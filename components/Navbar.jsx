@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from './LanguageSwitcher';
 import { useRouter, usePathname } from 'next/navigation';
-import { scrollToSectionCenter } from '../utils/scrollToSection';
+import { scrollToSection } from '../utils/scrollToSection';
 import CodivaWordmarkMark from './CodivaWordmarkMark';
 import { marketingBaseUrl } from '@/lib/ops/host';
 
@@ -16,11 +16,19 @@ const navItems = [
   { labelKey: 'nav.contact', id: 'contact' },
 ];
 
-function MenuToggle({ open, onToggle, label }) {
+function focusableIn(root) {
+  if (!root) return [];
+  return [...root.querySelectorAll('a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(
+    (node) => node.offsetParent !== null || node.getClientRects().length
+  );
+}
+
+function MenuToggle({ open, onToggle, label, buttonRef }) {
   const bar =
     'absolute left-0 h-0.5 w-full rounded-full bg-slate-800 transition duration-200 ease-out';
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onToggle}
       aria-label={label}
@@ -52,6 +60,9 @@ export default function Navbar({ variant = 'marketing' }) {
   const { t } = useTranslation();
   const isSatellite = variant === 'career' || variant === 'ticket';
   const marketingUrl = marketingBaseUrl();
+  const chromeRef = useRef(null);
+  const toggleRef = useRef(null);
+  const wasMenuOpen = useRef(false);
 
   /**
    * Navega a la sección correspondiente.
@@ -66,7 +77,7 @@ export default function Navbar({ variant = 'marketing' }) {
     if (pathname !== '/') {
       router.push(`/#${id}`);
     } else {
-      scrollToSectionCenter(id);
+      scrollToSection(id);
     }
     setMenuOpen(false);
   };
@@ -90,12 +101,74 @@ export default function Navbar({ variant = 'marketing' }) {
   }, [lastScrollY]);
 
   useEffect(() => {
-    const handleKey = (e) => {
-      if (e.key === 'Escape') setMenuOpen(false);
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const closeOnDesktop = () => {
+      if (mq.matches) setMenuOpen(false);
     };
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
+    mq.addEventListener('change', closeOnDesktop);
+    return () => mq.removeEventListener('change', closeOnDesktop);
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      if (wasMenuOpen.current) toggleRef.current?.focus();
+      wasMenuOpen.current = false;
+      return undefined;
+    }
+    wasMenuOpen.current = true;
+    const y = window.scrollY;
+    const body = document.body;
+    const prev = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+    };
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${y}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const nodes = focusableIn(chromeRef.current);
+      if (!nodes.length) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      const active = document.activeElement;
+      if (!chromeRef.current?.contains(active)) {
+        e.preventDefault();
+        (e.shiftKey ? last : first).focus();
+        return;
+      }
+      if (e.shiftKey && active === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      body.style.overflow = prev.overflow;
+      body.style.position = prev.position;
+      body.style.top = prev.top;
+      body.style.left = prev.left;
+      body.style.right = prev.right;
+      body.style.width = prev.width;
+      window.scrollTo(0, y);
+    };
+  }, [menuOpen]);
 
   return (
     <div className="pointer-events-none fixed top-0 z-50 w-full px-4 pt-[max(0.75rem,env(safe-area-inset-top,0px))] md:px-6">
@@ -107,7 +180,7 @@ export default function Navbar({ variant = 'marketing' }) {
         />
       ) : null}
 
-      <div className="relative z-50 mx-auto max-w-7xl">
+      <div ref={chromeRef} className="relative z-50 mx-auto max-w-7xl">
         <nav
           className={`glass-panel pointer-events-auto flex h-14 items-center rounded-2xl px-5 font-inter transition-transform duration-300 ease-out md:px-8 ${
             showNavbar || menuOpen ? 'translate-y-0' : '-translate-y-24'
@@ -158,6 +231,7 @@ export default function Navbar({ variant = 'marketing' }) {
                 open={menuOpen}
                 onToggle={() => setMenuOpen((open) => !open)}
                 label={t('a11y.menu')}
+                buttonRef={toggleRef}
               />
             </div>
           </div>
@@ -166,6 +240,9 @@ export default function Navbar({ variant = 'marketing' }) {
         {menuOpen ? (
           <div
             id="mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('a11y.menu')}
             className="glass-panel-solid pointer-events-auto absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 h-fit rounded-2xl p-2 lg:hidden"
           >
             <div className="flex flex-col">

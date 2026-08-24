@@ -4,6 +4,7 @@ import { templateStaffAlert } from '@/lib/ops/email-templates';
 import { logActivity } from '@/lib/ops/activity';
 import { opsBaseUrl } from '@/lib/ops/host';
 import { NextResponse } from 'next/server';
+import { localIsoDate } from '@/lib/local-iso-date';
 import { reportError } from '@/lib/report-error';
 import {
   PUBLIC_RL_FORM,
@@ -33,6 +34,11 @@ export async function POST(request: Request) {
       if (!emailRl.ok) return rateLimitJsonResponse(emailRl.retryAfterMs);
     }
 
+    const deliveryDate = String(body.deliveryDate || '').trim();
+    if (deliveryDate && deliveryDate < localIsoDate()) {
+      return NextResponse.json({ error: 'invalid_fields' }, { status: 400 });
+    }
+
     const admin = createAdminClient();
 
     const { data: lead, error } = await admin
@@ -50,7 +56,7 @@ export async function POST(request: Request) {
         has_content: body.hasContent || null,
         has_domain: body.hasDomain || null,
         has_hosting: body.hasHosting || null,
-        delivery_date: body.deliveryDate || null,
+        delivery_date: deliveryDate || null,
         budget: body.budget ? parseFloat(String(body.budget)) : null,
         reference_site: body.referenceSite || null,
       })

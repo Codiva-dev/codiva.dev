@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { scrollToSectionCenter } from '../utils/scrollToSection';
+import { scrollToSection } from '../utils/scrollToSection';
 import HuntBeacon from '../components/careers/HuntBeacon';
 import Navbar from '../components/Navbar';
 import CodivaToaster from '@/components/ui/CodivaToaster';
@@ -32,7 +32,7 @@ export default function LayoutClient({ children, variant = 'marketing' }) {
     const scrollFromHash = () => {
       const id = window.location.hash.replace('#', '');
       if (!id) return;
-      requestAnimationFrame(() => scrollToSectionCenter(id));
+      requestAnimationFrame(() => scrollToSection(id));
     };
 
     scrollFromHash();
@@ -54,7 +54,7 @@ export default function LayoutClient({ children, variant = 'marketing' }) {
   const showQuote = !isSatellite;
 
   return (
-    <div className="bg-codiva-background text-zinc-900 font-sans antialiased">
+    <div className="flex min-h-dvh flex-col bg-codiva-background text-zinc-900 font-sans antialiased">
       {/* Microdatos JSON-LD */}
       <script type="application/ld+json">
         {JSON.stringify(schemaOrgJsonLd)}
@@ -69,8 +69,8 @@ export default function LayoutClient({ children, variant = 'marketing' }) {
           {t('career.skip_to_content')}
         </a>
       ) : null}
-      {children}
-      <div data-site-footer="">
+      <div className="flex-1">{children}</div>
+      <div data-site-footer="" className="mt-auto">
         <Footer variant={variant} />
       </div>
 

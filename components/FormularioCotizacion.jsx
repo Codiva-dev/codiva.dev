@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useTranslation } from 'react-i18next';
+import { localIsoDate } from '@/lib/local-iso-date';
 
 const EMAIL_WITH_TLD = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -38,6 +39,7 @@ export default function FormularioCotizacion() {
   const functionalityOptions = ['login', 'catalog', 'admin', 'pwa', 'blog', 'multilang'];
   const yesNoPartialOptions = ['yes', 'partial', 'no'];
 
+  const minDelivery = localIsoDate();
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -75,7 +77,11 @@ export default function FormularioCotizacion() {
       hasContent: Yup.string().required(t('validation.required')),
       hasDomain: Yup.string().required(t('validation.required')),
       hasHosting: Yup.string().required(t('validation.required')),
-      deliveryDate: Yup.date().required(t('validation.required')),
+      deliveryDate: Yup.string()
+        .required(t('validation.required'))
+        .test('not-past', t('validation.minDate'), (value) =>
+          Boolean(value && value >= minDelivery)
+        ),
       budget: Yup.string(),
       referenceSite: Yup.string()
         .transform((v) => (v === '' ? undefined : v))
@@ -281,6 +287,7 @@ export default function FormularioCotizacion() {
             id="quote-deliveryDate"
             type="date"
             name="deliveryDate"
+            min={minDelivery}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.deliveryDate}

@@ -62,7 +62,7 @@ export default async function EmpleosPage() {
           </Link>
         </p>
         {rows.length ? (
-          <p className="mt-4 inline-flex rounded-full border border-codiva-primary/20 bg-white/90 px-4 py-1.5 text-xs font-semibold text-codiva-primary">
+          <p className="mt-4 text-sm font-medium text-zinc-500">
             {rows.length === 1 ? t('career.open_one') : t('career.open_many', { count: rows.length })}
           </p>
         ) : null}

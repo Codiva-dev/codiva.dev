@@ -23,7 +23,7 @@ export default function FloatingQuoteButton() {
 
     const observer = new IntersectionObserver(
       ([entry]) => setOverFooter(Boolean(entry?.isIntersecting)),
-      { threshold: 0, rootMargin: '0px' }
+      { threshold: 0, rootMargin: '0px 0px 120px 0px' }
     );
     observer.observe(footer);
     return () => observer.disconnect();

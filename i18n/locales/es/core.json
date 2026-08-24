@@ -289,7 +289,8 @@
     "required": "Requerido",
     "invalidEmail": "Email inválido",
     "invalidPhone": "Usa un número de teléfono (dígitos, con lada si aplica)",
-    "invalidUrl": "URL inválida"
+    "invalidUrl": "URL inválida",
+    "minDate": "Elige hoy o una fecha futura"
   },
   "status": {
     "success": "¡Gracias por tu solicitud!",

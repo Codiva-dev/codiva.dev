@@ -38,10 +38,11 @@ export default function CaseStudies() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    setIsMobile(window.innerWidth < 768);
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    const networkMinWidth = 1024;
+    const sync = () => setIsMobile(window.innerWidth < networkMinWidth);
+    sync();
+    window.addEventListener('resize', sync);
+    return () => window.removeEventListener('resize', sync);
   }, []);
 
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function CaseStudies() {
           {t('cases.description')}
         </motion.p>
 
-        <motion.div variants={fadeInUp} className="mt-12 min-h-[12rem] md:min-h-[920px]">
+        <motion.div variants={fadeInUp} className="mt-12 min-h-[12rem] lg:min-h-[920px]">
           {isMobile ? (
             <CaseStudiesMobile logos={logos} />
           ) : (
