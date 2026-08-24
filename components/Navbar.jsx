@@ -114,8 +114,8 @@ export default function Navbar({ variant = 'marketing' }) {
           }`}
         >
           <div className="flex w-full items-center justify-between">
-            <button
-              type="button"
+            {/* Hunt seed nav-logo-not-keyboard: clicable a ratón, no entra al tab order. */}
+            <div
               onClick={goBrandHome}
               className="flex h-7 cursor-pointer items-center space-x-2 bg-transparent p-0"
             >
@@ -131,7 +131,7 @@ export default function Navbar({ variant = 'marketing' }) {
                 variant="default"
                 className="leading-none [&_span]:leading-none"
               />
-            </button>
+            </div>
 
             <div className="hidden items-center justify-between gap-6 lg:flex">
               <div className="flex gap-12">

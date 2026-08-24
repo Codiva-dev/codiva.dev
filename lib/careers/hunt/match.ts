@@ -102,11 +102,12 @@ export function matchHuntReport(input: {
   pageUrl: string;
   title: string;
   description: string;
+  expected?: string | null;
   discipline?: string | null;
 }): HuntMatch | null {
   const path = normalizePath(input.pageUrl);
   const surface = reportSurface(input.pageUrl);
-  const blob = fold(`${input.title} ${input.description}`);
+  const blob = fold(`${input.title} ${input.description} ${input.expected || ''}`);
   const rawDiscipline = input.discipline ?? '';
   const discipline = isCareerDiscipline(rawDiscipline) ? rawDiscipline : null;
   let best: HuntMatch | null = null;

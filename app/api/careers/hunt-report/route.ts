@@ -95,7 +95,7 @@ export async function POST(request: Request) {
     if (await huntEvidenceExists(path)) evidenceOk.push(path);
   }
 
-  const match = matchHuntReport({ pageUrl, title, description, discipline });
+  const match = matchHuntReport({ pageUrl, title, description, expected, discipline });
   const huntBefore = catalogKey
     ? await huntProgressForAttempt({ email, catalogKey })
     : null;
