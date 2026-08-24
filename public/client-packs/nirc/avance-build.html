@@ -75,10 +75,10 @@
 </head>
 <body>
   <h1>NIRC — Avance de construcción</h1>
-  <p class="meta">Informe para NIRC · 19 de agosto de 2026 · Codiva · Incluye plan frontend</p>
+  <p class="meta">Informe para NIRC · 24 de agosto de 2026 · Codiva · Incluye plan frontend</p>
 
   <div class="cover">
-    <p><strong>En una frase.</strong> La arquitectura está cerrada y el software ya opera en demo guiada con <strong>tres superficies</strong>: backoffice (staff), kiosk de sitio y bolsa pública. Los empleados del pool <strong>no tienen app personal</strong>: el staff confirma ofertas; el código de entrada llega por email/SMS y se respalda en Asistencia. Siguiente foco de UI: monitor de jornada, cámara QR en tableta, timeline de cumplimiento y consola de jobs. IMSS, firma y pagos siguen en simulación hasta sandbox (IDSE PRO pendiente del proveedor).</p>
+    <p><strong>En una frase.</strong> La arquitectura está cerrada y el software ya opera en demo guiada con <strong>tres superficies</strong>: backoffice (staff), kiosk de sitio (cámara QR y geocerca) y bolsa pública. Los empleados del pool <strong>no tienen app personal</strong>: el staff confirma ofertas; el código de entrada llega por email/SMS y se respalda en Asistencia. Identidad visual oficial y sitio público en www. IMSS, firma y pagos siguen en simulación hasta sandbox (IDSE PRO pendiente del proveedor).</p>
   </div>
 
   <h2>Qué ya pueden ver en una demo guiada</h2>
@@ -94,17 +94,17 @@
       <tr>
         <td>Backoffice</td>
         <td>RH, reclutamiento, ops, finanzas</td>
-        <td>Clientes (RP), vacantes, postulaciones, pool y ranking, expedientes e INE, eventos y geocerca, convocatorias FCFS (aceptación por staff), asistencia (QR emitidos), cumplimiento y pagos en simulación, privacy y auditoría. Cada perfil ve solo lo de su rol.</td>
+        <td>Clientes (RP), vacantes, postulaciones, pool y ranking, expedientes e INE, eventos y geocerca, convocatorias FCFS (aceptación por staff), asistencia (monitor de jornada y QR), cumplimiento y pagos en simulación, privacidad, auditoría y consola de trabajos. Menú agrupado por proceso. Cada perfil ve solo lo de su rol.</td>
       </tr>
       <tr>
         <td>Kiosk (tableta en sitio)</td>
         <td>Admin de sitio</td>
-        <td>Check-in con GPS de la tableta, código manual y flujo hacia la firma en la misma pantalla. El lector de cámara es el siguiente bloque de UI.</td>
+        <td>Check-in con GPS y geocerca, lector de cámara QR, código manual, flujo de firma en la misma pantalla y check-out en tableta.</td>
       </tr>
       <tr>
         <td>Bolsa pública</td>
         <td>Candidatos nuevos</td>
-        <td>Vacantes publicadas y postulación. Postular no da de alta en el IMSS ni crea cuenta de empleado.</td>
+        <td>Vacantes publicadas y postulación, con la misma familia visual. Postular no da de alta en el IMSS ni crea cuenta de empleado.</td>
       </tr>
       <tr>
         <td>App personal</td>
@@ -120,29 +120,29 @@
       <tr>
         <th>Prioridad</th>
         <th>Entrega visible</th>
-        <th>Sprint</th>
+        <th>Estado</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td>P0</td>
         <td>Monitor de asistencia (jornada + checkout staff + reenvío de QR) y cámara en kiosk</td>
-        <td>B3 · Entrada</td>
+        <td>Hecho (19–20 ago)</td>
       </tr>
       <tr>
         <td>P1</td>
-        <td>Navegación del backoffice por carriles; timeline de cumplimiento; consola de jobs</td>
-        <td>B1–B4</td>
+        <td>Navegación del backoffice por procesos; línea de tiempo de cumplimiento; consola de trabajos</td>
+        <td>Hecho (19–20 ago)</td>
       </tr>
       <tr>
         <td>P2</td>
-        <td>Misma marca visual en kiosk y bolsa</td>
-        <td>B2</td>
+        <td>Misma marca en kiosk, bolsa y sitio público www</td>
+        <td>Hecho (21 ago)</td>
       </tr>
       <tr>
         <td>P3</td>
         <td>Alta Stripe Connect en pantalla (cuando salga de simulación)</td>
-        <td>B4</td>
+        <td>Pendiente · B4</td>
       </tr>
     </tbody>
   </table>
@@ -166,26 +166,26 @@
     </thead>
     <tbody>
       <tr>
-        <td>Mesa de entrada</td>
-        <td>La tableta lee el QR con cámara; el personal recibe el código por email/SMS; check-out en kiosk; monitor de jornada en backoffice.</td>
-      </tr>
-      <tr>
-        <td>Experiencia staff</td>
-        <td>Menú del backoffice agrupado por proceso; timeline de cumplimiento; consola de trabajos en cola.</td>
+        <td>Cierre de hitos</td>
+        <td>Demo de fundaciones con su equipo para cerrar plataforma base; recorrido de bolsa en ambiente de pruebas.</td>
       </tr>
       <tr>
         <td>Proveedores</td>
-        <td>Paso de simuladores a sandbox: Cincel y Stripe ya tienen cuenta; IDSE PRO sigue pendiente del proveedor.</td>
+        <td>Sandbox IDSE PRO (aún del proveedor). Paso de simuladores a cuentas de prueba: Cincel y Stripe ya tienen cuenta.</td>
       </tr>
       <tr>
         <td>Dominio</td>
-        <td>Corte DNS de nircconsulting.com hacia el hosting acordado (Vercel), cuando ustedes lo autoricen.</td>
+        <td>Sitio público en www listo. Falta apuntar el subdominio de la aplicación y el dominio raíz, cuando ustedes lo autoricen.</td>
+      </tr>
+      <tr>
+        <td>Documentos NIRC</td>
+        <td>Plantilla de adhesión y certificados de registro patronal vigentes.</td>
       </tr>
     </tbody>
   </table>
 
   <div class="note">
-    Este informe no sustituye la arquitectura ya entregada ni es un certificado de integración IMSS/firma/pagos. Es el estado de <strong>construcción</strong> y el <strong>plan de interfaz</strong> al 19 de agosto de 2026.
+    Este informe no sustituye la arquitectura ya entregada ni es un certificado de integración IMSS/firma/pagos. Es el estado de <strong>construcción</strong> y el <strong>plan de interfaz</strong> al 24 de agosto de 2026.
   </div>
 
   <footer>

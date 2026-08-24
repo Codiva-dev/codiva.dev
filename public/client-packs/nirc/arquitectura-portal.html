@@ -171,20 +171,20 @@
       <li>Flujos: ciclo de vida, día del evento, adhesión en entrada, IDSE, contabilidad</li>
       <li>Integración IMSS vía IDSE PRO</li>
       <li>LFPDPPP (uso/disposal), gates de negocio y modelo de datos</li>
-      <li>Estado de construcción al 19 ago 2026 (demo guiada; sin certificar IMSS/firma/pagos)</li>
+      <li>Estado de construcción al 24 ago 2026 (demo guiada; sin certificar IMSS/firma/pagos)</li>
       </ul>
   </div>
 
   <h2 id="avance">Avance de construcción</h2>
-  <p class="meta">Informe para NIRC · 19 de agosto de 2026 · Codiva</p>
+  <p class="meta">Informe para NIRC · 24 de agosto de 2026 · Codiva · Incluye plan frontend</p>
   <div class="cover-box">
-    <p><strong>En una frase.</strong> La arquitectura del producto está cerrada y el software ya tiene las cuatro aplicaciones previstas (backoffice, kiosk de sitio, app de la persona y bolsa pública), con operación interna en ambiente de construcción. Falta pulir la experiencia de mesa (cámara, QR en pantalla, PWA) y certificar IMSS, firma y pagos con los proveedores reales.</p>
+    <p><strong>En una frase.</strong> La arquitectura está cerrada y el software ya opera en demo guiada con <strong>tres superficies</strong>: backoffice (staff), kiosk de sitio (cámara QR y geocerca) y bolsa pública. Los empleados del pool <strong>no tienen app personal</strong>: el staff confirma ofertas; el código de entrada llega por email/SMS y se respalda en Asistencia. Identidad visual oficial y sitio público en www. IMSS, firma y pagos siguen en simulación hasta sandbox (IDSE PRO pendiente del proveedor).</p>
   </div>
   <h3>Qué ya pueden ver en una demo guiada</h3>
   <table>
     <thead>
       <tr>
-        <th>Aplicación</th>
+        <th>Superficie</th>
         <th>Para quién</th>
         <th>Qué hay hoy</th>
       </tr>
@@ -193,32 +193,64 @@
       <tr>
         <td>Backoffice</td>
         <td>RH, reclutamiento, ops, finanzas</td>
-        <td>Clientes, vacantes, postulaciones, pool y ranking, expedientes e INE, eventos y geocerca, convocatorias FCFS, asistencia, cumplimiento (contratos / IMSS en simulación), pagos y auditoría. Cada perfil ve solo lo de su rol.</td>
+        <td>Clientes (RP), vacantes, postulaciones, pool y ranking, expedientes e INE, eventos y geocerca, convocatorias FCFS (aceptación por staff), asistencia (monitor de jornada y QR), cumplimiento y pagos en simulación, privacidad, auditoría y consola de trabajos. Menú agrupado por proceso. Cada perfil ve solo lo de su rol.</td>
       </tr>
       <tr>
         <td>Kiosk (tableta en sitio)</td>
         <td>Admin de sitio</td>
-        <td>Check-in con GPS de la tableta, código manual y flujo hacia la firma en la misma pantalla. El lector de cámara llega en el siguiente bloque de UI.</td>
-      </tr>
-      <tr>
-        <td>App personal</td>
-        <td>Persona del pool</td>
-        <td>Aceptar o rechazar ofertas, cargar INE, ver el estado de la jornada y un código de entrada. El código en imagen (para que la tableta lo lea) es el siguiente paso.</td>
+        <td>Check-in con GPS y geocerca, lector de cámara QR, código manual, flujo de firma en la misma pantalla y check-out en tableta.</td>
       </tr>
       <tr>
         <td>Bolsa pública</td>
         <td>Candidatos nuevos</td>
-        <td>Vacantes publicadas y postulación. Postular no da de alta en el IMSS.</td>
+        <td>Vacantes publicadas y postulación, con la misma familia visual. Postular no da de alta en el IMSS ni crea cuenta de empleado.</td>
+      </tr>
+      <tr>
+        <td>App personal</td>
+        <td>—</td>
+        <td><strong>No aplica en Fase 1.</strong> Pantalla informativa solamente. Ofertas y QR los gestiona el staff / notificaciones.</td>
+      </tr>
+    </tbody>
+  </table>
+  <h3>Plan frontend (integrado al build)</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>Prioridad</th>
+        <th>Entrega visible</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>P0</td>
+        <td>Monitor de asistencia y cámara QR en kiosk</td>
+        <td>Hecho (19–20 ago)</td>
+      </tr>
+      <tr>
+        <td>P1</td>
+        <td>Navegación del backoffice por procesos; línea de tiempo de cumplimiento; consola de trabajos</td>
+        <td>Hecho (19–20 ago)</td>
+      </tr>
+      <tr>
+        <td>P2</td>
+        <td>Misma marca en kiosk, bolsa y sitio público www</td>
+        <td>Hecho (21 ago)</td>
+      </tr>
+      <tr>
+        <td>P3</td>
+        <td>Alta de pagos Stripe Connect en pantalla (cuando salga de simulación)</td>
+        <td>Pendiente · B4</td>
       </tr>
     </tbody>
   </table>
   <h3>Reglas de negocio que el software ya respeta</h3>
   <ul>
     <li>No hay estado <em>Trabajando</em> sin firma de adhesión y alta IMSS aceptada.</li>
-    <li>La adhesión se firma en la tableta de sitio (un firmante: el trabajador), no en el teléfono personal.</li>
+    <li>La adhesión se firma en la tableta de sitio (un firmante: el trabajador), no en un teléfono personal de empleado.</li>
     <li>El check-in usa la geocerca del sitio (radio por defecto 150 m). Fuera de radio no hay entrada.</li>
     <li>Al salir se dispara en paralelo la baja IMSS y la dispersión de pago (política de abandono aún por confirmar con ustedes).</li>
-    <li>El cupo de una convocatoria no se sobrevende; el primero en aceptar se queda con el lugar.</li>
+    <li>El cupo de una convocatoria no se sobrevende; el primero en aceptar se queda con el lugar (aceptación vía staff en Fase 1).</li>
   </ul>
   <h3>Qué sigue (sin reabrir el diseño)</h3>
   <table>
@@ -230,25 +262,25 @@
     </thead>
     <tbody>
       <tr>
-        <td>Mesa de entrada</td>
-        <td>La tableta lee el QR con cámara; la persona muestra un código en pantalla; check-out en kiosk.</td>
-      </tr>
-      <tr>
-        <td>Clientes / IMSS</td>
-        <td>Registros patronales y vigencia de certificado en backoffice (bloquea altas si el certificado venció).</td>
+        <td>Cierre de hitos</td>
+        <td>Demo de fundaciones con su equipo para cerrar plataforma base; recorrido de bolsa en ambiente de pruebas.</td>
       </tr>
       <tr>
         <td>Proveedores</td>
-        <td>Paso de simuladores a sandbox: Cincel y Stripe ya tienen cuenta; IDSE PRO sigue pendiente del proveedor.</td>
+        <td>Sandbox IDSE PRO (aún del proveedor). Paso de simuladores a cuentas de prueba: Cincel y Stripe ya tienen cuenta.</td>
       </tr>
       <tr>
         <td>Dominio</td>
-        <td>Corte DNS de nircconsulting.com hacia el hosting acordado (Vercel), cuando ustedes lo autoricen.</td>
+        <td>Sitio público en www listo. Falta apuntar el subdominio de la aplicación y el dominio raíz, cuando ustedes lo autoricen.</td>
+      </tr>
+      <tr>
+        <td>Documentos NIRC</td>
+        <td>Plantilla de adhesión y certificados de registro patronal vigentes.</td>
       </tr>
     </tbody>
   </table>
   <div class="note">
-    Este informe no sustituye la arquitectura ya entregada ni es un certificado de integración IMSS/firma/pagos. Es el estado de <strong>construcción</strong> al 19 de agosto de 2026.
+    Este informe no sustituye la arquitectura ya entregada ni es un certificado de integración IMSS/firma/pagos. Es el estado de <strong>construcción</strong> al 24 de agosto de 2026.
   </div>
 
   <div class="kpi">
@@ -260,7 +292,7 @@
 
   <h2>Índice</h2>
   <ol class="toc">
-    <li><a href="#avance">Avance de construcción (19 ago 2026)</a></li>
+    <li><a href="#avance">Avance de construcción (24 ago 2026)</a></li>
     <li><a href="#resumen">Resumen ejecutivo</a></li>
     <li><a href="#arquitectura">Arquitectura de plataforma</a></li>
     <li><a href="#stack">Stack y roles</a></li>
@@ -293,7 +325,7 @@ Backoffice: vacantes · aplicaciones · pools · validaciones · convocatorias �
     (idle → escanea QR del empleado → firma → idle). La alta IMSS corre <em>en paralelo</em>; la tableta no espera IDSE.
     <strong>Check-out:</strong> baja IDSE y pago Stripe <em>en paralelo</em> (SPEI solo como respaldo si el pago no completó al cierre del día).
     <strong>Estado:</strong> arquitectura certificada (freeze 17 ago 2026); siguiente fase = implementación.
-    <strong>Dominio:</strong> <code>nircconsulting.com</code> se migrará de IONOS a <strong>Vercel</strong>
+    <strong>Dominio:</strong> <code>nircgroup.info</code> en <strong>Vercel</strong> (<code>www</code> ya publica el sitio; <code>app</code> y el dominio raíz, cuando autoricen el corte DNS)
     (<code>www</code> marketing · <code>app</code> plataforma · <code>staging</code>). Colores de marca alineados al sitio actual (azul corporativo).
   </div>
 
