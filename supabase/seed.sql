@@ -278,6 +278,15 @@ INSERT INTO document_requests (
     'other', 'file', 'open', true, 48, true
   ),
   (
+    '94000001-0001-4000-8000-000000000010',
+    'b0000001-0001-4000-8000-00000000000b',
+    'registro_patronal',
+    'Registro patronal y certificados',
+    'Registro(s) patronal(es) y certificados IMSS vigentes para altas IDSE.',
+    'PDF o ZIP con el número de RP, el patrón y los certificados vigentes. Si hay varios RP, inclúyanlos todos. Si no carga, un enlace (Drive, Dropbox, SharePoint).',
+    'other', 'file', 'open', true, 47, true
+  ),
+  (
     '94000001-0001-4000-8000-000000000009',
     'b0000001-0001-4000-8000-00000000000b',
     'talent_databases',

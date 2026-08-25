@@ -7,7 +7,13 @@ import {
   templatePasswordRecoveryHtml,
   templatePortalPasswordRecoveryHtml,
 } from '@/lib/ops/email-templates';
-import { interviewsAuthCallbackUrl, opsAuthCallbackUrl, portalAuthCallbackUrl, portalHubAuthCallbackUrl } from '@/lib/ops/auth-urls';
+import {
+  interviewsAuthCallbackUrl,
+  opsAuthCallbackUrl,
+  portalAuthCallbackUrl,
+  portalHubAuthCallbackUrl,
+  withRecoveryOtpParams,
+} from '@/lib/ops/auth-urls';
 import { findUserIdByEmail } from '@/lib/ops/auth-users';
 import { getT } from '@/i18n/locale';
 import { tSync } from '@/i18n/translate';
@@ -88,7 +94,16 @@ async function sendRecoveryEmail(
     };
   }
 
-  const link = data?.properties?.action_link;
+  const hashedToken = data?.properties?.hashed_token;
+  const actionLink = data?.properties?.action_link;
+  let link = actionLink;
+  if (hashedToken) {
+    try {
+      link = withRecoveryOtpParams(redirectTo, hashedToken);
+    } catch {
+      link = actionLink;
+    }
+  }
   if (!link) {
     return { ok: false, message: t('auth.noLink') };
   }
