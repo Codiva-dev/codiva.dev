@@ -276,6 +276,15 @@ INSERT INTO document_requests (
     'Constancia vigente emitida por el SAT (RFC, régimen y domicilio fiscal).',
     'PDF descargado del portal del SAT. Debe coincidir con los datos de facturación.',
     'other', 'file', 'open', true, 48, true
+  ),
+  (
+    '94000001-0001-4000-8000-000000000009',
+    'b0000001-0001-4000-8000-00000000000b',
+    'talent_databases',
+    'Bases de datos de talento',
+    'Exportación vigente del pool de candidatos/empleados que operan hoy (Excel, ATS u otras listas).',
+    'Excel o CSV, una fila por persona, con encabezados originales. Si hay varias fuentes, un ZIP o un enlace (Drive, Dropbox, SharePoint).',
+    'other', 'file', 'open', true, 42, true
   )
 ON CONFLICT (id) DO NOTHING;
 

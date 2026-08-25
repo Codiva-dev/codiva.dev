@@ -42,6 +42,17 @@ export const DOCUMENT_REQUEST_PRESETS: DocumentRequestPreset[] = [
     required: true,
     sortOrder: 48,
   },
+  {
+    code: 'talent_databases',
+    title: 'Bases de datos de talento',
+    description: 'Exportación vigente del pool de candidatos/empleados que operan hoy (Excel, ATS u otras listas).',
+    instructions:
+      'Excel o CSV, una fila por persona, con encabezados originales. Si hay varias fuentes, un ZIP o un enlace (Drive, Dropbox, SharePoint).',
+    expectedType: 'other',
+    inputMode: 'file',
+    required: true,
+    sortOrder: 42,
+  },
 ];
 
 export function documentRequestPresetByCode(code: string) {
