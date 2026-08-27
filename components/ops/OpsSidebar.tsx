@@ -15,6 +15,7 @@ import {
   Building2,
   Gauge,
   Kanban,
+  ListTodo,
   PanelLeftClose,
 } from 'lucide-react';
 import { canAny, type Capability, type PermissionSubject } from '@/lib/ops/permissions';
@@ -32,6 +33,7 @@ const NAV: {
   { href: '/inbox', labelKey: 'ops.nav.inbox', icon: Inbox, capability: 'inbox' },
   { href: '/projects', labelKey: 'ops.nav.projects', icon: FolderKanban },
   { href: '/workload', labelKey: 'ops.nav.workload', icon: Gauge, capability: 'workload' },
+  { href: '/pendientes', labelKey: 'ops.nav.pendientes', icon: ListTodo, capability: 'assignments' },
   { href: '/asignaciones', labelKey: 'ops.nav.asignaciones', icon: Kanban, capability: 'assignments' },
   { href: '/organizations', labelKey: 'ops.nav.organizations', icon: Building2, capability: 'organizations' },
   { href: '/users', labelKey: 'ops.nav.users', icon: ContactRound, capability: 'portal_users' },
@@ -43,11 +45,13 @@ const NAV: {
 export default function OpsSidebar({
   staffName,
   staffPermissions,
+  pendingCount = 0,
   onHide,
   onNavigate,
 }: {
   staffName: string;
   staffPermissions?: PermissionSubject;
+  pendingCount?: number;
   onHide?: () => void;
   onNavigate?: () => void;
 }) {
@@ -99,6 +103,7 @@ export default function OpsSidebar({
       <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
         {items.map(({ href, labelKey, icon: Icon }) => {
           const active = normalized === href || normalized.startsWith(`${href}/`);
+          const showBadge = href === '/pendientes' && pendingCount > 0;
           return (
             <Link
               key={href}
@@ -111,7 +116,16 @@ export default function OpsSidebar({
               }`}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              {t(labelKey)}
+              <span className="min-w-0 flex-1 truncate">{t(labelKey)}</span>
+              {showBadge ? (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
+                    active ? 'bg-white text-codiva-primary' : 'bg-codiva-primary text-white'
+                  }`}
+                >
+                  {pendingCount > 99 ? '99+' : pendingCount}
+                </span>
+              ) : null}
             </Link>
           );
         })}

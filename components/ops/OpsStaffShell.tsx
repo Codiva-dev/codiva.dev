@@ -13,11 +13,13 @@ const TOGGLE_BTN_CLASS =
 export default function OpsStaffShell({
   staffName,
   staffPermissions,
+  pendingCount = 0,
   initialSidebarOpen,
   children,
 }: {
   staffName: string;
   staffPermissions?: PermissionSubject;
+  pendingCount?: number;
   initialSidebarOpen: boolean;
   children: React.ReactNode;
 }) {
@@ -94,6 +96,7 @@ export default function OpsStaffShell({
         <OpsSidebar
           staffName={staffName}
           staffPermissions={staffPermissions}
+          pendingCount={pendingCount}
           onHide={toggleDesktop}
           onNavigate={closeMobile}
         />

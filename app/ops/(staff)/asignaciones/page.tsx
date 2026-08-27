@@ -18,6 +18,7 @@ import {
   type WorkStream,
   type WorkSubtask,
 } from '@/lib/ops/work-board';
+import { markWorkMentionsReadForAssignment } from '@/lib/ops/work-board-actions';
 
 type StaffRow = { id: string; full_name: string };
 type ProcessMeta = { label: string; href: string | null };
@@ -43,6 +44,13 @@ export default async function AsignacionesPage({
   const t = await getT();
   const { id: initialAssignmentId } = await searchParams;
   const canManage = can(staff, 'assignments_manage');
+  if (initialAssignmentId) {
+    try {
+      await markWorkMentionsReadForAssignment(initialAssignmentId);
+    } catch (err) {
+      console.error('mark work mentions read:', err);
+    }
+  }
 
   const [
     assignmentsRes,

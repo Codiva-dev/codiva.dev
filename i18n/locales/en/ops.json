@@ -445,6 +445,7 @@
       "projects": "Projects",
       "workload": "Workload",
       "asignaciones": "Assignments",
+      "pendientes": "Pending",
       "organizations": "Organizations",
       "users": "Users",
       "tickets": "Tickets",
@@ -1883,6 +1884,17 @@
       "fromTo": "{{from}} → {{to}}",
       "createdAt": "Created",
       "progress": "Progress"
+    },
+    "pendientes": {
+      "title": "Pending",
+      "description": "Work still on you, and mentions you have not read yet.",
+      "mine": "Your open assignments",
+      "mineEmpty": "You have no open assignments.",
+      "mentions": "Unread mentions",
+      "mentionsEmpty": "No unread mentions.",
+      "mentionedBy": "{{name}} mentioned you",
+      "markRead": "Mark as read",
+      "mentionRead": "Mention marked as read"
     }
   },
   "auth": {

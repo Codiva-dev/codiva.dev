@@ -445,6 +445,7 @@
       "projects": "Proyectos",
       "workload": "Carga",
       "asignaciones": "Asignaciones",
+      "pendientes": "Pendientes",
       "organizations": "Organizaciones",
       "users": "Usuarios",
       "tickets": "Tickets",
@@ -1879,6 +1880,17 @@
       "fromTo": "{{from}} → {{to}}",
       "createdAt": "Creada",
       "progress": "Avance"
+    },
+    "pendientes": {
+      "title": "Pendientes",
+      "description": "Lo que te toca cerrar y las menciones que todavía no leíste.",
+      "mine": "Tus asignaciones abiertas",
+      "mineEmpty": "No tienes asignaciones abiertas.",
+      "mentions": "Menciones sin leer",
+      "mentionsEmpty": "Nadie te mencionó, o ya las leíste todas.",
+      "mentionedBy": "{{name}} te mencionó",
+      "markRead": "Marcar leída",
+      "mentionRead": "Mención marcada como leída"
     }
   },
   "auth": {

@@ -81,6 +81,8 @@ const CAREER_RESERVED = new Set([
   'tickets',
   'organizations',
   'workload',
+  'asignaciones',
+  'pendientes',
   'q',
   'p',
   'entrevistas',

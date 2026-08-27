@@ -26,7 +26,9 @@ import {
 
 function revalidateBoard() {
   revalidatePath('/asignaciones');
+  revalidatePath('/pendientes');
   revalidatePath('/workload');
+  revalidatePath('/', 'layout');
 }
 
 type AssignmentRow = {
@@ -443,4 +445,28 @@ async function notifyMentionedStaff({
   } catch (err) {
     console.error('work assignment mention notify:', err);
   }
+}
+
+export async function markWorkMentionRead(mentionId: string) {
+  const access = await assertAssignmentsAccess();
+  const { error } = await access.supabase
+    .from('work_assignment_mentions')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', mentionId)
+    .eq('mentioned_staff_id', access.staff.id)
+    .is('read_at', null);
+  if (error) throw await throwDb(error);
+  revalidateBoard();
+}
+
+export async function markWorkMentionsReadForAssignment(assignmentId: string) {
+  const access = await assertAssignmentsAccess();
+  const { error } = await access.supabase
+    .from('work_assignment_mentions')
+    .update({ read_at: new Date().toISOString() })
+    .eq('assignment_id', assignmentId)
+    .eq('mentioned_staff_id', access.staff.id)
+    .is('read_at', null);
+  if (error) throw await throwDb(error);
+  revalidateBoard();
 }

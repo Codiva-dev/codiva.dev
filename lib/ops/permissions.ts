@@ -232,6 +232,7 @@ export const NAV_CAPABILITY: Record<string, Capability | null> = {
   '/projects': null,
   '/workload': 'workload',
   '/asignaciones': 'assignments',
+  '/pendientes': 'assignments',
   '/organizations': 'organizations',
   '/users': 'portal_users',
   '/tickets': 'tickets',
