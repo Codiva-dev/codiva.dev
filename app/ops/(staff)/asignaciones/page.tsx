@@ -3,6 +3,7 @@ import OpsWorkBoard, { type ProcessOption } from '@/components/ops/work-board/Op
 import { requireCapability } from '@/lib/ops/auth';
 import { can } from '@/lib/ops/permissions';
 import { getT } from '@/i18n/locale';
+import { throwDb } from '@/lib/ops/throw-db';
 import { opsProjectPath } from '@/lib/ops/project-path';
 import {
   isWorkProcessKind,
@@ -44,7 +45,7 @@ export default async function AsignacionesPage({
   const canManage = can(staff, 'assignments_manage');
 
   const [
-    { data: assignmentRows },
+    assignmentsRes,
     { data: subtaskRows },
     { data: eventRows },
     { data: commentRows },
@@ -78,6 +79,9 @@ export default async function AsignacionesPage({
     supabase.from('quotes').select('id, title, status, project_id, projects(name, slug)').order('created_at', { ascending: false }).limit(80),
     supabase.from('tickets').select('id, title, status').order('created_at', { ascending: false }).limit(80),
   ]);
+
+  if (assignmentsRes.error) throw await throwDb(assignmentsRes.error);
+  const assignmentRows = assignmentsRes.data;
 
   const staffName = new Map((staffRows ?? []).map((row) => [row.id, row.full_name || 'Staff']));
   const processMeta = new Map<string, ProcessMeta>();

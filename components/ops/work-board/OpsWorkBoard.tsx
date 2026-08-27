@@ -201,10 +201,8 @@ export default function OpsWorkBoard({
         ) : null}
       </div>
 
-      {!visible.length ? (
-        <EmptyState>{t('ops.asignaciones.emptyBoard')}</EmptyState>
-      ) : view === 'board' ? (
-        <div className="grid auto-cols-[minmax(16rem,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2">
+      {view === 'board' ? (
+        <div className="flex min-h-[28rem] gap-3 overflow-x-auto pb-2">
           {WORK_BOARD_COLUMNS.map((status) => {
             const cards = visible.filter((row) => row.status === status);
             const active = dropStatus === status;
@@ -212,7 +210,7 @@ export default function OpsWorkBoard({
               <section
                 key={status}
                 data-work-drop-status={status}
-                className={`flex min-h-[28rem] min-w-[16rem] flex-col rounded-2xl border bg-zinc-50/80 p-2 ${
+                className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-zinc-50/80 p-2 ${
                   active ? 'border-codiva-primary ring-2 ring-codiva-primary/30' : 'border-zinc-200'
                 }`}
               >
@@ -249,25 +247,28 @@ export default function OpsWorkBoard({
         <div className="space-y-6">
           {WORK_STREAMS.map((streamId) => {
             const rows = visible.filter((row) => row.stream === streamId);
-            if (!rows.length) return null;
             return (
               <section key={streamId}>
                 <h2 className="mb-2 text-sm font-semibold text-zinc-800">{streamLabels[streamId]}</h2>
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  {rows.map((row) => (
-                    <WorkCard
-                      key={row.id}
-                      assignment={row}
-                      locale={locale}
-                      streamLabel={streamLabels[row.stream]}
-                      showStatus
-                      statusLabel={statusLabels[row.status]}
-                      onOpen={() => setSelectedId(row.id)}
-                      onToggleSubtask={onToggleSub}
-                      onAddSubtask={onAddSub}
-                    />
-                  ))}
-                </div>
+                {rows.length ? (
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {rows.map((row) => (
+                      <WorkCard
+                        key={row.id}
+                        assignment={row}
+                        locale={locale}
+                        streamLabel={streamLabels[row.stream]}
+                        showStatus
+                        statusLabel={statusLabels[row.status]}
+                        onOpen={() => setSelectedId(row.id)}
+                        onToggleSubtask={onToggleSub}
+                        onAddSubtask={onAddSub}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <EmptyState>{t('ops.asignaciones.emptyColumn')}</EmptyState>
+                )}
               </section>
             );
           })}
