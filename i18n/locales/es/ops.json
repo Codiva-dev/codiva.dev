@@ -203,6 +203,8 @@
       "quoteValidUntil": "Válida hasta {{date}}",
       "quotePending": "Pendiente de tu respuesta",
       "quoteView": "Ver detalle",
+      "quoteCommercial": "Propuesta comercial",
+      "quoteCanvasHint": "Inversión y fases",
       "materials": "{{count}} material(es) publicado(s)",
       "pendingPublish": "Pendiente de publicar",
       "architectureMvp": "Arquitectura y MVP",

@@ -1,12 +1,14 @@
 import Link from 'next/link';
 import ToastForm from '@/components/ops/ToastForm';
+import PortalCanvasViewer from '@/components/ops/PortalCanvasViewer';
 import { redirect } from 'next/navigation';
 import StatusBadge from '@/components/ops/StatusBadge';
 import { requireProjectMember } from '@/lib/ops/auth';
 import { clientAcceptQuote, clientRejectQuote } from '@/lib/ops/actions';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
-import { getPortalVisibility } from '@/lib/ops/portal-visibility';
+import { filterQuoteCanvases, getPortalVisibility } from '@/lib/ops/portal-visibility';
+import { portalCanvasPath } from '@/lib/ops/architecture';
 import { portalQuoteDocumentPath } from '@/lib/ops/quotes';
 
 export default async function PortalQuotePage({
@@ -23,17 +25,39 @@ export default async function PortalQuotePage({
   const { QUOTE_STATUS_LABELS, formatCurrency } = labelsFor(t.locale);
   const visibility = getPortalVisibility(project);
 
-  if (!visibility.showQuote) {
+  const { data: canvases } = await supabase
+    .from('deliverables')
+    .select('id, title, description, kind, url, file_url, sort_order')
+    .eq('project_id', project.id)
+    .eq('visible_to_client', true)
+    .eq('kind', 'mvp')
+    .order('sort_order', { ascending: true });
+
+  const quoteCanvases = filterQuoteCanvases(canvases ?? [], visibility);
+
+  if (!visibility.showQuote && quoteCanvases.length === 0) {
     redirect(`/p/${slug}`);
   }
 
-  const { data: quotes } = await supabase
-    .from('quotes')
-    .select('id, title, status, total_amount, currency, version, visible_to_client')
-    .eq('project_id', project.id)
-    .eq('visible_to_client', true)
-    .in('status', ['sent', 'accepted', 'rejected', 'expired'])
-    .order('version', { ascending: false });
+  const { data: quotes } = visibility.showQuote
+    ? await supabase
+        .from('quotes')
+        .select('id, title, status, total_amount, currency, version, visible_to_client')
+        .eq('project_id', project.id)
+        .eq('visible_to_client', true)
+        .in('status', ['sent', 'accepted', 'rejected', 'expired'])
+        .order('version', { ascending: false })
+    : Promise.resolve({
+        data: [] as {
+          id: string;
+          title: string;
+          status: string;
+          total_amount: number;
+          currency: string;
+          version: number;
+          visible_to_client: boolean;
+        }[],
+      });
 
   const list = quotes ?? [];
   const preferred =
@@ -54,14 +78,14 @@ export default async function PortalQuotePage({
     await clientRejectQuote(quoteId, project.id);
   }
 
-  if (!preferred) {
+  if (!preferred && quoteCanvases.length === 0) {
     return <p className="text-sm text-zinc-500">{t('portal.quote.empty')}</p>;
   }
 
-  const src = portalQuoteDocumentPath(slug, preferred.id);
+  const src = preferred ? portalQuoteDocumentPath(slug, preferred.id) : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <p className="text-sm text-zinc-600">
         {t('portal.quote.introPrefix')}{' '}
         <Link href={`/p/${slug}/propuesta`} className="text-codiva-primary hover:underline">
@@ -78,10 +102,19 @@ export default async function PortalQuotePage({
         .
       </p>
 
+      {quoteCanvases.length > 0 && (
+        <PortalCanvasViewer
+          items={quoteCanvases.map((item) => ({
+            ...item,
+            canvasPath: portalCanvasPath(slug, item.id),
+          }))}
+        />
+      )}
+
       {list.length > 1 && (
         <div className="flex flex-wrap gap-2">
           {list.map((item) => {
-            const selected = item.id === preferred.id;
+            const selected = item.id === preferred?.id;
             return (
               <Link
                 key={item.id}
@@ -97,48 +130,50 @@ export default async function PortalQuotePage({
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-100 px-4 py-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-              {t('portal.quote.interactive')}
-            </p>
-            <div className="mt-1 flex flex-wrap items-center gap-2">
-              <h2 className="font-semibold text-zinc-900">{preferred.title}</h2>
-              <StatusBadge
-                label={QUOTE_STATUS_LABELS[preferred.status]}
-                tone={
-                  preferred.status === 'accepted'
-                    ? 'success'
-                    : preferred.status === 'rejected'
-                      ? 'danger'
-                      : 'info'
-                }
-              />
+      {preferred && src && (
+        <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-100 px-4 py-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                {t('portal.quote.interactive')}
+              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <h2 className="font-semibold text-zinc-900">{preferred.title}</h2>
+                <StatusBadge
+                  label={QUOTE_STATUS_LABELS[preferred.status]}
+                  tone={
+                    preferred.status === 'accepted'
+                      ? 'success'
+                      : preferred.status === 'rejected'
+                        ? 'danger'
+                        : 'info'
+                  }
+                />
+              </div>
+              <p className="mt-1 text-sm font-medium text-codiva-primary">
+                {formatCurrency(preferred.total_amount, preferred.currency)}
+              </p>
             </div>
-            <p className="mt-1 text-sm font-medium text-codiva-primary">
-              {formatCurrency(preferred.total_amount, preferred.currency)}
-            </p>
+            <a
+              href={src}
+              target="_blank"
+              rel="noreferrer"
+              className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
+            >
+              {t('portal.quote.fullscreen')}
+            </a>
           </div>
-          <a
-            href={src}
-            target="_blank"
-            rel="noreferrer"
-            className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
-          >
-            {t('portal.quote.fullscreen')}
-          </a>
+          <iframe
+            title={preferred.title}
+            src={src}
+            className="h-[min(85vh,920px)] w-full bg-white"
+            sandbox="allow-same-origin allow-downloads"
+            referrerPolicy="no-referrer"
+          />
         </div>
-        <iframe
-          title={preferred.title}
-          src={src}
-          className="h-[min(85vh,920px)] w-full bg-white"
-          sandbox="allow-same-origin allow-downloads"
-          referrerPolicy="no-referrer"
-        />
-      </div>
+      )}
 
-      {preferred.status === 'sent' && (
+      {preferred?.status === 'sent' && (
         <div className="flex flex-wrap gap-3">
           <ToastForm success={t('portal.quote.accepted')} action={onAccept}>
             <input type="hidden" name="quoteId" value={preferred.id} />

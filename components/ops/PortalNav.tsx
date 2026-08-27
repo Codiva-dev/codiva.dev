@@ -47,7 +47,7 @@ export default function PortalNav({
   }
 
   const items = linkDefs(slug).filter((l) => {
-    if (l.key === 'quote') return visibility.showQuote;
+    if (l.key === 'quote') return visibility.showQuoteNav ?? visibility.showQuote;
     if (l.key === 'payments') return visibility.showCosts;
     return true;
   });

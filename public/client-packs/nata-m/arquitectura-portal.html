@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NATA&amp;M - Arquitectura (portal)</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root {
+      --ink: #12160f; --muted: #555; --line: #ccc; --accent: #2f4a28; --bg-soft: #f3f4ee;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto; padding: 16px 20px 28px;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink); font-size: 9.5pt; line-height: 1.35; max-width: 920px;
+    }
+    h1 { font-size: 16pt; color: var(--accent); margin: 0 0 4px; border-bottom: 2px solid var(--accent); padding-bottom: 4px; }
+    h2 { font-size: 11.5pt; color: var(--accent); margin: 14px 0 6px; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+    h3 { font-size: 10pt; margin: 10px 0 4px; }
+    p, li { margin: 3px 0; }
+    ol, ul { margin: 4px 0 8px; padding-left: 1.25em; }
+    .meta { color: var(--muted); font-size: 8.5pt; margin: 0 0 8px; }
+    .cover-box { background: var(--bg-soft); border: 1px solid var(--line); padding: 8px 10px; margin: 6px 0 10px; }
+    .cover-box ul { margin: 4px 0 0 16px; padding: 0; }
+    table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 8.5pt; }
+    th, td { border: 1px solid var(--line); padding: 3px 6px; text-align: left; vertical-align: top; }
+    th { background: var(--bg-soft); font-weight: 600; }
+    .note, .info { padding: 6px 8px; margin: 6px 0; font-size: 8.5pt; }
+    .note { background: #fff8e6; border-left: 3px solid #c9a227; }
+    .info { background: #eef2e8; border-left: 3px solid var(--accent); }
+    .mermaid { background: #fff; border: 1px solid var(--line); padding: 4px 6px; margin: 6px 0 8px; text-align: center; overflow: hidden; line-height: 1.1; }
+    .mermaid svg { max-width: 100% !important; height: auto !important; }
+    .kpi { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+    .kpi div { flex: 1 1 120px; border: 1px solid var(--line); padding: 6px; background: var(--bg-soft); text-align: center; }
+    .kpi strong { display: block; font-size: 11pt; color: var(--accent); }
+    .kpi span { font-size: 7.5pt; color: var(--muted); }
+    footer { margin-top: 14px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 7.5pt; color: var(--muted); }
+    @media print {
+      body { padding: 0; max-width: none; font-size: 9pt; }
+      a { color: inherit; text-decoration: none; }
+      .mermaid { break-inside: auto; }
+      table { break-inside: auto; }
+      tr { break-inside: avoid; }
+    }
+    @page { size: A4; margin: 10mm 9mm 12mm; }
+  </style>
+</head>
+<body>
+  <h1>NATA&amp;M - Arquitectura del sitio institucional</h1>
+  <p class="meta">
+    Tarjeta de presentación en esteroides · Fondo de capital privado en activos naturales<br />
+    Documento de arquitectura para revisión e impresión · Agosto 2026
+  </p>
+
+  <div class="cover-box">
+    <strong>Alcance del documento</strong>
+    <ul>
+      <li>Doble audiencia: propietario de la tierra e inversionista institucional</li>
+      <li>Posicionamiento: traductores entre naturaleza y capital</li>
+      <li>One-scroll de urgencia, paisajes, trazabilidad de presentación y motor de contenidos</li>
+      <li>Identidad (no hay brandbook), i18n ES/EN, analítica, correo @nata-m.com</li>
+      <li>Liga de conversación: Climate Asset Management, &amp;Green. Oficio de scroll: Dragonfly. Ninguno habla al propietario en el mismo sitio.</li>
+    </ul>
+  </div>
+
+  <div class="kpi">
+    <div><strong>15 semanas</strong><span>plan de construcción</span></div>
+    <div><strong>5 fases</strong><span>certificables en preview</span></div>
+    <div><strong>8 capítulos</strong><span>one-scroll de tesis</span></div>
+    <div><strong>ES / EN</strong><span>estructura lista para FR</span></div>
+  </div>
+
+  <h2 id="tesis">Tesis</h2>
+  <p>
+    NATA&amp;M da valor a la naturaleza considerando los activos naturales más importantes
+    y usando la distribución de capital para su interrelación. El sitio es la pieza con la
+    que se entra a levantar un fondo de capital privado: Banco Mundial, cooperación alemana
+    y francesa, fondos y multi family offices y, en el mismo recorrido, el propietario
+    de la tierra. Documento fuente de urgencia: <em>Crisis_activos_naturales</em>.
+  </p>
+  <div class="info">«Somos los traductores: naturaleza en lana, y viceversa.»</div>
+
+  <h2 id="audiencias">Audiencias</h2>
+  <pre class="mermaid">
+flowchart LR
+  Sitio["nata-m.com"] --> Propietario["Dueño de tierra"]
+  Sitio --> Inversor["Institucional / fondo"]
+  Propietario --> Destino["Control del destino"]
+  Inversor --> Traza["Trazabilidad viva"]
+  Sitio --> Vanguardia["Blog / newsletter"]
+  </pre>
+  <table>
+    <thead>
+      <tr><th>Lectura</th><th>Quién</th><th>Qué debe entender en 90 s</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Inversor</td>
+        <td>BM, GIZ/AFD, fondos, multi family office</td>
+        <td>Urgencia, ciclo de capital, traza, conversación de fondo.</td>
+      </tr>
+      <tr>
+        <td>Propietario</td>
+        <td>Dueño de territorio / comunidad</td>
+        <td>Que puede tomar control de su destino. Puerta humana, no comité.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="superficies">Superficies</h2>
+  <pre class="mermaid">
+flowchart TB
+  WWW["One-scroll Next.js"] --> CMS["CMS paisajes"]
+  WWW --> TrazaUI["Vista de traza"]
+  WWW --> Blog["Blog + búsqueda"]
+  Blog --> Cola["Cola de scrapers"]
+  WWW --> Leads["Formularios duales"]
+  WWW --> Analytics["Eventos por audiencia"]
+  WWW --> Mail["Correo @nata-m.com"]
+  </pre>
+  <table>
+    <thead>
+      <tr><th>Superficie</th><th>Para quién</th><th>Qué entrega</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Tesis (scroll)</td>
+        <td>Ambas audiencias</td>
+        <td>Urgencia, traductores, cuatro activos, ciclo, equipo, dos CTAs.</td>
+      </tr>
+      <tr>
+        <td>Paisajes</td>
+        <td>Inversor y territorio</td>
+        <td>Dossiers con nombre. Hidalgo como piloto. CMS de alta/edición.</td>
+      </tr>
+      <tr>
+        <td>Trazabilidad</td>
+        <td>Inversionista</td>
+        <td>Estado vivo del paisaje/activo. Capa de presentación, no motor de títulos.</td>
+      </tr>
+      <tr>
+        <td>Vanguardia</td>
+        <td>Público institucional</td>
+        <td>Blog, newsletter, búsqueda. Scrapers con aprobación humana.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 id="capitulos">Capítulos del scroll</h2>
+  <ol>
+    <li>Urgencia: la tierra hoy (Crisis_activos_naturales)</li>
+    <li>Traductores: naturaleza ↔ capital</li>
+    <li>Propietario: control del destino</li>
+    <li>Inversor: fondo, activos, distribución de capital</li>
+    <li>Paisajes: territorio nombrado</li>
+    <li>Traza: estado para quien pone el dinero</li>
+    <li>Vanguardia: lo que estudian esta semana</li>
+    <li>Equipo y conversación: dos puertas</li>
+  </ol>
+
+  <h2 id="fases">Plan de construcción</h2>
+  <p>Cada fase se certifica en preview. El corte a www puede adelantarse al cerrar las fases 0-2.</p>
+  <table>
+    <thead>
+      <tr><th>Fase</th><th>Semanas</th><th>Resultado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>0. Identidad y dirección</td><td>1-3</td><td>Brand web + storyboard</td></tr>
+      <tr><td>1. Tesis en esteroides</td><td>4-7</td><td>One-scroll dual en preview</td></tr>
+      <tr><td>2. Territorio y traza</td><td>8-10</td><td>Paisajes CMS + vista de traza</td></tr>
+      <tr><td>3. Vanguardia pública</td><td>11-13</td><td>Blog, búsqueda, scrapers</td></tr>
+      <tr><td>4. Infra y go-live</td><td>14-15</td><td>ES/EN, analítica, correo, DNS</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="stack">Stack</h2>
+  <ul>
+    <li>Next.js App Router + Tailwind</li>
+    <li>Motion: Lenis + GSAP ScrollTrigger</li>
+    <li>i18n ES/EN; estructura para un tercer idioma</li>
+    <li>CMS de paisajes y posts</li>
+    <li>Jobs de scraper → cola de revisión → publicar</li>
+    <li>Analítica con eventos por audiencia</li>
+    <li>Vercel (sitio) · Google Workspace (correo) · nata-m.com</li>
+  </ul>
+
+  <h2 id="fuera">Fuera de este documento</h2>
+  <ul>
+    <li>Backoffice de NAC / cap table de comunidades</li>
+    <li>Publicación automática sin revisión humana</li>
+  </ul>
+  <p class="note">El detalle comercial vive en <strong>Cotización</strong>. Este documento cubre tesis, superficies y plan de construcción.</p>
+
+  <footer>Codiva · NATA&amp;M · Arquitectura · Agosto 2026</footer>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+  </script>
+</body>
+</html>

@@ -25,7 +25,7 @@ export const QUOTE_DOCUMENT_PATTERNS = {
   enterprise: {
     label: 'Enterprise / estratégica',
     description: 'Resumen ejecutivo, objetivos, diferenciador, múltiples secciones narrativas.',
-    examples: ['Grupo IAMSA', 'Inquilia', 'NIRC'],
+    examples: ['Grupo IAMSA', 'Inquilia', 'NIRC', 'NATA-M'],
   },
 } as const;
 
@@ -44,6 +44,7 @@ export const QUOTE_CATALOG: QuoteCatalogEntry[] = [
   { client: 'Maic/Gas', file: 'Cotizacion_REGIO_PWA.docx', serviceType: 'PWA', pattern: 'standard' },
   { client: 'FES', file: 'Cotizacion_eshop.pdf', serviceType: 'E-Shop', pattern: 'table' },
   { client: 'NATA-M', file: 'Cotizacion_AD_i18n.docx', serviceType: 'Admin/i18n', pattern: 'standard' },
+  { client: 'NATA-M', file: 'propuesta.html', serviceType: 'Web', pattern: 'enterprise' },
   { client: 'Pentesting', file: 'Cotizacion_pentesting.docx', serviceType: 'Pentesting', pattern: 'standard' },
   { client: 'Pepe Martínez', file: 'Cotizacion_Jose_Martinez_APP_Automata.docx', serviceType: 'App', pattern: 'standard' },
   { client: 'Pepe Martínez', file: 'Cotizacion_Jose_Martinez_SPA_Fusion.docx', serviceType: 'SPA', pattern: 'standard' },

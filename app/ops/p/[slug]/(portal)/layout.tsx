@@ -1,7 +1,7 @@
 import PortalNav from '@/components/ops/PortalNav';
 import StaffPortalPreviewBanner from '@/components/ops/StaffPortalPreviewBanner';
 import { requirePortalMemberWithAcceptances } from '@/lib/ops/auth';
-import { getPortalVisibility } from '@/lib/ops/portal-visibility';
+import { getPortalVisibility, withQuoteNav } from '@/lib/ops/portal-visibility';
 import Link from 'next/link';
 import { getT } from '@/i18n/locale';
 
@@ -14,8 +14,17 @@ export default async function PortalLayout({
 }) {
   const { slug } = await params;
   const access = await requirePortalMemberWithAcceptances(slug);
-  const { project, isStaffPreview } = access;
-  const visibility = getPortalVisibility(project);
+  const { project, isStaffPreview, supabase } = access;
+  const baseVisibility = getPortalVisibility(project);
+  const { count: quoteCanvasCount } = baseVisibility.showCosts
+    ? await supabase
+        .from('deliverables')
+        .select('id', { count: 'exact', head: true })
+        .eq('project_id', project.id)
+        .eq('visible_to_client', true)
+        .eq('kind', 'mvp')
+    : { count: 0 };
+  const visibility = withQuoteNav(baseVisibility, (quoteCanvasCount ?? 0) > 0);
   const t = await getT();
 
   return (

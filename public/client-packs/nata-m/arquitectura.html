@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NATA&amp;M · Arquitectura: tarjeta en esteroides</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <style>
+    :root { --ink:#12160f; --muted:#555; --line:#ccc; --accent:#2f4a28; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto; padding: 16px 20px 28px;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink); font-size: 9.5pt; line-height: 1.4; max-width: 920px;
+    }
+    h1 { font-size: 16pt; color: var(--accent); margin: 0 0 4px; border-bottom: 2px solid var(--accent); padding-bottom: 4px; }
+    h2 { font-size: 11.5pt; color: var(--accent); margin: 14px 0 6px; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+    p, li { margin: 3px 0; }
+    .meta { color: var(--muted); font-size: 8.5pt; margin: 0 0 8px; }
+    .note { padding: 6px 8px; margin: 6px 0; font-size: 8.5pt; background: #fff8e6; border-left: 3px solid #c9a227; }
+    .mermaid { background: #fff; border: 1px solid var(--line); padding: 8px; margin: 8px 0; }
+  </style>
+</head>
+<body>
+  <h1>NATA&amp;M · Arquitectura</h1>
+  <p class="meta">Post-junta 26 ago 2026 · Codiva · no visible al cliente</p>
+
+  <h2>1. Visión</h2>
+  <p>
+    Tarjeta de presentación en esteroides para un fondo de capital privado en activos naturales.
+    Doble audiencia: propietario de la tierra (control del destino, enfoque social) e inversionista
+    institucional (Banco Mundial, cooperación alemana/francesa, fondos, multi family office).
+    Posicionamiento: traductores entre naturaleza y capital. Urgencia de lo que se está acabando.
+    Documento fuente: Crisis_activos_naturales.
+  </p>
+
+  <h2>2. Audiencias y lecturas</h2>
+  <pre class="mermaid">
+flowchart LR
+  Visitante --> Tesis["One-scroll de urgencia"]
+  Tesis --> Propietario["Dueño de tierra"]
+  Tesis --> Inversor["Institucional / fondo"]
+  Propietario --> ConversaP["Conversación humana"]
+  Inversor --> Traza["Trazabilidad viva"]
+  Inversor --> ConversaI["Comité / data"]
+  Tesis --> Vanguardia["Blog / newsletter / scrapers"]
+  </pre>
+
+  <h2>3. Qué resuelven (contenido)</h2>
+  <p>
+    Darle valor a la naturaleza considerando los activos naturales más importantes,
+    y usar la distribución de capital para la interrelación de esos activos.
+    El sitio explica el ciclo; no opera la emisión.
+  </p>
+  <pre class="mermaid">
+flowchart TB
+  Crisis["Crisis de activos naturales"] --> Traductor["NATA&amp;M traduce"]
+  Traductor --> Lana["Capital: fondo / ESLAT / NAC"]
+  Traductor --> Tierra["Territorio: propietario toma control"]
+  Lana --> Traza["Trazabilidad para el inversionista"]
+  Tierra --> Destino["Destino del paisaje"]
+  </pre>
+
+  <h2>4. Superficies</h2>
+  <pre class="mermaid">
+flowchart TB
+  WWW["nata-m.com · Next.js"] --> Scroll["Tesis dual + motion"]
+  WWW --> CMS["CMS paisajes"]
+  WWW --> TrazaUI["Vista de traza"]
+  WWW --> Blog["Blog + búsqueda"]
+  Blog --> Cola["Cola de scrapers"]
+  Cola --> Fuentes["Fuentes que NATA define"]
+  WWW --> Leads["Formularios duales"]
+  WWW --> Analytics["Eventos por audiencia"]
+  WWW --> Mail["Google Workspace @nata-m.com"]
+  WWW --> Vercel["Vercel + DNS"]
+  </pre>
+
+  <h2>5. Capítulos del scroll</h2>
+  <ol>
+    <li>Urgencia: la tierra hoy (Crisis_activos_naturales)</li>
+    <li>Traductores: naturaleza ↔ capital</li>
+    <li>Propietario: control del destino (social)</li>
+    <li>Inversor: fondo, ciclo de activos, distribución de capital</li>
+    <li>Paisajes: territorio nombrado</li>
+    <li>Traza: estado vivo para quien pone el dinero</li>
+    <li>Vanguardia: lo que estudian esta semana</li>
+    <li>Equipo y conversación: dos puertas (tierra / capital)</li>
+  </ol>
+
+  <h2>6. Stack</h2>
+  <ul>
+    <li>Next.js App Router + Tailwind</li>
+    <li>Motion: Lenis + GSAP ScrollTrigger</li>
+    <li>i18n ES/EN; estructura para FR</li>
+    <li>CMS paisajes + posts</li>
+    <li>Ingesta: jobs de scraper → cola de revisión → publicar</li>
+    <li>Analítica: GA4 y/o Plausible, eventos por audiencia</li>
+    <li>Hosting sitio: Vercel. Correo: Google Workspace. Dominio: nata-m.com</li>
+  </ul>
+
+  <h2>7. Fuera de alcance</h2>
+  <ul>
+    <li>Backoffice de NAC / cap table</li>
+    <li>Publicación automática sin revisión humana</li>
+    <li>FR completo (opcional)</li>
+    <li>Sala gated (opcional)</li>
+  </ul>
+
+  <div class="note">Go-live puede adelantarse al cerrar fases 0-2. El detalle comercial no va en este documento.</div>
+  <script>
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+  </script>
+</body>
+</html>

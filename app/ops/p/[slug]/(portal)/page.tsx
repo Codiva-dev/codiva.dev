@@ -4,7 +4,7 @@ import StatusBadge, { projectTone } from '@/components/ops/StatusBadge';
 import { requireProjectMember } from '@/lib/ops/auth';
 import { getActiveChargeNotices } from '@/lib/ops/charges';
 import { labelsFor } from '@/lib/ops/labels';
-import { filterClientCanvases, getPortalVisibility } from '@/lib/ops/portal-visibility';
+import { filterProposalCanvases, filterQuoteCanvases, getPortalVisibility, withQuoteNav } from '@/lib/ops/portal-visibility';
 import { getT } from '@/i18n/locale';
 import type { Translator } from '@/i18n/translate';
 
@@ -51,12 +51,9 @@ function quoteCardSubtitle(
 function proposalCardCopy(t: Translator, kinds: string[]) {
   const set = new Set(kinds);
   const hasArch = set.has('architecture');
-  const hasMvp = set.has('mvp');
   const hasProposal = set.has('proposal') || set.has('other');
   const empty = t('portal.home.pendingPublish');
-  if (hasArch && hasMvp) return { title: t('portal.home.architectureMvp'), empty };
   if (hasArch) return { title: t('portal.home.architecture'), empty };
-  if (hasMvp) return { title: t('portal.home.mvp'), empty };
   if (hasProposal) return { title: t('portal.home.identity'), empty };
   return { title: t('portal.home.proposal'), empty };
 }
@@ -136,9 +133,11 @@ export default async function PortalHomePage({
   const ndaDocs = [...(docs ?? []), ...(orgNda ?? [])];
   const hasNda = ndaDocs.length > 0;
   const signedNda = ndaDocs.some((d) => d.type === 'nda' && d.signed);
-  const visibleCanvases = filterClientCanvases(canvases ?? [], visibility);
+  const proposalCanvases = filterProposalCanvases(canvases ?? []);
+  const quoteCanvases = filterQuoteCanvases(canvases ?? [], visibility);
+  const navVisibility = withQuoteNav(visibility, quoteCanvases.length > 0);
   const renewalNotices = getActiveChargeNotices(charges ?? []);
-  const proposalCopy = proposalCardCopy(t, visibleCanvases.map((c) => c.kind));
+  const proposalCopy = proposalCardCopy(t, proposalCanvases.map((c) => c.kind));
 
   return (
     <div className="space-y-6">
@@ -175,9 +174,9 @@ export default async function PortalHomePage({
 
       <section
         className={`grid gap-3 sm:grid-cols-2 ${
-          visibility.showQuote && visibility.showCosts
+          navVisibility.showQuoteNav && visibility.showCosts
             ? 'lg:grid-cols-3 xl:grid-cols-5'
-            : visibility.showQuote || visibility.showCosts
+            : navVisibility.showQuoteNav || visibility.showCosts
               ? 'lg:grid-cols-4'
               : 'lg:grid-cols-3'
         }`}
@@ -189,22 +188,26 @@ export default async function PortalHomePage({
           <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{t('portal.home.proposal')}</p>
           <p className="mt-2 font-semibold text-zinc-900">{proposalCopy.title}</p>
           <p className="mt-1 text-sm text-zinc-600">
-            {visibleCanvases.length
-              ? t('portal.home.materials', { count: visibleCanvases.length })
+            {proposalCanvases.length
+              ? t('portal.home.materials', { count: proposalCanvases.length })
               : proposalCopy.empty}
           </p>
         </Link>
-        {visibility.showQuote && (
+        {navVisibility.showQuoteNav && (
           <Link
             href={`/p/${slug}/cotizacion`}
             className="rounded-2xl border border-zinc-200 bg-white p-5 transition hover:border-codiva-primary/40"
           >
             <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{t('portal.home.quote')}</p>
             <p className="mt-2 font-semibold text-zinc-900">
-              {quote ? formatCurrency(quote.total_amount, quote.currency) : t('portal.home.noQuote')}
+              {quote
+                ? formatCurrency(quote.total_amount, quote.currency)
+                : t('portal.home.quoteCommercial')}
             </p>
             <p className="mt-1 text-sm text-zinc-600">
-              {quoteCardSubtitle(t, formatDate, QUOTE_STATUS_LABELS, quote)}
+              {quote
+                ? quoteCardSubtitle(t, formatDate, QUOTE_STATUS_LABELS, quote)
+                : t('portal.home.quoteCanvasHint')}
             </p>
           </Link>
         )}

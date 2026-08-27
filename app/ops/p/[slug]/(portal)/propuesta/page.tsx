@@ -4,7 +4,7 @@ import StatusBadge from '@/components/ops/StatusBadge';
 import { requireProjectMember } from '@/lib/ops/auth';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
-import { filterClientCanvases, getPortalVisibility } from '@/lib/ops/portal-visibility';
+import { filterProposalCanvases, getPortalVisibility } from '@/lib/ops/portal-visibility';
 import { portalCanvasPath } from '@/lib/ops/architecture';
 
 export default async function PortalProposalPage({
@@ -24,7 +24,7 @@ export default async function PortalProposalPage({
       .select('id, title, description, kind, url, file_url, sort_order')
       .eq('project_id', project.id)
       .eq('visible_to_client', true)
-      .in('kind', ['architecture', 'mvp', 'proposal', 'other'])
+      .in('kind', ['architecture', 'proposal', 'other'])
       .order('sort_order', { ascending: true }),
     visibility.showQuote
       ? supabase
@@ -49,7 +49,7 @@ export default async function PortalProposalPage({
   ]);
 
   const quote = quotes?.[0];
-  const visibleCanvases = filterClientCanvases(canvases ?? [], visibility);
+  const visibleCanvases = filterProposalCanvases(canvases ?? []);
   const showValidity = Boolean(quote?.valid_until && quote.status !== 'accepted');
 
   return (
