@@ -39,8 +39,8 @@ export default async function PortalQuotePage({
     redirect(`/p/${slug}`);
   }
 
-  const { data: quotes } = visibility.showQuote
-    ? await supabase
+  const { data: quotes } = await (visibility.showQuote
+    ? supabase
         .from('quotes')
         .select('id, title, status, total_amount, currency, version, visible_to_client')
         .eq('project_id', project.id)
@@ -57,7 +57,7 @@ export default async function PortalQuotePage({
           version: number;
           visible_to_client: boolean;
         }[],
-      });
+      }));
 
   const list = quotes ?? [];
   const preferred =
