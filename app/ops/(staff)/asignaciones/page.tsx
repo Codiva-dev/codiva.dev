@@ -54,6 +54,7 @@ export default async function AsignacionesPage({
     { data: leadRows },
     { data: quoteRows },
     { data: ticketRows },
+    { data: internalRows },
   ] = await Promise.all([
     supabase
       .from('work_assignments')
@@ -78,6 +79,7 @@ export default async function AsignacionesPage({
     supabase.from('leads').select('id, name, company, status').neq('status', 'discarded').order('created_at', { ascending: false }).limit(80),
     supabase.from('quotes').select('id, title, status, project_id, projects(name, slug)').order('created_at', { ascending: false }).limit(80),
     supabase.from('tickets').select('id, title, status').order('created_at', { ascending: false }).limit(80),
+    supabase.from('work_internal_processes').select('id, key, title, href, sort_order').order('sort_order'),
   ]);
 
   if (assignmentsRes.error) throw await throwDb(assignmentsRes.error);
@@ -110,6 +112,12 @@ export default async function AsignacionesPage({
     processMeta.set(`ticket:${row.id}`, {
       label: row.title,
       href: `/tickets/${row.id}`,
+    });
+  }
+  for (const row of internalRows ?? []) {
+    processMeta.set(`internal:${row.id}`, {
+      label: row.title,
+      href: row.href || '/asignaciones',
     });
   }
 
@@ -193,6 +201,11 @@ export default async function AsignacionesPage({
     ...(ticketRows ?? []).map((row) => ({
       id: row.id,
       kind: 'ticket' as const,
+      label: row.title,
+    })),
+    ...(internalRows ?? []).map((row) => ({
+      id: row.id,
+      kind: 'internal' as const,
       label: row.title,
     })),
   ];

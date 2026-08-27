@@ -96,6 +96,7 @@ describe('work-board process links', () => {
   it('builds ops hrefs', () => {
     expect(processHref('project', 'abc', { projectSlug: 'nirc' })).toBe('/projects/nirc');
     expect(processHref('lead', 'lead-1')).toBe('/leads/lead-1');
+    expect(processHref('internal', 'x', { internalHref: '/team' })).toBe('/team');
     expect(processHref('none', 'x')).toBeNull();
   });
 

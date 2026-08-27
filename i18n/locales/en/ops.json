@@ -574,6 +574,7 @@
         "done": "Done"
       },
       "workStream": {
+        "internal": "Internal structure",
         "commercial": "Commercial",
         "delivery": "Delivery",
         "production": "Production",
@@ -582,6 +583,7 @@
       },
       "workProcess": {
         "none": "No link",
+        "internal": "Internal structure",
         "lead": "Lead",
         "project": "Project",
         "quote": "Quote",
@@ -1835,7 +1837,7 @@
     },
     "asignaciones": {
       "title": "Assignments",
-      "description": "Internal board wired to Codiva’s process: discovery, build, review, and time spent in each column.",
+      "description": "Internal board with two process families: Codiva’s own structure and client projects. Columns from discovery to done, with time spent in each.",
       "create": "New assignment",
       "creating": "Creating…",
       "created": "Assignment created",

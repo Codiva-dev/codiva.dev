@@ -1,4 +1,4 @@
-export const WORK_STREAMS = ['commercial', 'delivery', 'production', 'evolution', 'people'] as const;
+export const WORK_STREAMS = ['internal', 'commercial', 'delivery', 'production', 'evolution', 'people'] as const;
 export const WORK_STATUSES = [
   'backlog',
   'discovery',
@@ -7,7 +7,7 @@ export const WORK_STATUSES = [
   'blocked',
   'done',
 ] as const;
-export const WORK_PROCESS_KINDS = ['none', 'lead', 'project', 'quote', 'ticket'] as const;
+export const WORK_PROCESS_KINDS = ['none', 'internal', 'project', 'lead', 'quote', 'ticket'] as const;
 
 export type WorkStream = (typeof WORK_STREAMS)[number];
 export type WorkStatus = (typeof WORK_STATUSES)[number];
@@ -23,6 +23,7 @@ export const WORK_BOARD_COLUMNS: readonly WorkStatus[] = [
 ];
 
 export const WORK_STREAM_COLOR: Record<WorkStream, string> = {
+  internal: 'emerald',
   commercial: 'sky',
   delivery: 'teal',
   production: 'violet',
@@ -39,6 +40,12 @@ export const WORK_COLOR_TONE: Record<
     bar: 'bg-teal-700',
     swatch: 'bg-teal-600',
     ring: 'ring-teal-400',
+  },
+  emerald: {
+    card: 'border-emerald-200 bg-emerald-50',
+    bar: 'bg-emerald-600',
+    swatch: 'bg-emerald-500',
+    ring: 'ring-emerald-400',
   },
   sky: {
     card: 'border-sky-200 bg-sky-50',
@@ -299,9 +306,11 @@ export function filterMentionableStaff(
 export function processHref(
   kind: WorkProcessKind,
   id: string | null,
-  extras?: { projectSlug?: string | null }
+  extras?: { projectSlug?: string | null; internalHref?: string | null }
 ) {
-  if (!id || kind === 'none') return null;
+  if (kind === 'none') return extras?.internalHref ?? null;
+  if (kind === 'internal') return extras?.internalHref || null;
+  if (!id) return null;
   if (kind === 'lead') return `/leads/${id}`;
   if (kind === 'project') return extras?.projectSlug ? `/projects/${extras.projectSlug}` : `/projects/${id}`;
   if (kind === 'quote') return `/quotes/${id}`;

@@ -574,6 +574,7 @@
         "done": "Hecho"
       },
       "workStream": {
+        "internal": "Estructura interna",
         "commercial": "Comercial",
         "delivery": "Entrega",
         "production": "Producción",
@@ -582,6 +583,7 @@
       },
       "workProcess": {
         "none": "Sin vínculo",
+        "internal": "Estructura interna",
         "lead": "Lead",
         "project": "Proyecto",
         "quote": "Cotización",
@@ -1831,7 +1833,7 @@
     },
     "asignaciones": {
       "title": "Asignaciones",
-      "description": "Tablero interno conectado al proceso Codiva: descubrimiento, desarrollo, revisión y tiempos entre columnas.",
+      "description": "Tablero interno con dos familias de proceso: estructura Codiva y proyectos de cliente. Columnas de descubrimiento a hecho, con tiempos entre cada una.",
       "create": "Nueva asignación",
       "creating": "Creando…",
       "created": "Asignación creada",
