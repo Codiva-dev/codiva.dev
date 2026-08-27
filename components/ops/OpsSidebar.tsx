@@ -14,6 +14,7 @@ import {
   UserCog,
   Building2,
   Gauge,
+  Kanban,
   PanelLeftClose,
 } from 'lucide-react';
 import { canAny, type Capability, type PermissionSubject } from '@/lib/ops/permissions';
@@ -31,6 +32,7 @@ const NAV: {
   { href: '/inbox', labelKey: 'ops.nav.inbox', icon: Inbox, capability: 'inbox' },
   { href: '/projects', labelKey: 'ops.nav.projects', icon: FolderKanban },
   { href: '/workload', labelKey: 'ops.nav.workload', icon: Gauge, capability: 'workload' },
+  { href: '/asignaciones', labelKey: 'ops.nav.asignaciones', icon: Kanban, capability: 'assignments' },
   { href: '/organizations', labelKey: 'ops.nav.organizations', icon: Building2, capability: 'organizations' },
   { href: '/users', labelKey: 'ops.nav.users', icon: ContactRound, capability: 'portal_users' },
   { href: '/tickets', labelKey: 'ops.nav.tickets', icon: Ticket, capability: 'tickets' },

@@ -1,5 +1,5 @@
 import { cn } from '@/lib/cn';
-import type { ComponentPropsWithoutRef } from 'react';
+import type { ComponentPropsWithoutRef, ComponentPropsWithRef } from 'react';
 
 const sizes = {
   sm: 'px-3 py-2 text-sm',
@@ -23,9 +23,10 @@ export function Textarea({
   className,
   rows = 4,
   size = 'md',
+  ref,
   ...props
-}: ComponentPropsWithoutRef<'textarea'> & { size?: ControlSize }) {
-  return <textarea rows={rows} className={cn(controlClass, sizes[size], className)} {...props} />;
+}: ComponentPropsWithRef<'textarea'> & { size?: ControlSize }) {
+  return <textarea ref={ref} rows={rows} className={cn(controlClass, sizes[size], className)} {...props} />;
 }
 
 export function Select({

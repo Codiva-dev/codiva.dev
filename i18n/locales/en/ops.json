@@ -444,6 +444,7 @@
       "inbox": "Inbox",
       "projects": "Projects",
       "workload": "Workload",
+      "asignaciones": "Assignments",
       "organizations": "Organizations",
       "users": "Users",
       "tickets": "Tickets",
@@ -563,6 +564,28 @@
         "read": "Read",
         "replied": "Replied",
         "archived": "Archived"
+      },
+      "workStatus": {
+        "backlog": "Backlog",
+        "discovery": "Discovery",
+        "build": "Build",
+        "review": "Review",
+        "blocked": "Blocked",
+        "done": "Done"
+      },
+      "workStream": {
+        "commercial": "Commercial",
+        "delivery": "Delivery",
+        "production": "Production",
+        "evolution": "Evolution",
+        "people": "People"
+      },
+      "workProcess": {
+        "none": "No link",
+        "lead": "Lead",
+        "project": "Project",
+        "quote": "Quote",
+        "ticket": "Ticket"
       }
     },
     "login": {
@@ -638,7 +661,9 @@
       "site_access": "Site access",
       "tickets": "Tickets",
       "dashboard_finance": "Dashboard finance",
-      "settings_profile": "View and update their profile"
+      "settings_profile": "View and update their profile",
+      "assignments": "View the assignments board",
+      "assignments_manage": "Create and reassign internal work"
     },
     "settings": {
       "title": "Settings",
@@ -1807,6 +1832,55 @@
       "previewTitle": "Preview · {{title}}",
       "version": "Version {{version}}",
       "draftBanner": "Draft - this is how the proposal will look before you send it."
+    },
+    "asignaciones": {
+      "title": "Assignments",
+      "description": "Internal board wired to Codiva’s process: discovery, build, review, and time spent in each column.",
+      "create": "New assignment",
+      "creating": "Creating…",
+      "created": "Assignment created",
+      "saved": "Assignment updated",
+      "commented": "Comment posted",
+      "subtaskAdded": "Subtask added",
+      "loadFailed": "Could not load assignments.",
+      "statusFailed": "Could not move the card.",
+      "notFound": "Assignment not found.",
+      "forbiddenEdit": "You can only edit assignments assigned to you.",
+      "titleRequired": "Title is required.",
+      "processRequired": "Choose the lead, project, quote, or ticket.",
+      "openSubtasks": "Close open subtasks before marking it done.",
+      "subtaskRequired": "Enter a subtask title.",
+      "commentRequired": "Write a comment.",
+      "allStreams": "All processes",
+      "allPeople": "Everyone",
+      "viewBoard": "Board",
+      "viewList": "List",
+      "emptyColumn": "Nothing here",
+      "emptyBoard": "No assignments yet. Create the first one for the team.",
+      "unassigned": "Unassigned",
+      "dwell": "In this column",
+      "subtaskCount": "{{done}} of {{total}}",
+      "addSubtask": "Add subtask",
+      "subtaskPlaceholder": "New subtask",
+      "titlePlaceholder": "What needs to happen",
+      "descriptionPlaceholder": "Context, done criteria, dependencies…",
+      "subtasksPlaceholder": "One subtask per line",
+      "assignee": "Assignee",
+      "stream": "Codiva process",
+      "due": "Due",
+      "process": "Link",
+      "processNone": "Not linked to a process",
+      "save": "Save",
+      "commentPlaceholder": "Write and use @ to mention the team",
+      "commentSubmit": "Comment",
+      "timeline": "Time between stages",
+      "currentStage": "Current",
+      "mentionHint": "Mention",
+      "noComments": "No comments yet.",
+      "noEvents": "No moves yet.",
+      "fromTo": "{{from}} → {{to}}",
+      "createdAt": "Created",
+      "progress": "Progress"
     }
   },
   "auth": {

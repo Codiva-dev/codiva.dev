@@ -22,7 +22,9 @@ export type Capability =
   | 'site_access'
   | 'tickets'
   | 'dashboard_finance'
-  | 'settings_profile';
+  | 'settings_profile'
+  | 'assignments'
+  | 'assignments_manage';
 
 export const ALL_CAPABILITIES = [
   'leads',
@@ -47,6 +49,8 @@ export const ALL_CAPABILITIES = [
   'tickets',
   'dashboard_finance',
   'settings_profile',
+  'assignments',
+  'assignments_manage',
 ] as const satisfies readonly Capability[];
 
 export const CAPABILITY_GROUPS = [
@@ -75,6 +79,8 @@ export const CAPABILITY_GROUPS = [
       'sprints_plan',
       'sprints_update_own',
       'workload',
+      'assignments',
+      'assignments_manage',
     ] as const satisfies readonly Capability[],
   },
   {
@@ -111,6 +117,8 @@ export const ROLE_CAPABILITY_LIST: Record<StaffRole, readonly Capability[]> = {
     'site_access',
     'tickets',
     'settings_profile',
+    'assignments',
+    'assignments_manage',
   ],
   dev: [
     'sprints_update_own',
@@ -120,6 +128,7 @@ export const ROLE_CAPABILITY_LIST: Record<StaffRole, readonly Capability[]> = {
     'site_access',
     'tickets',
     'settings_profile',
+    'assignments',
   ],
 };
 
@@ -222,6 +231,7 @@ export const NAV_CAPABILITY: Record<string, Capability | null> = {
   '/inbox': 'inbox',
   '/projects': null,
   '/workload': 'workload',
+  '/asignaciones': 'assignments',
   '/organizations': 'organizations',
   '/users': 'portal_users',
   '/tickets': 'tickets',

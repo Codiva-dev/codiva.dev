@@ -444,6 +444,7 @@
       "inbox": "Inbox",
       "projects": "Proyectos",
       "workload": "Carga",
+      "asignaciones": "Asignaciones",
       "organizations": "Organizaciones",
       "users": "Usuarios",
       "tickets": "Tickets",
@@ -563,6 +564,28 @@
         "read": "Leído",
         "replied": "Respondido",
         "archived": "Archivado"
+      },
+      "workStatus": {
+        "backlog": "Cola",
+        "discovery": "Descubrimiento",
+        "build": "Desarrollo",
+        "review": "Revisión",
+        "blocked": "Bloqueado",
+        "done": "Hecho"
+      },
+      "workStream": {
+        "commercial": "Comercial",
+        "delivery": "Entrega",
+        "production": "Producción",
+        "evolution": "Evolución",
+        "people": "Equipo"
+      },
+      "workProcess": {
+        "none": "Sin vínculo",
+        "lead": "Lead",
+        "project": "Proyecto",
+        "quote": "Cotización",
+        "ticket": "Ticket"
       }
     },
     "login": {
@@ -638,7 +661,9 @@
       "site_access": "Accesos al sitio",
       "tickets": "Tickets",
       "dashboard_finance": "Finanzas en el dashboard",
-      "settings_profile": "Ver y cambiar su perfil"
+      "settings_profile": "Ver y cambiar su perfil",
+      "assignments": "Ver tablero de asignaciones",
+      "assignments_manage": "Crear y reasignar trabajo interno"
     },
     "settings": {
       "title": "Configuración",
@@ -1803,6 +1828,55 @@
       "previewTitle": "Vista previa · {{title}}",
       "version": "Versión {{version}}",
       "draftBanner": "Borrador - así se verá la propuesta antes de enviarla."
+    },
+    "asignaciones": {
+      "title": "Asignaciones",
+      "description": "Tablero interno conectado al proceso Codiva: descubrimiento, desarrollo, revisión y tiempos entre columnas.",
+      "create": "Nueva asignación",
+      "creating": "Creando…",
+      "created": "Asignación creada",
+      "saved": "Asignación actualizada",
+      "commented": "Comentario publicado",
+      "subtaskAdded": "Subtarea agregada",
+      "loadFailed": "No se pudieron cargar las asignaciones.",
+      "statusFailed": "No se pudo mover la tarjeta.",
+      "notFound": "Asignación no encontrada.",
+      "forbiddenEdit": "Solo puedes editar las asignaciones que te tocaron.",
+      "titleRequired": "El título es obligatorio.",
+      "processRequired": "Elige el lead, proyecto, cotización o ticket.",
+      "openSubtasks": "Cierra las subtareas pendientes antes de marcarla como hecha.",
+      "subtaskRequired": "Escribe el título de la subtarea.",
+      "commentRequired": "Escribe un comentario.",
+      "allStreams": "Todos los procesos",
+      "allPeople": "Todas las personas",
+      "viewBoard": "Tablero",
+      "viewList": "Lista",
+      "emptyColumn": "Nada aquí",
+      "emptyBoard": "Todavía no hay asignaciones. Crea la primera para el equipo.",
+      "unassigned": "Sin asignar",
+      "dwell": "En esta columna",
+      "subtaskCount": "{{done}} de {{total}}",
+      "addSubtask": "Agregar subtarea",
+      "subtaskPlaceholder": "Nueva subtarea",
+      "titlePlaceholder": "Qué hay que hacer",
+      "descriptionPlaceholder": "Contexto, criterio de listo, dependencias…",
+      "subtasksPlaceholder": "Una subtarea por línea",
+      "assignee": "Asignado a",
+      "stream": "Proceso Codiva",
+      "due": "Fecha",
+      "process": "Vínculo",
+      "processNone": "Sin vínculo a un proceso",
+      "save": "Guardar",
+      "commentPlaceholder": "Escribe y usa @ para mencionar al equipo",
+      "commentSubmit": "Comentar",
+      "timeline": "Tiempo entre etapas",
+      "currentStage": "Actual",
+      "mentionHint": "Mencionar",
+      "noComments": "Todavía no hay comentarios.",
+      "noEvents": "Sin movimientos todavía.",
+      "fromTo": "{{from}} → {{to}}",
+      "createdAt": "Creada",
+      "progress": "Avance"
     }
   },
   "auth": {
