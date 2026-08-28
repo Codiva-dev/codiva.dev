@@ -1,6 +1,6 @@
 /**
  * Dispatch GitHub Actions promote workflow for a project release.
- * Token: GITHUB_RELEASES_TOKEN (preferred) or GITHUB_TOKEN — server-only.
+ * Token: GITHUB_RELEASES_TOKEN (preferred) or GITHUB_TOKEN - server-only.
  */
 
 export type PromoteDispatchInput = {

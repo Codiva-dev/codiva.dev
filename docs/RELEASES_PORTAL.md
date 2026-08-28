@@ -19,9 +19,9 @@
 
 ## Convención de ramas
 
-- `main` — integración; CI **no** publica Incoming. Si el job está verde, adelanta `preview/ops-release` y hace `workflow_dispatch` (el push con `GITHUB_TOKEN` no crea un run).
-- `preview/ops-release` — staging de QA (auto desde `main`, o **Preparar release** en Ops).
-- Otras `preview/*` o PRs — trabajo en curso.
+- `main` - integración; CI **no** publica Incoming. Si el job está verde, adelanta `preview/ops-release` y hace `workflow_dispatch` (el push con `GITHUB_TOKEN` no crea un run).
+- `preview/ops-release` - staging de QA (auto desde `main`, o **Preparar release** en Ops).
+- Otras `preview/*` o PRs - trabajo en curso.
 
 No desplegar working trees sucios a Vercel (deploys con `gitDirty` / actor `cursor-cli` se ocultan y se pueden limpiar).
 
@@ -49,8 +49,8 @@ No desplegar working trees sucios a Vercel (deploys con `gitDirty` / actor `curs
 
 ### 3. Repo del cliente (ej. NIRC)
 
-- `.github/workflows/ci.yml` — CI; preview si ≠ `main`; en `main` verde sincroniza `preview/ops-release`
-- `.github/workflows/promote-production.yml` — respaldo promote
+- `.github/workflows/ci.yml` - CI; preview si ≠ `main`; en `main` verde sincroniza `preview/ops-release`
+- `.github/workflows/promote-production.yml` - respaldo promote
 - Secrets: `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`
 
 ### 4. Vercel del sitio cliente

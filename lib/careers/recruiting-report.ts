@@ -173,7 +173,7 @@ export type RecruitingPipelinePack = {
 };
 
 function formatWhen(value: string | null | undefined): string {
-  if (!value) return '—';
+  if (!value) return '-';
   return new Date(value).toLocaleString('es-MX', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -181,7 +181,7 @@ function formatWhen(value: string | null | undefined): string {
 }
 
 function formatDuration(ms: number | null | undefined): string {
-  if (!ms || ms < 0) return '—';
+  if (!ms || ms < 0) return '-';
   const total = Math.round(ms / 1000);
   const m = Math.floor(total / 60);
   const s = total % 60;
@@ -1056,7 +1056,7 @@ export function renderRecruitingDossierHtml(d: RecruitingDossier): string {
       <table class="meta" role="presentation">
         <tr><th>Correo</th><td>${escapeHtml(d.email)}</td></tr>
         <tr><th>Vacante</th><td>${escapeHtml(d.vacancy)}</td></tr>
-        <tr><th>Oficio</th><td>${escapeHtml(d.craft || '—')}</td></tr>
+        <tr><th>Oficio</th><td>${escapeHtml(d.craft || '-')}</td></tr>
         <tr><th>Fase</th><td>${escapeHtml(d.stageLabel)}</td></tr>
         <tr><th>Postulación</th><td>${escapeHtml(applicationCopy(d))}</td></tr>
         <tr><th>Criterio</th><td>${escapeHtml(resultCopy(d))}${d.scoreCorrect != null ? ` · ${d.scoreCorrect}/${d.scoreTotal} pts` : ''} · intento ${d.attemptNumber}</td></tr>
@@ -1081,7 +1081,7 @@ export function renderRecruitingDossierHtml(d: RecruitingDossier): string {
 }
 
 function criterionCell(row: RecruitingPipelineRow): string {
-  const result = row.passed ? 'Aprobó' : row.passed === false ? 'No' : '—';
+  const result = row.passed ? 'Aprobó' : row.passed === false ? 'No' : '-';
   const pct = row.scorePct != null ? ` ${row.scorePct}%` : '';
   return `${result}${pct}`;
 }
@@ -1092,7 +1092,7 @@ function huntCell(row: RecruitingPipelineRow): string {
 }
 
 function statusCell(row: RecruitingPipelineRow): string {
-  const status = row.applicationStatusLabel || '—';
+  const status = row.applicationStatusLabel || '-';
   const interview = row.interviewLabel ? `<div class="sub">${escapeHtml(row.interviewLabel)}</div>` : '';
   return `${escapeHtml(status)}${interview}`;
 }
@@ -1123,7 +1123,7 @@ function pipelineTable(rows: RecruitingPipelineRow[], withStatus: boolean): stri
       const status = withStatus ? `<td>${statusCell(row)}</td>` : '';
       return `<tr>
         <td>${escapeHtml(row.fullName)}<div class="sub">${escapeHtml(row.email)}</div></td>
-        <td>${escapeHtml(row.craft || '—')}<div class="sub">${escapeHtml(row.vacancy)}</div></td>
+        <td>${escapeHtml(row.craft || '-')}<div class="sub">${escapeHtml(row.vacancy)}</div></td>
         ${status}
         <td>${criterionCell(row)}</td>
         <td>${huntCell(row)}</td>

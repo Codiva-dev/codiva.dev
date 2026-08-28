@@ -25,7 +25,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
 function formatDuration(ms: number | null | undefined, t: Translator) {
-  if (!ms || ms < 0) return '—';
+  if (!ms || ms < 0) return '-';
   const total = Math.round(ms / 1000);
   const m = Math.floor(total / 60);
   const s = total % 60;
@@ -233,8 +233,8 @@ export default async function AssessmentAttemptPage({
           </p>
           <p className="mt-1 text-xs text-zinc-500">
             {t('ops.attempt.pts', {
-              correct: attempt.score_correct ?? '—',
-              total: attempt.score_total ?? '—',
+              correct: attempt.score_correct ?? '-',
+              total: attempt.score_total ?? '-',
               n: attempt.attempt_number,
             })}
           </p>

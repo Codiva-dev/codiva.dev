@@ -104,7 +104,7 @@ export default function OpsQuoteLineItems({
             </div>
             <div className="flex items-center justify-between text-sm">
               <p className="text-zinc-500">
-                {t('ops.quoteLines.subtotal', { amount: itemTotal(item) != null ? itemTotal(item) : '—' })}
+                {t('ops.quoteLines.subtotal', { amount: itemTotal(item) != null ? itemTotal(item) : '-' })}
               </p>
               {items.length > 1 && (
                 <button

@@ -1750,7 +1750,7 @@
         "pending": "CI…",
         "failure": "CI failed",
         "error": "CI error",
-        "unknown": "CI —"
+        "unknown": "CI -"
       },
       "promoted": "Published",
       "historyProduction": "Production",
@@ -1913,7 +1913,7 @@
     },
     "pendientes": {
       "title": "Pending",
-      "description": "Work still on you, unread mentions, and — if you administer the board — subtask change requests.",
+      "description": "Work still on you, unread mentions, and - if you administer the board - subtask change requests.",
       "mine": "Your open assignments",
       "mineEmpty": "You have no open assignments.",
       "mentions": "Unread mentions",

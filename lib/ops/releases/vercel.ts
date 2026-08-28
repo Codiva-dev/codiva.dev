@@ -1,7 +1,7 @@
 /**
  * Vercel REST: list preview deployments and publish to production.
  * Previews rebuild with Production env; existing production deploys alias-switch.
- * Token: VERCEL_RELEASES_TOKEN (preferred) or VERCEL_TOKEN — server-only.
+ * Token: VERCEL_RELEASES_TOKEN (preferred) or VERCEL_TOKEN - server-only.
  */
 
 import {

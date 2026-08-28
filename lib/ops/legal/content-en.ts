@@ -85,7 +85,7 @@ export const TERMS_OF_USE_EN: LegalDocument = {
     {
       id: 'confidentiality',
       title: '9. Confidentiality and NDA',
-      body: 'Commercial, technical, and project information shared in the Portal is treated as confidential. When the Project includes an NDA, acceptance in the Portal complements — and does not replace — any separately signed agreement. The User agrees not to disclose Confidential Information outside the need-to-know circle of their organization.',
+      body: 'Commercial, technical, and project information shared in the Portal is treated as confidential. When the Project includes an NDA, acceptance in the Portal complements - and does not replace - any separately signed agreement. The User agrees not to disclose Confidential Information outside the need-to-know circle of their organization.',
     },
     {
       id: 'ip',
@@ -224,10 +224,10 @@ export const PRIVACY_NOTICE_EN: LegalDocument = {
       title: '5. Processors and subprocessors',
       lead: 'Relevant providers that may process data on Codiva’s behalf to operate the service:',
       items: [
-        'Vercel — hosting and edge.',
-        'Supabase — database, authentication, and storage.',
-        'Resend — transactional email.',
-        'Stripe — payments, when the project uses it.',
+        'Vercel - hosting and edge.',
+        'Supabase - database, authentication, and storage.',
+        'Resend - transactional email.',
+        'Stripe - payments, when the project uses it.',
       ],
       closing:
         'Each provider applies its own measures. Codiva remains the controller vis-à-vis the data subject for the purposes it determines.',
@@ -279,14 +279,14 @@ export const PRIVACY_NOTICE_EN: LegalDocument = {
       items: [
         `General and data-protection email: ${CONTACT_EMAIL}`,
         `Address: ${DOMICILIO}`,
-        'Brand: Codiva.dev — custom software and digital products.',
+        'Brand: Codiva.dev - custom software and digital products.',
       ],
     },
   ],
 };
 
 export const PORTAL_NDA_EN: LegalDocument = {
-  title: 'Non-Disclosure Agreement (NDA) — Project portal',
+  title: 'Non-Disclosure Agreement (NDA) - Project portal',
   versionCode: LEGAL_DOCS_VERSION,
   updated: UPDATED,
   intro: [

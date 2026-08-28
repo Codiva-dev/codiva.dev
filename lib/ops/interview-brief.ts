@@ -38,7 +38,7 @@ export type InterviewPartnerBrief = {
 };
 
 function formatTrailMs(ms: number): string {
-  if (ms < 0) return '—';
+  if (ms < 0) return '-';
   const total = Math.round(ms / 1000);
   const m = Math.floor(total / 60);
   const s = total % 60;

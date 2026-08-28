@@ -147,7 +147,7 @@ export default function WorkSubtaskEditor({
           <p className="text-xs font-medium text-amber-900">
             {t('ops.asignaciones.requestPending', { name: request.requested_by_name })}
           </p>
-          <p className="mt-1 whitespace-pre-wrap break-words text-xs text-zinc-700">{request.payload || '—'}</p>
+          <p className="mt-1 whitespace-pre-wrap break-words text-xs text-zinc-700">{request.payload || '-'}</p>
           {canManage ? (
             <div className="mt-2 flex flex-wrap gap-1">
               <Button type="button" size="xs" disabled={saving} onClick={() => void applyRequest()}>

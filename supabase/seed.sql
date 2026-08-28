@@ -112,10 +112,10 @@ INSERT INTO milestones (id, project_id, title, description, status, sort_order, 
   ('f0000001-0001-4000-8000-00000000000d', 'b0000001-0001-4000-8000-00000000000b', 'Módulos e integraciones', 'Diseño de pool y convocatoria, kiosk, Cincel, IDSE, Stripe, contabilidad y privacidad.', 'completed', 4, '2026-08-17', true),
   ('f0000001-0001-4000-8000-00000000000e', 'b0000001-0001-4000-8000-00000000000b', 'Arquitectura certificada', 'Paquete de arquitectura firmado el 17 ago 2026. Listo para implementación.', 'completed', 5, '2026-08-17', true),
   ('f0000001-0001-4000-8000-00000000000f', 'b0000001-0001-4000-8000-00000000000b', 'Arranque de implementación', 'Semana 1 cerrada (24 ago). Entorno de trabajo listo; sandboxes Cincel y Stripe; sitio público en www. Pendiente de NIRC/proveedor: plantilla de adhesión, certificados de registro patronal y sandbox IDSE PRO.', 'completed', 6, '2026-08-24', true),
-  ('f0000001-0001-4000-8000-000000000010', 'b0000001-0001-4000-8000-00000000000b', 'Plataforma base', 'Semanas 2-5. Accesos, panel, expediente, carga masiva, consentimientos, navegación por procesos y colas — núcleo ya construido. Identidad visual oficial y sitio público en www (21 ago). Queda demo de fundaciones para cerrar el hito.', 'in_progress', 7, '2026-09-21', true),
-  ('f0000001-0001-4000-8000-000000000011', 'b0000001-0001-4000-8000-00000000000b', 'Bolsa y convocatoria', 'Semanas 6-9. Labores, vacantes públicas, convocatoria, ofertas por orden de llegada, lista de espera y reemplazos — ya construido. Queda el recorrido en staging para cerrar el hito.', 'in_progress', 8, '2026-10-19', true),
+  ('f0000001-0001-4000-8000-000000000010', 'b0000001-0001-4000-8000-00000000000b', 'Plataforma base', 'Semanas 2-5. Accesos, panel, expediente, carga masiva, consentimientos, navegación por procesos y colas - núcleo ya construido. Identidad visual oficial y sitio público en www (21 ago). Queda demo de fundaciones para cerrar el hito.', 'in_progress', 7, '2026-09-21', true),
+  ('f0000001-0001-4000-8000-000000000011', 'b0000001-0001-4000-8000-00000000000b', 'Bolsa y convocatoria', 'Semanas 6-9. Labores, vacantes públicas, convocatoria, ofertas por orden de llegada, lista de espera y reemplazos - ya construido. Queda el recorrido en staging para cerrar el hito.', 'in_progress', 8, '2026-10-19', true),
   ('f0000001-0001-4000-8000-000000000012', 'b0000001-0001-4000-8000-00000000000b', 'Entrada en sitio', 'Semanas 10-13. Tableta kiosk (geocerca + cámara QR), INE, firma e IMSS en simulación; nadie pasa a trabajando sin firma y alta aceptada. Monitor de jornada y línea de tiempo en el panel. Pendiente certificar con proveedores (sandbox IDSE).', 'in_progress', 9, '2026-11-16', true),
-  ('f0000001-0001-4000-8000-000000000013', 'b0000001-0001-4000-8000-00000000000b', 'Salida y pago', 'Semanas 14-16. Check-out, baja IMSS y pago en paralelo, asientos y privacidad — en simulación. Consola de trabajos en el panel. Pendiente: cuentas de pago reales y política si no hay jornada válida.', 'in_progress', 10, '2026-12-07', true),
+  ('f0000001-0001-4000-8000-000000000013', 'b0000001-0001-4000-8000-00000000000b', 'Salida y pago', 'Semanas 14-16. Check-out, baja IMSS y pago en paralelo, asientos y privacidad - en simulación. Consola de trabajos en el panel. Pendiente: cuentas de pago reales y política si no hay jornada válida.', 'in_progress', 10, '2026-12-07', true),
   ('f0000001-0001-4000-8000-000000000014', 'b0000001-0001-4000-8000-00000000000b', 'Pruebas y go-live', 'Semanas 17-18. Recorrido punta a punta, capacitación al equipo NIRC y arranque asistido en producción.', 'pending', 11, '2026-12-21', true)
 ON CONFLICT (id) DO UPDATE SET
   title = EXCLUDED.title,
@@ -129,31 +129,31 @@ INSERT INTO milestone_updates (id, milestone_id, body, created_at) VALUES
   (
     'f1000001-0001-4000-8000-000000000001',
     'f0000001-0001-4000-8000-00000000000b',
-    E'17 ago 2026 — Operación en sitio definida.\n• Firma: adhesión solo del trabajador en tableta (idle → QR → firma → idle); IMSS en paralelo.\n• Baja IMSS al check-out.\n• Sandboxes Cincel y Stripe listos; IDSE pendiente de proveedor.',
+    E'17 ago 2026 - Operación en sitio definida.\n• Firma: adhesión solo del trabajador en tableta (idle → QR → firma → idle); IMSS en paralelo.\n• Baja IMSS al check-out.\n• Sandboxes Cincel y Stripe listos; IDSE pendiente de proveedor.',
     '2026-08-17T18:00:00Z'
   ),
   (
     'f1000001-0001-4000-8000-000000000002',
     'f0000001-0001-4000-8000-00000000000e',
-    E'17 ago 2026 — Arquitectura certificada.\n• Decisiones de entrada, salida, pagos y cumplimiento cerradas.\n• Check-out: baja IMSS y pago Stripe en paralelo; SPEI solo como respaldo.\n• Siguiente fase: implementación del MVP.\n• Pendiente operativo: sandbox IDSE PRO; política de abandono a confirmar con NIRC.',
+    E'17 ago 2026 - Arquitectura certificada.\n• Decisiones de entrada, salida, pagos y cumplimiento cerradas.\n• Check-out: baja IMSS y pago Stripe en paralelo; SPEI solo como respaldo.\n• Siguiente fase: implementación del MVP.\n• Pendiente operativo: sandbox IDSE PRO; política de abandono a confirmar con NIRC.',
     '2026-08-18T03:00:00Z'
   ),
   (
     'f1000001-0001-4000-8000-000000000003',
     'f0000001-0001-4000-8000-00000000000f',
-    E'18 ago 2026 — Arranque de implementación.\n• Arquitectura certificada; el plan de 18 semanas ya está visible en el portal.\n• Semana 1: preparación del entorno, accesos de prueba y plantilla de adhesión.\n• Pendiente de NIRC: acceso de prueba del proveedor IMSS y política de abandono.',
+    E'18 ago 2026 - Arranque de implementación.\n• Arquitectura certificada; el plan de 18 semanas ya está visible en el portal.\n• Semana 1: preparación del entorno, accesos de prueba y plantilla de adhesión.\n• Pendiente de NIRC: acceso de prueba del proveedor IMSS y política de abandono.',
     '2026-08-18T04:00:00Z'
   ),
   (
     'f1000001-0001-4000-8000-000000000004',
     'f0000001-0001-4000-8000-00000000000f',
-    E'19 ago 2026 — Avance de construcción.\n• Arquitectura cerrada. Demo guiada: backoffice, kiosk y bolsa pública (sin app de empleado).\n• Falta cámara QR, código en imagen y sandbox IDSE.\n• Este corte no certifica IMSS, firma ni pagos.',
+    E'19 ago 2026 - Avance de construcción.\n• Arquitectura cerrada. Demo guiada: backoffice, kiosk y bolsa pública (sin app de empleado).\n• Falta cámara QR, código en imagen y sandbox IDSE.\n• Este corte no certifica IMSS, firma ni pagos.',
     '2026-08-19T21:00:00Z'
   ),
   (
     'f1000001-0001-4000-8000-000000000006',
     'f0000001-0001-4000-8000-00000000000f',
-    E'24 ago 2026 — Cierre de semana 1.\n• Entorno cloud listo; sitio público en www y ambiente de pruebas colgados.\n• Producto en demo guiada con marca oficial (panel, tableta y bolsa).\n• Cámara QR, monitor de jornada, línea de tiempo y consola de operaciones ya están en el software (IMSS/firma/pagos en simulación).\n• Pendiente para cerrar hitos: demo de fundaciones, DNS de la aplicación, sandbox IDSE PRO y plantilla de adhesión.',
+    E'24 ago 2026 - Cierre de semana 1.\n• Entorno cloud listo; sitio público en www y ambiente de pruebas colgados.\n• Producto en demo guiada con marca oficial (panel, tableta y bolsa).\n• Cámara QR, monitor de jornada, línea de tiempo y consola de operaciones ya están en el software (IMSS/firma/pagos en simulación).\n• Pendiente para cerrar hitos: demo de fundaciones, DNS de la aplicación, sandbox IDSE PRO y plantilla de adhesión.',
     '2026-08-24T18:00:00Z'
   )
 ON CONFLICT (id) DO UPDATE SET
@@ -167,7 +167,7 @@ INSERT INTO deliverables (
     '92000001-0001-4000-8000-000000000001',
     'b0000001-0001-4000-8000-00000000000b',
     'Arquitectura',
-    'Arquitectura certificada + estado de construcción (24 ago 2026) en el mismo canvas. Tres superficies; P0–P2 de UI hechos.',
+    'Arquitectura certificada + estado de construcción (24 ago 2026) en el mismo canvas. Tres superficies; P0-P2 de UI hechos.',
     '/client-packs/nirc/arquitectura-portal.html',
     'architecture', 1, true
   ),

@@ -42,8 +42,8 @@ Seeds y migraciones deben apuntar a esas rutas. No dejes SQL one-shot en `docs/`
 
 ## Docs
 
-- [`docs/HOSTS.md`](./docs/HOSTS.md) — DNS, env, Auth, smoke test
-- [`docs/OPS_SECURITY.md`](./docs/OPS_SECURITY.md) — storage, retención, crons
-- [`docs/BRAND.md`](./docs/BRAND.md) — marca
-- [`docs/RELEASES_PORTAL.md`](./docs/RELEASES_PORTAL.md) — CI → preview → promote
-- [`docs/workflows/`](./docs/workflows/) — plantillas GitHub Actions para repos de cliente
+- [`docs/HOSTS.md`](./docs/HOSTS.md) - DNS, env, Auth, smoke test
+- [`docs/OPS_SECURITY.md`](./docs/OPS_SECURITY.md) - storage, retención, crons
+- [`docs/BRAND.md`](./docs/BRAND.md) - marca
+- [`docs/RELEASES_PORTAL.md`](./docs/RELEASES_PORTAL.md) - CI → preview → promote
+- [`docs/workflows/`](./docs/workflows/) - plantillas GitHub Actions para repos de cliente

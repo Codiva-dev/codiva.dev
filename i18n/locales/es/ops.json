@@ -1750,7 +1750,7 @@
         "pending": "CI…",
         "failure": "CI falló",
         "error": "CI error",
-        "unknown": "CI —"
+        "unknown": "CI -"
       },
       "promoted": "Publicado",
       "historyProduction": "Producción",

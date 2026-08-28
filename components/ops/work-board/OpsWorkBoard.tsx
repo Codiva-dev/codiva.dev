@@ -796,7 +796,7 @@ function DetailModal({
           </ToastForm>
         ) : (
           <div className="space-y-3 text-sm text-zinc-700">
-            <p className="break-words">{assignment.description || '—'}</p>
+            <p className="break-words">{assignment.description || '-'}</p>
             {assignment.process_href ? (
               <Link href={assignment.process_href} className="font-medium text-codiva-primary hover:underline">
                 {assignment.process_label}

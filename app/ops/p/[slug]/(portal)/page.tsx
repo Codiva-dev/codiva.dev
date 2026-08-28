@@ -18,7 +18,7 @@ function milestoneTone(status: string) {
   return map[status] ?? 'neutral';
 }
 
-/** Last completed + current + upcoming — the live slice of the plan, not a stale prefix. */
+/** Last completed + current + upcoming - the live slice of the plan, not a stale prefix. */
 function recentMilestonesForHome<T extends { status: string }>(items: T[], limit = 6): T[] {
   if (items.length <= limit) return items;
   const currentIdx = items.findIndex((m) => m.status !== 'completed');

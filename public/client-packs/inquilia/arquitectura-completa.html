@@ -157,7 +157,7 @@
 
   <div class="kpi">
     <div><strong>~8 700 h</strong><span>P50 reemplazo (jul 2026)</span></div>
-    <div><strong>~520–930k USD</strong><span>Costo medio LATAM ajustado</span></div>
+    <div><strong>~520-930k USD</strong><span>Costo medio LATAM ajustado</span></div>
     <div><strong>~250k LOC</strong><span>Frontend src + backend lib</span></div>
     <div><strong>211+</strong><span>Migraciones SQL</span></div>
   </div>
@@ -205,11 +205,11 @@ Workspace: comercial · legal · operaciones · finanzas · RRHH · TI · conten
   <h2 id="arquitectura">2. Arquitectura de plataforma</h2>
   <h3>Principios</h3>
   <ol>
-    <li><strong>Un frontend, varios hosts</strong> — marketing, CRM, asesores, carrera y facturación comparten build; el enrutamiento es por hostname.</li>
-    <li><strong>BFF delgado</strong> — rutas <span class="mono">api/**</span> delegan en <span class="mono">lib/handlers/**</span>; la lógica de dominio no vive en el router HTTP.</li>
-    <li><strong>Expediente como máquina de estados</strong> — fases legales con gates; no se genera contrato ni se cobra si el expediente no está listo.</li>
-    <li><strong>Fuente de verdad en Postgres</strong> — RLS, triggers de normalización de contacto, auditoría workspace.</li>
-    <li><strong>Terceros por adapter</strong> — Ekatena, Stripe, Facturama, Google, Resend, WhatsApp; fallos no bloquean el request del operador.</li>
+    <li><strong>Un frontend, varios hosts</strong> - marketing, CRM, asesores, carrera y facturación comparten build; el enrutamiento es por hostname.</li>
+    <li><strong>BFF delgado</strong> - rutas <span class="mono">api/**</span> delegan en <span class="mono">lib/handlers/**</span>; la lógica de dominio no vive en el router HTTP.</li>
+    <li><strong>Expediente como máquina de estados</strong> - fases legales con gates; no se genera contrato ni se cobra si el expediente no está listo.</li>
+    <li><strong>Fuente de verdad en Postgres</strong> - RLS, triggers de normalización de contacto, auditoría workspace.</li>
+    <li><strong>Terceros por adapter</strong> - Ekatena, Stripe, Facturama, Google, Resend, WhatsApp; fallos no bloquean el request del operador.</li>
   </ol>
 
   <h3>Vista lógica</h3>
@@ -327,8 +327,8 @@ flowchart LR
 
   <h3>Permisos sensibles del expediente</h3>
   <ul>
-    <li><span class="mono">expedientes.commercial_product.review</span> — VoBo del producto contratado vs documentos.</li>
-    <li><span class="mono">expedientes.lease_signature.validate</span> — validar fecha y evidencia de firma.</li>
+    <li><span class="mono">expedientes.commercial_product.review</span> - VoBo del producto contratado vs documentos.</li>
+    <li><span class="mono">expedientes.lease_signature.validate</span> - validar fecha y evidencia de firma.</li>
     <li>Visibilidad de cotización del expediente: se puede ocultar al revisor si la política lo exige.</li>
     <li>Casos de <em>investigación</em> ocultan CPS, arrendamiento y pagarés en el drawer.</li>
   </ul>
@@ -473,7 +473,7 @@ flowchart LR
       <tr><td>Eventos</td><td><span class="mono">/event/{slug}</span></td><td>Landing, check-in, consola de evento</td></tr>
       <tr><td>Reseñas</td><td><span class="mono">/review</span>, token</td><td>Reseña pública post-servicio</td></tr>
       <tr><td>Blog / newsletter</td><td><span class="mono">/blog</span>, preferencias email</td><td>Contenido público y baja/preferencias tokenizadas</td></tr>
-      <tr><td>Enlace corto</td><td><span class="mono">/c/{code}</span></td><td>Share link de 8–12 caracteres</td></tr>
+      <tr><td>Enlace corto</td><td><span class="mono">/c/{code}</span></td><td>Share link de 8-12 caracteres</td></tr>
     </tbody>
   </table>
 
@@ -675,8 +675,8 @@ flowchart LR
   </table>
   <p>
     Lectura práctica (tarifa media ~70 USD/h): costo de reemplazo ajustado
-    <strong>~520k–930k USD</strong>. Nearshore bajo: ~310k–565k. US/EU: ~1,2M–2,1M.
-    vs mayo 2026 (misma tarifa media, factor entonces 0,80): banda media ~220k–410k →
+    <strong>~520k-930k USD</strong>. Nearshore bajo: ~310k-565k. US/EU: ~1,2M-2,1M.
+    vs mayo 2026 (misma tarifa media, factor entonces 0,80): banda media ~220k-410k →
     <strong>×2,3</strong>.
   </p>
   <div class="note">
