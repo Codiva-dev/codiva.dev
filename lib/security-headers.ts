@@ -11,6 +11,9 @@ const SAME_ORIGIN_EMBED_PATHS = [
 /** Portal / staff preview iframe for deliverables.body_html (Mermaid on jsDelivr). */
 export const PORTAL_CANVAS_HEADER_SOURCE = '/p/:slug/canvas/:id';
 const PORTAL_CANVAS_EXCLUDE = 'p/[^/]+/canvas/';
+/** Quote HTML served into the Cotización iframe (not the listing page). */
+export const PORTAL_QUOTE_DOC_HEADER_SOURCE = '/p/:slug/cotizacion/:quoteId';
+const PORTAL_QUOTE_DOC_EXCLUDE = 'p/[^/]+/cotizacion/[^/]+';
 const MERMAID_CDN = 'https://cdn.jsdelivr.net';
 
 export function contentSecurityPolicy(
@@ -74,6 +77,7 @@ export function nextSecurityHeaderSources(isDev = process.env.NODE_ENV !== 'prod
   const excluded = [
     ...SAME_ORIGIN_EMBED_PATHS.map((path) => `${path.replace(/^\//, '')}$`),
     PORTAL_CANVAS_EXCLUDE,
+    PORTAL_QUOTE_DOC_EXCLUDE,
   ].join('|');
   return [
     {
@@ -87,6 +91,10 @@ export function nextSecurityHeaderSources(isDev = process.env.NODE_ENV !== 'prod
     {
       source: PORTAL_CANVAS_HEADER_SOURCE,
       headers: portalCanvasHeaders(isDev),
+    },
+    {
+      source: PORTAL_QUOTE_DOC_HEADER_SOURCE,
+      headers: sameOriginEmbedHeaders(isDev),
     },
   ];
 }

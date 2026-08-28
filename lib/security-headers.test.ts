@@ -4,6 +4,7 @@ import {
   nextSecurityHeaderSources,
   portalCanvasHeaders,
   PORTAL_CANVAS_HEADER_SOURCE,
+  PORTAL_QUOTE_DOC_HEADER_SOURCE,
   sameOriginEmbedHeaders,
   securityHeaders,
 } from './security-headers';
@@ -30,6 +31,12 @@ describe('security headers', () => {
     expect(sources[0]).toContain('api/ops/careers/cv$');
     expect(sources).toContain('/api/ops/careers/cv');
     expect(sources).toContain('/api/ops/careers/recruiting-report');
+  });
+
+  it('allows same-origin iframes for portal quote documents', () => {
+    const sources = nextSecurityHeaderSources(false).map((row) => row.source);
+    expect(sources[0]).toContain('p/[^/]+/cotizacion/[^/]+');
+    expect(sources).toContain(PORTAL_QUOTE_DOC_HEADER_SOURCE);
   });
 
   it('allows same-origin iframes for portal architecture canvases', () => {
