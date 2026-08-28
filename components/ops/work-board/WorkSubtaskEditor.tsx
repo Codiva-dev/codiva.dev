@@ -27,6 +27,7 @@ export default function WorkSubtaskEditor({
   visibleLimit,
   onToggle,
   onRefresh,
+  onExpand,
 }: {
   assignment: WorkAssignment;
   canAct: boolean;
@@ -36,6 +37,7 @@ export default function WorkSubtaskEditor({
   visibleLimit?: number;
   onToggle: (id: string) => void;
   onRefresh: () => void;
+  onExpand?: () => void;
 }) {
   const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
@@ -52,9 +54,17 @@ export default function WorkSubtaskEditor({
   }, [assignment.id]);
 
   function startEdit() {
+    onExpand?.();
     setText(request && canRequest ? request.payload : workSubtaskEditorText(subs));
     setEditing(true);
   }
+
+  const canChangeList = canManage || canRequest;
+  const actionLabel = !subs.length
+    ? t('ops.asignaciones.addSubtasks')
+    : canManage
+      ? t('ops.asignaciones.editSubtasks')
+      : t('ops.asignaciones.requestEdit');
 
   async function save() {
     if (saving) return;
@@ -159,7 +169,7 @@ export default function WorkSubtaskEditor({
         </div>
       ) : null}
 
-      {showEditor && editing ? (
+      {editing ? (
         <div className="mt-2 space-y-2">
           <Textarea
             size="sm"
@@ -186,14 +196,24 @@ export default function WorkSubtaskEditor({
         </div>
       ) : null}
 
-      {showEditor && !editing && (canManage || canRequest) ? (
-        <button
-          type="button"
-          className="mt-2 text-xs font-medium text-codiva-primary underline-offset-2 hover:underline"
-          onClick={startEdit}
-        >
-          {canManage ? t('ops.asignaciones.editSubtasks') : t('ops.asignaciones.requestEdit')}
-        </button>
+      {!editing && canChangeList ? (
+        !subs.length ? (
+          <button
+            type="button"
+            className="mt-2 w-full rounded-lg border border-dashed border-codiva-primary/40 bg-white/80 px-2 py-2 text-left text-xs font-medium text-codiva-primary"
+            onClick={startEdit}
+          >
+            {actionLabel}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="mt-2 text-xs font-medium text-codiva-primary underline-offset-2 hover:underline"
+            onClick={startEdit}
+          >
+            {actionLabel}
+          </button>
+        )
       ) : null}
     </div>
   );

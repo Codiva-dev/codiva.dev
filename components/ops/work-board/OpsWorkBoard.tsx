@@ -473,8 +473,9 @@ function WorkCard({
         visibleLimit={expanded ? undefined : 2}
         onToggle={onToggleSubtask}
         onRefresh={onRefresh}
+        onExpand={() => setExpanded(true)}
       />
-      {!expanded && (subs.length > 2 || canEdit || canManage) ? (
+      {!expanded && subs.length > 2 ? (
         <button
           type="button"
           className="mt-1 text-xs font-medium text-zinc-600 underline-offset-2 hover:underline"
@@ -483,7 +484,7 @@ function WorkCard({
             setExpanded(true);
           }}
         >
-          {subs.length > 2 ? `+${subs.length - 2}` : t('ops.asignaciones.editSubtasks')}
+          +{subs.length - 2}
         </button>
       ) : null}
     </article>
