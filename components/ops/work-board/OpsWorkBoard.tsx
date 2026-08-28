@@ -247,7 +247,9 @@ export default function OpsWorkBoard({
               >
                 <header className="mb-2 flex items-center justify-between px-1 py-1">
                   <h2 className="text-sm font-semibold text-zinc-800">{statusLabels[status]}</h2>
-                  <span className="text-xs text-zinc-500">{cards.length}</span>
+                  {status === 'done' ? null : (
+                    <span className="text-xs text-zinc-500">{cards.length}</span>
+                  )}
                 </header>
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                   {cards.map((row) => (
