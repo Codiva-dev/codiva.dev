@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DeskSpace · MVP a producción</title>
+  <style>
+    :root {
+      --ink: #121212;
+      --muted: #555;
+      --line: #d8dde8;
+      --accent: #203c7f;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.55;
+    }
+    main { max-width: 880px; margin: 0 auto; padding: 48px 24px 80px; }
+    .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+    h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 8px 0 12px; letter-spacing: -0.02em; }
+    .lead { color: var(--muted); font-size: 1.05rem; max-width: 62ch; }
+    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin: 28px 0 36px; }
+    .pill {
+      border: 1px solid var(--line); background: var(--card);
+      border-radius: 999px; padding: 8px 14px; font-size: 13px; color: var(--muted);
+    }
+    .pill strong { color: var(--ink); }
+    section {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 18px; padding: 24px 26px; margin-bottom: 16px;
+    }
+    h2 { font-size: 1.1rem; margin: 0 0 12px; color: var(--accent); }
+    ul { margin: 0; padding-left: 1.15rem; }
+    li { margin: 6px 0; color: var(--muted); }
+    li strong { color: var(--ink); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .amount { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 700; color: var(--accent); }
+    .note { font-size: 13px; color: var(--muted); margin-top: 12px; }
+    .callout {
+      margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+      background: #eef2fb; border: 1px solid #c9d4ec; font-size: 13px; color: var(--muted);
+    }
+    .callout strong { color: var(--ink); }
+    footer { margin-top: 28px; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">DeskSpace · Cotización</p>
+    <h1>MVP a producción</h1>
+    <p class="lead">
+      Reconstruir DeskSpace como plataforma operable en México: identidad real,
+      APIs autenticadas, cobro con Stripe antes de confirmar reserva, check-in QR
+      no forjable, liquidación al host, lealtad y panel de plataforma.
+    </p>
+    <div class="meta">
+      <span class="pill"><strong>16 semanas</strong> · 4 meses</span>
+      <span class="pill"><strong>$720,000 MXN</strong> · solo desarrollo</span>
+      <span class="pill">4 hitos SPEI de <strong>$180,000</strong></span>
+      <span class="pill">Vigencia <strong>27 sep 2026</strong></span>
+    </div>
+
+    <section>
+      <h2>Qué hay hoy</h2>
+      <p class="note" style="margin-top:0">
+        Existe un prototipo (consumidor, host, comercios de lealtad, superadmin)
+        que sirve como especificación de flujos y copy. No se usa como base de
+        producción: APIs abiertas, rol en el navegador, reservas marcadas como
+        pagadas sin cobro, QR en texto plano.
+      </p>
+    </section>
+
+    <section>
+      <h2>Alcance incluido</h2>
+      <ul>
+        <li><strong>Superficies:</strong> PWA consumidor, panel de host, panel de comercio, superadmin</li>
+        <li><strong>Identidad:</strong> auth con roles en servidor; APIs con token</li>
+        <li><strong>Reserva:</strong> mapa, inventario, disponibilidad, checkout</li>
+        <li><strong>Dinero:</strong> Stripe + webhook antes de confirmar; comisión y payout al host</li>
+        <li><strong>Sitio:</strong> QR firmado, check-in/out, ocupación</li>
+        <li><strong>Red:</strong> lealtad, referidos, canjes, aprobación de espacios y comercios</li>
+        <li><strong>Entrega:</strong> preview y producción, UAT y go-live asistido</li>
+      </ul>
+      <p class="note">Fuera de este paquete: apps nativas, CFDI automático, WhatsApp masivo, hosting variable.</p>
+    </section>
+
+    <section>
+      <h2>Brechas que cierra este trabajo</h2>
+      <table>
+        <thead>
+          <tr><th>Área</th><th>Hoy</th><th>Hito</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Identidad</td><td>Rol en localStorage; /superadmin spoofable</td><td>1</td></tr>
+          <tr><td>APIs</td><td>30 rutas sin token; CORS *</td><td>1</td></tr>
+          <tr><td>Pagos</td><td>Reserva marked paid sin PaymentIntent</td><td>3</td></tr>
+          <tr><td>PCI</td><td>PAN/CVC en formulario propio</td><td>3</td></tr>
+          <tr><td>QR</td><td>checkin:bookingId en texto</td><td>3</td></tr>
+          <tr><td>Liquidación</td><td>CLABE en UI, sin Connect ni SPEI</td><td>3</td></tr>
+          <tr><td>Inventario</td><td>Sin locks; split no aplicado</td><td>2</td></tr>
+          <tr><td>Lealtad</td><td>Puntos vía API abierta</td><td>4</td></tr>
+          <tr><td>Superadmin</td><td>Configuración en memoria</td><td>4</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Plan de entregas</h2>
+      <table>
+        <thead>
+          <tr><th>Fase</th><th>Semanas</th><th>Entregable</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>0. Kickoff</td><td>1</td><td>Sandboxes Stripe/Maps, brand, políticas de cancelación</td></tr>
+          <tr><td>1. Fundaciones</td><td>2-4</td><td>Auth, roles, datos, APIs cerradas, freeze de arquitectura</td></tr>
+          <tr><td>2. Reserva</td><td>5-8</td><td>Mapa, inventario, checkout de reserva en staging</td></tr>
+          <tr><td>3. Dinero y sitio</td><td>9-12</td><td>Pago real, QR, ocupación, payout al host</td></tr>
+          <tr><td>4. Red y go-live</td><td>13-16</td><td>Lealtad, superadmin, UAT, producción</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Inversión de desarrollo</h2>
+      <table>
+        <thead>
+          <tr><th>Hito</th><th>Cierre</th><th>Monto</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1. Arquitectura y fundaciones</td><td>Semana 4</td><td class="amount">$180,000</td></tr>
+          <tr><td>2. Marketplace de reserva</td><td>Semana 8</td><td class="amount">$180,000</td></tr>
+          <tr><td>3. Dinero y check-in</td><td>Semana 12</td><td class="amount">$180,000</td></tr>
+          <tr><td>4. Red, plataforma y go-live</td><td>Semana 16</td><td class="amount">$180,000</td></tr>
+          <tr><td><strong>Total desarrollo</strong></td><td></td><td class="amount">$720,000</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        <strong>Extras (opcionales):</strong> apps nativas $280,000 · CFDI $80,000 ·
+        hypercare 4 semanas $90,000 · soporte mensual $35,000 · WhatsApp/SMS $40,000.
+        Hosting, comisiones Stripe y Google Maps no están en los $720,000.
+      </div>
+      <p class="note">Montos MXN sin IVA. Hitos SPEI 25% al cierre de las semanas 4 / 8 / 12 / 16. Semana 0: sandboxes Stripe, Maps, brand y políticas de no-show a cargo del cliente.</p>
+    </section>
+
+    <footer>
+      Codiva · DeskSpace · cotización v1 · 28 ago 2026
+    </footer>
+  </main>
+</body>
+</html>
