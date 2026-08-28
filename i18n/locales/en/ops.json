@@ -795,7 +795,7 @@
       "permissionsApplyTemplate": "Use template",
       "permissionsCount": "{{count}} of {{total}}",
       "permissionsExtraCount": "+{{count}} extra",
-      "permissionsMissingCount": "−{{count}} fewer",
+      "permissionsMissingCount": "-{{count}} fewer",
       "permissionsMismatch": "These permissions do not match the role template.",
       "permissionsGroupAll": "All",
       "permissionsGroupNone": "None",

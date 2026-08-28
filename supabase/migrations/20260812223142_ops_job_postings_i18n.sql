@@ -47,7 +47,7 @@ SET
   title_en = 'Tester · Frontend, Backend, Full stack, UX/UI and QA',
   location_en = 'Remote · Mexico',
   description_en = $qa_desc_en$About the role:
-At Codiva.dev, software is designed to run real businesses. We look for testers — not development or design profiles to build the product: people who validate flows, regressions, and acceptance criteria in the craft they know best.
+At Codiva.dev, software is designed to run real businesses. We look for testers - not development or design profiles to build the product: people who validate flows, regressions, and acceptance criteria in the craft they know best.
 
 When you apply you choose your testing craft and take that craft’s judgment test. Without that test, the CV form stays locked.
 
@@ -60,7 +60,7 @@ Profiles we look for:
 
 Responsibilities:
 - Design and run tests in the declared craft, on Codiva.dev custom products.
-- Report defects with steps, evidence, and severity — not loose opinions.
+- Report defects with steps, evidence, and severity - not loose opinions.
 - Tell a defect apart from a preference or a scope change.
 - Verify fixes and a short regression of what was touched.
 - Support UAT when the project needs it.

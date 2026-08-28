@@ -22,7 +22,7 @@ INSERT INTO public.milestone_updates (id, milestone_id, body, created_at)
 VALUES (
   'f1000001-0001-4000-8000-000000000004',
   'f0000001-0001-4000-8000-00000000000f',
-  E'19 ago 2026 — Avance de construcción.\n• Arquitectura cerrada. Cuatro aplicaciones en demo guiada: backoffice, kiosk, app personal y bolsa pública.\n• Falta cámara QR, código en imagen y sandbox IDSE.\n• Este corte no certifica IMSS, firma ni pagos.',
+  E'19 ago 2026 - Avance de construcción.\n• Arquitectura cerrada. Cuatro aplicaciones en demo guiada: backoffice, kiosk, app personal y bolsa pública.\n• Falta cámara QR, código en imagen y sandbox IDSE.\n• Este corte no certifica IMSS, firma ni pagos.',
   '2026-08-19T21:00:00Z'
 )
 ON CONFLICT (id) DO UPDATE SET

@@ -24,7 +24,7 @@ REVOKE ALL ON FUNCTION public.set_updated_at() FROM PUBLIC;
 
 -- ---------------------------------------------------------------------------
 -- SECURITY DEFINER helpers: not callable as anonymous RPC
--- (authenticated EXECUTE stays — RLS policies run as the requesting role)
+-- (authenticated EXECUTE stays - RLS policies run as the requesting role)
 -- ---------------------------------------------------------------------------
 REVOKE ALL ON FUNCTION public.is_staff() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.is_staff() FROM anon;

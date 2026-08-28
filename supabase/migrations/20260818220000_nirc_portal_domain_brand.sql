@@ -11,7 +11,7 @@ INSERT INTO public.milestone_updates (id, milestone_id, body, created_at)
 VALUES (
   'f1000001-0001-4000-8000-000000000003',
   'f0000001-0001-4000-8000-00000000000f',
-  E'18 ago 2026 — Preparación de implementación.\n• Infraestructura cloud conectada (web, base de datos, colas, archivos, monitoreo).\n• Dominio nircconsulting.com: salida de IONOS → hospedaje en Vercel (sitio + plataforma).\n• Identidad visual documentada a partir del sitio actual (azul corporativo).\n• Siguiente: desarrollo del producto; credenciales Cincel/Stripe/IDSE en workers.',
+  E'18 ago 2026 - Preparación de implementación.\n• Infraestructura cloud conectada (web, base de datos, colas, archivos, monitoreo).\n• Dominio nircconsulting.com: salida de IONOS → hospedaje en Vercel (sitio + plataforma).\n• Identidad visual documentada a partir del sitio actual (azul corporativo).\n• Siguiente: desarrollo del producto; credenciales Cincel/Stripe/IDSE en workers.',
   '2026-08-18T21:30:00Z'
 )
 ON CONFLICT (id) DO UPDATE SET

@@ -57,7 +57,7 @@ FROM (VALUES
 WHERE m.id = v.id::uuid;
 
 UPDATE public.milestone_updates
-SET body = E'18 ago 2026 — Arranque de implementación.
+SET body = E'18 ago 2026 - Arranque de implementación.
 • Arquitectura certificada; el plan de 18 semanas ya está visible en el portal.
 • Semana 1: preparación del entorno, accesos de prueba y plantilla de adhesión.
 • Pendiente de NIRC: acceso de prueba del proveedor IMSS y política de abandono.'

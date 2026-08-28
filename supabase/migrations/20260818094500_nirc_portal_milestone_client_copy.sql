@@ -39,9 +39,9 @@ FROM (VALUES
 WHERE m.id = v.id::uuid;
 
 UPDATE public.milestone_updates
-SET body = E'17 ago 2026 — Operación en sitio definida.\n• Firma: adhesión solo del trabajador en tableta (idle → QR → firma → idle); IMSS en paralelo.\n• Baja IMSS al check-out.\n• Sandboxes Cincel y Stripe listos; IDSE pendiente de proveedor.'
+SET body = E'17 ago 2026 - Operación en sitio definida.\n• Firma: adhesión solo del trabajador en tableta (idle → QR → firma → idle); IMSS en paralelo.\n• Baja IMSS al check-out.\n• Sandboxes Cincel y Stripe listos; IDSE pendiente de proveedor.'
 WHERE id = 'f1000001-0001-4000-8000-000000000001';
 
 UPDATE public.milestone_updates
-SET body = E'17 ago 2026 — Arquitectura certificada.\n• Decisiones de entrada, salida, pagos y cumplimiento cerradas.\n• Check-out: baja IMSS y pago Stripe en paralelo; SPEI solo como respaldo.\n• Siguiente fase: implementación del MVP.\n• Pendiente operativo: sandbox IDSE PRO; política de abandono a confirmar con NIRC.'
+SET body = E'17 ago 2026 - Arquitectura certificada.\n• Decisiones de entrada, salida, pagos y cumplimiento cerradas.\n• Check-out: baja IMSS y pago Stripe en paralelo; SPEI solo como respaldo.\n• Siguiente fase: implementación del MVP.\n• Pendiente operativo: sandbox IDSE PRO; política de abandono a confirmar con NIRC.'
 WHERE id = 'f1000001-0001-4000-8000-000000000002';

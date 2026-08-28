@@ -37,7 +37,7 @@ Responsabilidades:
 - Acompañar UAT cuando el proyecto lo requiera.
 - Otras actividades afines a testing que Codiva asigne según las necesidades del estudio y de los proyectos.$craft_desc$,
   description_en = $qa_desc_en$About the role:
-At Codiva.dev, software is built to run real businesses. We hire testers — not developers or designers to build the product. We want people who validate flows, regressions, and acceptance criteria in the craft they know best.
+At Codiva.dev, software is built to run real businesses. We hire testers - not developers or designers to build the product. We want people who validate flows, regressions, and acceptance criteria in the craft they know best.
 
 When you apply, you pick your testing craft. The test has two parts: a judgment test (eight situations, 15 minutes) and a finding in that craft on the public site, with evidence. The CV form stays locked until both are done.
 
@@ -51,7 +51,7 @@ Profiles we look for:
 
 Responsibilities:
 - Design and run tests in your declared craft, on Codiva.dev custom products.
-- Report defects with steps, evidence, and severity — not opinions.
+- Report defects with steps, evidence, and severity - not opinions.
 - Tell a defect apart from a preference or a scope change.
 - Verify fixes and a short regression of what changed.
 - Support UAT when the project needs it.
@@ -69,7 +69,7 @@ Deseable:
 - Nociones de staging, regresiones entre sprints y handoff diseño ↔ desarrollo.
 - Para seguridad: autorización, cabeceras, cookies y filtración; no se pide pentest de red ni explotación.$craft_req$,
   requirements_en = $craft_req_en$Requirements:
-- Hands-on experience testing software (web, API, or digital product) — not courses alone.
+- Hands-on experience testing software (web, API, or digital product) - not courses alone.
 - Reproducible reports: steps, expected vs. actual, environment, and evidence.
 - Judgment to prioritize what blocks a delivery.
 - Clear Spanish with engineering and, when it applies, with the client in UAT.
@@ -79,6 +79,6 @@ Nice to have:
 - Familiarity with Next.js, admin panels, auth, or payments, depending on the craft.
 - Experience on custom software (studio, agency, or in-house).
 - A working sense of staging, regressions between sprints, and the design ↔ engineering handoff.
-- For security: authorization, headers, cookies, and leaks — not network pentesting or exploitation.$craft_req_en$,
+- For security: authorization, headers, cookies, and leaks - not network pentesting or exploitation.$craft_req_en$,
   updated_at = now()
 WHERE lower(trim(slug)) = 'tester-qa';

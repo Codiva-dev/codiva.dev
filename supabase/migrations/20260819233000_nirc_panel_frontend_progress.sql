@@ -17,7 +17,7 @@ WHERE id = 'b0000001-0001-4000-8000-00000000000b'
 -- ---------------------------------------------------------------------------
 UPDATE public.milestones
 SET
-  description = E'Semanas 2-5. Accesos y permisos, panel de administración, expediente, carga masiva y consentimientos — núcleo ya construido. Queda demo de fundaciones y pulido de UI (navegación por carriles).',
+  description = E'Semanas 2-5. Accesos y permisos, panel de administración, expediente, carga masiva y consentimientos - núcleo ya construido. Queda demo de fundaciones y pulido de UI (navegación por carriles).',
   status = 'in_progress'
 WHERE id = 'f0000001-0001-4000-8000-000000000010'
   AND project_id = 'b0000001-0001-4000-8000-00000000000b';
@@ -45,7 +45,7 @@ INSERT INTO public.milestone_updates (id, milestone_id, body, created_at)
 VALUES (
   'f1000001-0001-4000-8000-000000000005',
   'f0000001-0001-4000-8000-000000000010',
-  E'19 ago 2026 — Corte frontend + construcción.\n• Fundaciones (auth, expediente, colas) y gran parte de bolsa/convocatoria ya en software.\n• Empleados sin cuenta: staff confirma ofertas; QR por email/SMS.\n• Plan UI: monitor de asistencia, nav por carriles, timeline de cumplimiento, consola ops, cámara en kiosk.\n• No certifica IMSS, firma ni pagos.',
+  E'19 ago 2026 - Corte frontend + construcción.\n• Fundaciones (auth, expediente, colas) y gran parte de bolsa/convocatoria ya en software.\n• Empleados sin cuenta: staff confirma ofertas; QR por email/SMS.\n• Plan UI: monitor de asistencia, nav por carriles, timeline de cumplimiento, consola ops, cámara en kiosk.\n• No certifica IMSS, firma ni pagos.',
   '2026-08-19T23:30:00Z'
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -81,7 +81,7 @@ UPDATE public.project_sprints SET
 WHERE id = 'c1000001-0001-4000-8000-0000000000b4';
 
 -- ---------------------------------------------------------------------------
--- Sprint items — marcar hecho lo que ya está en código
+-- Sprint items - marcar hecho lo que ya está en código
 -- ---------------------------------------------------------------------------
 UPDATE public.sprint_items SET
   status = 'done',
@@ -96,7 +96,7 @@ WHERE id = '720dd99a-1cbf-423e-844f-56b6909bc40a';
 UPDATE public.sprint_items SET status = 'done', details = 'Hecho 18 ago 2026. Monorepo pnpm apps/web|workers + packages.'
 WHERE id = '6f9bd546-16af-4b92-a290-ede0f37d1fba';
 
-UPDATE public.sprint_items SET status = 'done', details = 'Hecho 18–19 ago 2026. DDL núcleo en packages/db.'
+UPDATE public.sprint_items SET status = 'done', details = 'Hecho 18-19 ago 2026. DDL núcleo en packages/db.'
 WHERE id = 'eeff6197-b1cb-4ee9-9a3c-1ea49e570bad';
 
 UPDATE public.sprint_items SET status = 'done', details = 'Hecho 19 ago 2026. Auth.js + guards bo/ks/pb + matriz RBAC.'
@@ -182,7 +182,7 @@ UPDATE public.sprint_items SET
 WHERE id = '5d68abed-ac00-4e22-aeb9-f34ff95e079b';
 
 -- ---------------------------------------------------------------------------
--- Sprint items — frontend (spec arquitectura-frontend / AGT-B42)
+-- Sprint items - frontend (spec arquitectura-frontend / AGT-B42)
 -- ---------------------------------------------------------------------------
 INSERT INTO public.sprint_items (id, sprint_id, title, details, status, sort_order)
 VALUES
@@ -190,7 +190,7 @@ VALUES
     'c2000001-0001-4000-8000-0000000000f1',
     'c1000001-0001-4000-8000-0000000000b1',
     'AGT-B42 Spec arquitectura frontend',
-    'Hecho 19 ago 2026. Cuatro superficies (BO/KS/PB/AP stub), carriles BO, patrones UI, backlog P0–P3. Docs: arquitectura-frontend.md + superficies-frontend.md.',
+    'Hecho 19 ago 2026. Cuatro superficies (BO/KS/PB/AP stub), carriles BO, patrones UI, backlog P0-P3. Docs: arquitectura-frontend.md + superficies-frontend.md.',
     'done',
     65
   ),
@@ -274,7 +274,7 @@ ON CONFLICT (id) DO UPDATE SET
   sort_order = EXCLUDED.sort_order;
 
 -- ---------------------------------------------------------------------------
--- Entregable Arquitectura — sección avance + índice
+-- Entregable Arquitectura - sección avance + índice
 -- ---------------------------------------------------------------------------
 UPDATE public.deliverables
 SET
@@ -316,7 +316,7 @@ SET
       </tr>
       <tr>
         <td>App personal</td>
-        <td>—</td>
+        <td>-</td>
         <td><strong>No aplica en Fase 1.</strong> Pantalla informativa solamente. Ofertas y QR los gestiona el staff / notificaciones.</td>
       </tr>
     </tbody>
@@ -339,7 +339,7 @@ SET
       <tr>
         <td>P1</td>
         <td>Navegación del backoffice por carriles (Captación → Gobierno); timeline de cumplimiento por persona; consola de jobs</td>
-        <td>B1–B4</td>
+        <td>B1-B4</td>
       </tr>
       <tr>
         <td>P2</td>

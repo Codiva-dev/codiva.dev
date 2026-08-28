@@ -795,7 +795,7 @@
       "permissionsApplyTemplate": "Usar plantilla",
       "permissionsCount": "{{count}} de {{total}}",
       "permissionsExtraCount": "+{{count}} extra",
-      "permissionsMissingCount": "−{{count}} menos",
+      "permissionsMissingCount": "-{{count}} menos",
       "permissionsMismatch": "Estos permisos no coinciden con la plantilla del rol.",
       "permissionsGroupAll": "Todo",
       "permissionsGroupNone": "Nada",

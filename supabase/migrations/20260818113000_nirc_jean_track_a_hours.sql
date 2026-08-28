@@ -1,5 +1,5 @@
--- NIRC: backfill Jean hours for completed Track A (architecture week 13–17 ago 2026).
--- Reconstruction from closed A0–A-III work; one entry per day linked to the sprint capstone.
+-- NIRC: backfill Jean hours for completed Track A (architecture week 13-17 ago 2026).
+-- Reconstruction from closed A0-A-III work; one entry per day linked to the sprint capstone.
 
 INSERT INTO public.time_entries (
   id, project_id, sprint_item_id, staff_id, hours, worked_on, notes

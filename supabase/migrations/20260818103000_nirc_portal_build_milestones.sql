@@ -81,7 +81,7 @@ INSERT INTO public.milestone_updates (id, milestone_id, body, created_at)
 VALUES (
   'f1000001-0001-4000-8000-000000000003',
   'f0000001-0001-4000-8000-00000000000f',
-  E'18 ago 2026 — Arranque de implementación.\n• Arquitectura certificada; el plan de 18 semanas queda visible en el portal.\n• Semana 1: ambientes, sandboxes y plantilla de adhesión.\n• Pendiente de NIRC: sandbox IDSE PRO y política de abandono.',
+  E'18 ago 2026 - Arranque de implementación.\n• Arquitectura certificada; el plan de 18 semanas queda visible en el portal.\n• Semana 1: ambientes, sandboxes y plantilla de adhesión.\n• Pendiente de NIRC: sandbox IDSE PRO y política de abandono.',
   '2026-08-18T04:00:00Z'
 )
 ON CONFLICT (id) DO NOTHING;

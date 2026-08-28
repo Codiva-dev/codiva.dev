@@ -23,7 +23,7 @@ INSERT INTO public.milestone_updates (id, milestone_id, body, created_at)
 VALUES (
   'f1000001-0001-4000-8000-000000000006',
   'f0000001-0001-4000-8000-00000000000f',
-  E'24 ago 2026 — Cierre de semana 1.\n• Entorno cloud listo; sitio público en www y ambiente de pruebas colgados.\n• Producto en demo guiada con marca oficial (panel, tableta y bolsa).\n• Cámara QR, monitor de jornada, línea de tiempo y consola de operaciones ya están en el software (IMSS/firma/pagos en simulación).\n• Pendiente para cerrar hitos: demo de fundaciones, DNS de la aplicación, sandbox IDSE PRO y plantilla de adhesión.',
+  E'24 ago 2026 - Cierre de semana 1.\n• Entorno cloud listo; sitio público en www y ambiente de pruebas colgados.\n• Producto en demo guiada con marca oficial (panel, tableta y bolsa).\n• Cámara QR, monitor de jornada, línea de tiempo y consola de operaciones ya están en el software (IMSS/firma/pagos en simulación).\n• Pendiente para cerrar hitos: demo de fundaciones, DNS de la aplicación, sandbox IDSE PRO y plantilla de adhesión.',
   '2026-08-24T18:00:00Z'
 )
 ON CONFLICT (id) DO UPDATE SET
@@ -40,7 +40,7 @@ WHERE id = 'c1000001-0001-4000-8000-0000000000b0';
 
 UPDATE public.project_sprints SET
   status = 'active',
-  goal = 'Semanas 2-5 (calendario 25 ago–21 sep). Código adelantado: monorepo, auth/RBAC, expediente, CSV, BullMQ, nav BO, shells, kit RGB y landing www. Cierra el hito 25% con demo PRC-B12. Carry de B0: DNS app./apex, IDSE PRO, plantilla adhesión, políticas NIRC.'
+  goal = 'Semanas 2-5 (calendario 25 ago-21 sep). Código adelantado: monorepo, auth/RBAC, expediente, CSV, BullMQ, nav BO, shells, kit RGB y landing www. Cierra el hito 25% con demo PRC-B12. Carry de B0: DNS app./apex, IDSE PRO, plantilla adhesión, políticas NIRC.'
 WHERE id = 'c1000001-0001-4000-8000-0000000000b1';
 
 UPDATE public.sprint_items SET
@@ -68,7 +68,7 @@ WHERE title LIKE 'HUM · Cutover DNS%'
 -- ---------------------------------------------------------------------------
 UPDATE public.deliverables
 SET
-  description = 'Arquitectura certificada + estado de construcción (24 ago 2026). Tres superficies; P0–P2 de UI hechos; IMSS/firma/pagos en simulación.',
+  description = 'Arquitectura certificada + estado de construcción (24 ago 2026). Tres superficies; P0-P2 de UI hechos; IMSS/firma/pagos en simulación.',
   body_html = regexp_replace(
     regexp_replace(
       regexp_replace(
@@ -107,7 +107,7 @@ SET
       </tr>
       <tr>
         <td>App personal</td>
-        <td>—</td>
+        <td>-</td>
         <td><strong>No aplica en Fase 1.</strong> Pantalla informativa solamente. Ofertas y QR los gestiona el staff / notificaciones.</td>
       </tr>
     </tbody>
@@ -125,12 +125,12 @@ SET
       <tr>
         <td>P0</td>
         <td>Monitor de asistencia y cámara QR en kiosk</td>
-        <td>Hecho (19–20 ago)</td>
+        <td>Hecho (19-20 ago)</td>
       </tr>
       <tr>
         <td>P1</td>
         <td>Navegación del backoffice por procesos; línea de tiempo de cumplimiento; consola de trabajos</td>
-        <td>Hecho (19–20 ago)</td>
+        <td>Hecho (19-20 ago)</td>
       </tr>
       <tr>
         <td>P2</td>
