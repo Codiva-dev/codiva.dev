@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
@@ -81,16 +81,29 @@ export default function OpsWorkBoard({
 }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
   const [assignments, setAssignments] = useState(initialAssignments);
   const [stream, setStream] = useState('');
   const [person, setPerson] = useState('');
   const [view, setView] = useState<'board' | 'list'>('board');
   const [createOpen, setCreateOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(initialAssignmentId || '');
+  const urlId = initialAssignmentId || '';
+  const [selectedId, setSelectedId] = useState(urlId);
 
   useEffect(() => {
     setAssignments(initialAssignments);
   }, [initialAssignments]);
+
+  useEffect(() => {
+    setSelectedId(urlId);
+  }, [urlId]);
+
+  function selectAssignment(id: string) {
+    setSelectedId(id);
+    if (id === urlId) return;
+    const href = id ? `${pathname}?id=${encodeURIComponent(id)}` : pathname;
+    router.replace(href, { scroll: false });
+  }
 
   const statusLabels = useMemo(
     () => Object.fromEntries(WORK_STATUSES.map((id) => [id, t(`ops.labels.workStatus.${id}`)])) as Record<
@@ -250,7 +263,7 @@ export default function OpsWorkBoard({
                       isMine={canMutateWorkAssignment(currentUserId, row.assignee_id, false)}
                       draggable={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
                       isDragging={draggingId === row.id}
-                      onOpen={() => setSelectedId(row.id)}
+                      onOpen={() => selectAssignment(row.id)}
                       onToggleSubtask={onToggleSub}
                       onRefresh={() => router.refresh()}
                       onPointerDownCard={onCardPointerDown}
@@ -286,7 +299,7 @@ export default function OpsWorkBoard({
                         currentUserId={currentUserId}
                         isMine={canMutateWorkAssignment(currentUserId, row.assignee_id, false)}
                         statusLabel={statusLabels[row.status]}
-                        onOpen={() => setSelectedId(row.id)}
+                        onOpen={() => selectAssignment(row.id)}
                         onToggleSubtask={onToggleSub}
                         onRefresh={() => router.refresh()}
                       />
@@ -313,7 +326,7 @@ export default function OpsWorkBoard({
       {selected ? (
         <DetailModal
           assignment={selected}
-          onClose={() => setSelectedId('')}
+          onClose={() => selectAssignment('')}
           staff={staff}
           processOptions={processOptions}
           canManage={canManage}
