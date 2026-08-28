@@ -166,9 +166,10 @@ export default function OpsWorkBoard({
     }
   }
 
-  const { draggingId, dropStatus, onCardPointerDown, consumeClickIfDragged, ghost } = useWorkBoardDrag({
-    onDrop: onDropStatus,
-  });
+  const { draggingId, dropStatus, onCardPointerDown, consumeClickIfDragged, ghost, scrollerRef } =
+    useWorkBoardDrag({
+      onDrop: onDropStatus,
+    });
 
   async function onToggleSub(id: string) {
     let from: 'open' | 'done' | null = null;
@@ -233,7 +234,10 @@ export default function OpsWorkBoard({
       </div>
 
       {view === 'board' ? (
-        <div className="flex min-h-[28rem] min-w-0 max-w-full gap-3 overflow-x-auto pb-2">
+        <div
+          ref={scrollerRef}
+          className="flex min-h-[28rem] min-w-0 max-w-full gap-3 overflow-x-auto pb-2"
+        >
           {WORK_BOARD_COLUMNS.map((status) => {
             const cards = visible.filter((row) => row.status === status);
             const active = dropStatus === status;

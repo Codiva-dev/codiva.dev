@@ -1,12 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { createPortal } from 'react-dom';
+import { workBoardEdgeScrollDelta } from '@/lib/ops/work-board-drag';
 
 const DRAG_THRESHOLD_PX = 8;
 
 export function isWorkCardInteractiveTarget(target: EventTarget | null) {
   if (!(target instanceof Element)) return false;
   return Boolean(target.closest('a, button, input, select, textarea, label, form'));
+}
+
+function dropStatusAt(x: number, y: number) {
+  const under = document.elementFromPoint(x, y);
+  const col = under instanceof Element ? under.closest('[data-work-drop-status]') : null;
+  return col ? String(col.getAttribute('data-work-drop-status') || '') : '';
 }
 
 export function useWorkBoardDrag({
@@ -27,19 +35,44 @@ export function useWorkBoardDrag({
     started: boolean;
   } | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
   const dropStatusRef = useRef('');
   const ignoreClickRef = useRef(false);
+  const pointerRef = useRef({ x: 0, y: 0 });
+  const rafRef = useRef(0);
   const onDropRef = useRef(onDrop);
   onDropRef.current = onDrop;
 
+  const applyDropStatus = useCallback((next: string) => {
+    if (next === dropStatusRef.current) return;
+    dropStatusRef.current = next;
+    setDropStatus(next);
+  }, []);
+
+  const placeGhost = useCallback((x: number, y: number) => {
+    const session = sessionRef.current;
+    const ghost = ghostRef.current;
+    if (!session || !ghost) return;
+    ghost.style.transform = `translate(${x - session.offsetX}px, ${y - session.offsetY}px)`;
+    ghost.style.width = `${session.width}px`;
+  }, []);
+
+  const stopScrollLoop = useCallback(() => {
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = 0;
+    }
+  }, []);
+
   const endSession = useCallback(() => {
+    stopScrollLoop();
     sessionRef.current = null;
     dropStatusRef.current = '';
     setDraggingId('');
     setDropStatus('');
     document.body.style.removeProperty('cursor');
     document.body.style.removeProperty('user-select');
-  }, []);
+  }, [stopScrollLoop]);
 
   const onCardPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>, assignment: { id: string; title: string }) => {
@@ -48,6 +81,7 @@ export function useWorkBoardDrag({
       const id = String(assignment?.id || '').trim();
       if (!id) return;
       const rect = event.currentTarget.getBoundingClientRect();
+      pointerRef.current = { x: event.clientX, y: event.clientY };
       sessionRef.current = {
         id,
         title: String(assignment?.title || '').trim(),
@@ -63,9 +97,34 @@ export function useWorkBoardDrag({
   );
 
   useEffect(() => {
+    function tick() {
+      rafRef.current = 0;
+      const session = sessionRef.current;
+      if (!session?.started) return;
+      const scroller = scrollerRef.current;
+      const { x, y } = pointerRef.current;
+      if (scroller) {
+        const rect = scroller.getBoundingClientRect();
+        const dx = workBoardEdgeScrollDelta(x, rect.left, rect.right);
+        if (dx) {
+          const max = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+          scroller.scrollLeft = Math.max(0, Math.min(max, scroller.scrollLeft + dx));
+        }
+      }
+      placeGhost(x, y);
+      applyDropStatus(dropStatusAt(x, y));
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
+    function startScrollLoop() {
+      if (rafRef.current) return;
+      rafRef.current = requestAnimationFrame(tick);
+    }
+
     function onMove(event: PointerEvent) {
       const session = sessionRef.current;
       if (!session) return;
+      pointerRef.current = { x: event.clientX, y: event.clientY };
       const dx = event.clientX - session.originX;
       const dy = event.clientY - session.originY;
       if (!session.started) {
@@ -74,20 +133,11 @@ export function useWorkBoardDrag({
         setDraggingId(session.id);
         document.body.style.cursor = 'grabbing';
         document.body.style.userSelect = 'none';
+        startScrollLoop();
       }
       event.preventDefault();
-      const ghost = ghostRef.current;
-      if (ghost) {
-        ghost.style.transform = `translate(${event.clientX - session.offsetX}px, ${event.clientY - session.offsetY}px)`;
-        ghost.style.width = `${session.width}px`;
-      }
-      const under = document.elementFromPoint(event.clientX, event.clientY);
-      const col = under instanceof Element ? under.closest('[data-work-drop-status]') : null;
-      const next = col ? String(col.getAttribute('data-work-drop-status') || '') : '';
-      if (next !== dropStatusRef.current) {
-        dropStatusRef.current = next;
-        setDropStatus(next);
-      }
+      placeGhost(event.clientX, event.clientY);
+      applyDropStatus(dropStatusAt(event.clientX, event.clientY));
     }
 
     function onUp() {
@@ -113,8 +163,9 @@ export function useWorkBoardDrag({
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
+      stopScrollLoop();
     };
-  }, [endSession]);
+  }, [applyDropStatus, endSession, placeGhost, stopScrollLoop]);
 
   const consumeClickIfDragged = useCallback(() => {
     if (!ignoreClickRef.current) return false;
@@ -122,21 +173,27 @@ export function useWorkBoardDrag({
     return true;
   }, []);
 
-  const ghost = draggingId ? (
-    <div
-      ref={(node) => {
-        ghostRef.current = node;
-        const session = sessionRef.current;
-        if (node && session) {
-          node.style.transform = `translate(${session.originX - session.offsetX}px, ${session.originY - session.offsetY}px)`;
-          node.style.width = `${session.width}px`;
-        }
-      }}
-      className="pointer-events-none fixed left-0 top-0 z-[90] rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 shadow-xl"
-    >
-      {sessionRef.current?.title || ''}
-    </div>
-  ) : null;
+  const ghost =
+    draggingId && typeof document !== 'undefined'
+      ? createPortal(
+          <div
+            ref={(node) => {
+              ghostRef.current = node;
+              const session = sessionRef.current;
+              if (node && session) {
+                node.style.transform = `translate(${pointerRef.current.x - session.offsetX}px, ${
+                  pointerRef.current.y - session.offsetY
+                }px)`;
+                node.style.width = `${session.width}px`;
+              }
+            }}
+            className="pointer-events-none fixed left-0 top-0 z-[90] rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 shadow-xl"
+          >
+            {sessionRef.current?.title || ''}
+          </div>,
+          document.body
+        )
+      : null;
 
-  return { draggingId, dropStatus, onCardPointerDown, consumeClickIfDragged, ghost };
+  return { draggingId, dropStatus, onCardPointerDown, consumeClickIfDragged, ghost, scrollerRef };
 }
