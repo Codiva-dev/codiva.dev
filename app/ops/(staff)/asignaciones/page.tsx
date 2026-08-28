@@ -12,6 +12,7 @@ import {
   processHref,
   type WorkAssignment,
   type WorkComment,
+  type WorkFile,
   type WorkProcessKind,
   type WorkStageEvent,
   type WorkStatus,
@@ -63,6 +64,7 @@ export default async function AsignacionesPage({
     { data: quoteRows },
     { data: ticketRows },
     { data: internalRows },
+    { data: fileRows },
   ] = await Promise.all([
     supabase
       .from('work_assignments')
@@ -88,6 +90,10 @@ export default async function AsignacionesPage({
     supabase.from('quotes').select('id, title, status, project_id, projects(name, slug)').order('created_at', { ascending: false }).limit(80),
     supabase.from('tickets').select('id, title, status').order('created_at', { ascending: false }).limit(80),
     supabase.from('work_internal_processes').select('id, key, title, href, sort_order').order('sort_order'),
+    supabase
+      .from('work_assignment_files')
+      .select('id, assignment_id, file_name, content_type, byte_size, kind')
+      .order('created_at', { ascending: false }),
   ]);
 
   if (assignmentsRes.error) throw await throwDb(assignmentsRes.error);
@@ -164,6 +170,20 @@ export default async function AsignacionesPage({
     commentsByAssignment.set(row.assignment_id, list);
   }
 
+  const filesByAssignment = new Map<string, WorkFile[]>();
+  for (const row of fileRows ?? []) {
+    const list = filesByAssignment.get(row.assignment_id) ?? [];
+    list.push({
+      id: row.id,
+      assignment_id: row.assignment_id,
+      file_name: row.file_name,
+      content_type: row.content_type,
+      byte_size: row.byte_size,
+      kind: row.kind === 'image' ? 'image' : 'file',
+    });
+    filesByAssignment.set(row.assignment_id, list);
+  }
+
   const assignments: WorkAssignment[] = (assignmentRows ?? []).map((row) => {
     const kind = asKind(row.process_kind);
     const meta = kind !== 'none' && row.process_id ? processMeta.get(`${kind}:${row.process_id}`) : null;
@@ -187,6 +207,7 @@ export default async function AsignacionesPage({
       subtasks: subtasksByAssignment.get(row.id) ?? [],
       stage_events: eventsByAssignment.get(row.id) ?? [],
       comments: commentsByAssignment.get(row.id) ?? [],
+      files: filesByAssignment.get(row.id) ?? [],
     };
   });
 

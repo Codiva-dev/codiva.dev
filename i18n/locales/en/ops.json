@@ -1883,7 +1883,17 @@
       "noEvents": "No moves yet.",
       "fromTo": "{{from}} → {{to}}",
       "createdAt": "Created",
-      "progress": "Progress"
+      "progress": "Progress",
+      "attachments": "Files and images",
+      "attachmentsHint": "Optional. Up to 6 files, 4 MB each: images, PDF, or Office.",
+      "attachmentsAdded": "Files added",
+      "attachmentCount": "{{count}} files",
+      "attach": "Attach",
+      "noAttachments": "No files yet.",
+      "fileRequired": "Choose at least one file.",
+      "fileTooBig": "Each file can be up to 4 MB.",
+      "tooManyFiles": "Maximum 6 files per assignment.",
+      "fileTypeRejected": "That file type cannot be attached."
     },
     "pendientes": {
       "title": "Pending",

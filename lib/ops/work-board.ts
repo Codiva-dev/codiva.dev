@@ -102,6 +102,15 @@ export type WorkComment = {
   created_at: string;
 };
 
+export type WorkFile = {
+  id: string;
+  assignment_id: string;
+  file_name: string;
+  content_type: string;
+  byte_size: number;
+  kind: 'image' | 'file';
+};
+
 export type WorkAssignment = {
   id: string;
   title: string;
@@ -122,6 +131,7 @@ export type WorkAssignment = {
   subtasks: WorkSubtask[];
   stage_events: WorkStageEvent[];
   comments: WorkComment[];
+  files: WorkFile[];
 };
 
 export type MentionPart =
@@ -169,6 +179,59 @@ export function rollupProgressFromSubtasks(subtasks: Pick<WorkSubtask, 'status'>
 
 export function parentCannotMarkDoneWithOpenSubtasks(subtasks: Pick<WorkSubtask, 'status'>[]) {
   return subtasks.some((s) => s.status !== 'done');
+}
+
+export function canMutateWorkAssignment(
+  staffId: string,
+  assigneeId: string | null | undefined,
+  canManage: boolean
+) {
+  if (canManage) return true;
+  const staff = String(staffId || '').trim().toLowerCase();
+  const assignee = String(assigneeId || '').trim().toLowerCase();
+  return Boolean(staff && assignee && staff === assignee);
+}
+
+export const WORK_FILE_MAX_BYTES = 4 * 1024 * 1024;
+export const WORK_FILE_MAX_COUNT = 6;
+export const WORK_FILE_ACCEPT =
+  'image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp,application/pdf,.pdf,text/plain,.txt,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.ms-excel,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx,application/zip,.zip';
+
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+const FILE_TYPES = new Set([
+  'application/pdf',
+  'text/plain',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/zip',
+  'application/x-zip-compressed',
+]);
+const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp']);
+const FILE_EXTS = new Set(['pdf', 'txt', 'doc', 'docx', 'xls', 'xlsx', 'zip']);
+
+function fileExt(name: string) {
+  const base = name.split(/[/\\]/).pop() || name;
+  const dot = base.lastIndexOf('.');
+  return dot >= 0 ? base.slice(dot + 1).toLowerCase() : '';
+}
+
+export function workFileKind(type: string, name: string): 'image' | 'file' | null {
+  const mime = String(type || '').trim().toLowerCase();
+  const ext = fileExt(name);
+  if (IMAGE_TYPES.has(mime) || IMAGE_EXTS.has(ext)) return 'image';
+  if (FILE_TYPES.has(mime) || FILE_EXTS.has(ext)) return 'file';
+  return null;
+}
+
+export function workFileHref(id: string) {
+  return `/api/ops/assignment-file?id=${encodeURIComponent(id)}`;
+}
+
+export function clampWorkProgress(pct: number) {
+  if (!Number.isFinite(pct)) return 0;
+  return Math.max(0, Math.min(100, Math.round(pct)));
 }
 
 export function workAssignmentPreview(assignment: Pick<WorkAssignment, 'description'>, max = 140) {

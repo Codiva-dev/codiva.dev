@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   activeMentionQuery,
   buildMentionToken,
+  canMutateWorkAssignment,
+  clampWorkProgress,
   dwellMsSince,
   filterMentionableStaff,
   formatDwellDuration,
@@ -12,6 +14,7 @@ import {
   processHref,
   rollupProgressFromSubtasks,
   splitMentionTokens,
+  workFileKind,
   workSubtaskCounts,
 } from './work-board';
 
@@ -30,6 +33,22 @@ describe('work-board progress', () => {
   it('blocks done when a subtask is still open', () => {
     expect(parentCannotMarkDoneWithOpenSubtasks([{ status: 'done' }])).toBe(false);
     expect(parentCannotMarkDoneWithOpenSubtasks([{ status: 'open' }, { status: 'done' }])).toBe(true);
+  });
+
+  it('lets the assignee edit without manage', () => {
+    expect(canMutateWorkAssignment('u1', 'u1', false)).toBe(true);
+    expect(canMutateWorkAssignment('u1', 'u2', false)).toBe(false);
+    expect(canMutateWorkAssignment('u1', null, false)).toBe(false);
+    expect(canMutateWorkAssignment('u1', 'u2', true)).toBe(true);
+  });
+
+  it('classifies work attachments', () => {
+    expect(workFileKind('image/png', 'shot.png')).toBe('image');
+    expect(workFileKind('application/pdf', 'brief.pdf')).toBe('file');
+    expect(workFileKind('', 'notes.txt')).toBe('file');
+    expect(workFileKind('application/x-msdownload', 'x.exe')).toBeNull();
+    expect(clampWorkProgress(140)).toBe(100);
+    expect(clampWorkProgress(-4)).toBe(0);
   });
 
   it('counts subtasks on a card', () => {
@@ -123,6 +142,7 @@ describe('work-board process links', () => {
           subtasks: [],
           stage_events: [],
           comments: [],
+          files: [],
         },
       ],
       'a',

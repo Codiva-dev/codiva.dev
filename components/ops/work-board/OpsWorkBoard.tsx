@@ -12,10 +12,13 @@ import Input, { Select, Textarea } from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ToastForm from '@/components/ops/ToastForm';
 import { toUserErrorMessage } from '@/lib/user-error';
+import { formatBytes } from '@/lib/format-bytes';
 import {
   addWorkAssignmentComment,
+  addWorkAssignmentFiles,
   createWorkAssignment,
   createWorkSubtask,
+  deleteWorkAssignmentFile,
   toggleWorkSubtask,
   updateWorkAssignment,
   updateWorkAssignmentStatus,
@@ -25,6 +28,8 @@ import {
   WORK_PROCESS_KINDS,
   WORK_STATUSES,
   WORK_STREAMS,
+  canMutateWorkAssignment,
+  clampWorkProgress,
   dwellMsSince,
   formatDwellDuration,
   isWorkStatus,
@@ -33,12 +38,15 @@ import {
   stageEventDurationMs,
   workAssignmentPreview,
   workColorTone,
+  workFileHref,
   workSubtaskCounts,
   type WorkAssignment,
+  type WorkFile,
   type WorkProcessKind,
   type WorkStatus,
 } from '@/lib/ops/work-board';
 import OpsMentionComposer, { type MentionStaff } from './OpsMentionComposer';
+import WorkAttachmentField from './WorkAttachmentField';
 import { isWorkCardInteractiveTarget, useWorkBoardDrag } from './useWorkBoardDrag';
 
 export type ProcessOption = {
@@ -130,6 +138,10 @@ export default function OpsWorkBoard({
     if (!isWorkStatus(status)) return;
     const current = assignments.find((row) => row.id === assignmentId);
     if (!current || current.status === status) return;
+    if (!canMutateWorkAssignment(currentUserId, current.assignee_id, canManage)) {
+      toast.error(t('ops.asignaciones.forbiddenEdit'));
+      return;
+    }
     setAssignments((prev) => patchWorkAssignmentStatus(prev, assignmentId, status));
     try {
       await updateWorkAssignmentStatus(assignmentId, status, 'kanban');
@@ -154,12 +166,16 @@ export default function OpsWorkBoard({
   }
 
   async function onAddSub(assignmentId: string, title: string) {
-    await createWorkSubtask(assignmentId, title);
-    router.refresh();
+    try {
+      await createWorkSubtask(assignmentId, title);
+      router.refresh();
+    } catch (err) {
+      toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
+    }
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {ghost}
       <div className="flex flex-wrap items-center gap-2">
         <Select size="sm" className="w-auto min-w-40" value={stream} onChange={(e) => setStream(e.target.value)}>
@@ -202,7 +218,7 @@ export default function OpsWorkBoard({
       </div>
 
       {view === 'board' ? (
-        <div className="flex min-h-[28rem] gap-3 overflow-x-auto pb-2">
+        <div className="flex min-h-[28rem] min-w-0 max-w-full gap-3 overflow-x-auto pb-2">
           {WORK_BOARD_COLUMNS.map((status) => {
             const cards = visible.filter((row) => row.status === status);
             const active = dropStatus === status;
@@ -210,7 +226,7 @@ export default function OpsWorkBoard({
               <section
                 key={status}
                 data-work-drop-status={status}
-                className={`flex w-72 shrink-0 flex-col rounded-2xl border bg-zinc-50/80 p-2 ${
+                className={`flex w-72 min-w-72 max-w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-2 ${
                   active ? 'border-codiva-primary ring-2 ring-codiva-primary/30' : 'border-zinc-200'
                 }`}
               >
@@ -218,7 +234,7 @@ export default function OpsWorkBoard({
                   <h2 className="text-sm font-semibold text-zinc-800">{statusLabels[status]}</h2>
                   <span className="text-xs text-zinc-500">{cards.length}</span>
                 </header>
-                <div className="flex flex-1 flex-col gap-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
                   {cards.map((row) => (
                     <WorkCard
                       key={row.id}
@@ -226,7 +242,9 @@ export default function OpsWorkBoard({
                       locale={locale}
                       streamLabel={streamLabels[row.stream]}
                       compact
-                      draggable
+                      canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
+                      isMine={canMutateWorkAssignment(currentUserId, row.assignee_id, false)}
+                      draggable={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
                       isDragging={draggingId === row.id}
                       onOpen={() => setSelectedId(row.id)}
                       onToggleSubtask={onToggleSub}
@@ -259,6 +277,8 @@ export default function OpsWorkBoard({
                         locale={locale}
                         streamLabel={streamLabels[row.stream]}
                         showStatus
+                        canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
+                        isMine={canMutateWorkAssignment(currentUserId, row.assignee_id, false)}
                         statusLabel={statusLabels[row.status]}
                         onOpen={() => setSelectedId(row.id)}
                         onToggleSubtask={onToggleSub}
@@ -309,6 +329,8 @@ function WorkCard({
   streamLabel,
   statusLabel,
   compact = false,
+  canEdit = false,
+  isMine = false,
   draggable = false,
   showStatus = false,
   isDragging = false,
@@ -323,6 +345,8 @@ function WorkCard({
   streamLabel: string;
   statusLabel?: string;
   compact?: boolean;
+  canEdit?: boolean;
+  isMine?: boolean;
   draggable?: boolean;
   showStatus?: boolean;
   isDragging?: boolean;
@@ -333,7 +357,7 @@ function WorkCard({
   consumeClickIfDragged?: () => boolean;
 }) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(!compact);
+  const [expanded, setExpanded] = useState(!compact || isMine);
   const [newSubtask, setNewSubtask] = useState('');
   const [adding, setAdding] = useState(false);
   const tone = workColorTone(assignment.stream);
@@ -342,6 +366,8 @@ function WorkCard({
   const subs = assignment.subtasks;
   const visibleSubs = expanded ? subs : subs.slice(0, 2);
   const dwell = formatDwellDuration(dwellMsSince(assignment.status_entered_at), locale);
+  const progress = clampWorkProgress(assignment.progress_pct);
+  const images = assignment.files.filter((file) => file.kind === 'image').slice(0, 3);
 
   function open(event: React.MouseEvent) {
     if (isWorkCardInteractiveTarget(event.target)) return;
@@ -367,13 +393,13 @@ function WorkCard({
     <article
       onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
       onClick={open}
-      className={`rounded-xl border p-3 ${tone.card} ${draggable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-pointer'} ${
+      className={`min-w-0 max-w-full overflow-hidden rounded-xl border p-3 ${tone.card} ${draggable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-pointer'} ${
         isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : ''
       }`}
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-zinc-900">{assignment.title}</h3>
+          <h3 className="break-words text-sm font-semibold text-zinc-900">{assignment.title}</h3>
           <p className="mt-0.5 text-xs text-zinc-600">
             {assignment.assignee_name || t('ops.asignaciones.unassigned')}
             {counts.total
@@ -393,23 +419,44 @@ function WorkCard({
         assignment.process_href ? (
           <Link
             href={assignment.process_href}
-            className="mt-1 inline-block text-xs font-medium text-codiva-primary hover:underline"
+            className="mt-1 inline-block max-w-full truncate text-xs font-medium text-codiva-primary hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
             {assignment.process_label}
           </Link>
         ) : (
-          <p className="mt-1 text-xs text-zinc-600">{assignment.process_label}</p>
+          <p className="mt-1 truncate text-xs text-zinc-600">{assignment.process_label}</p>
         )
       ) : null}
       {expanded && assignment.description ? (
-        <p className="mt-2 whitespace-pre-wrap text-sm text-zinc-700">{assignment.description}</p>
+        <p className="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-700">{assignment.description}</p>
       ) : !expanded && preview ? (
-        <p className="mt-2 line-clamp-2 text-sm text-zinc-700">{preview}</p>
+        <p className="mt-2 line-clamp-2 break-words text-sm text-zinc-700">{preview}</p>
       ) : null}
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/70">
-        <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${assignment.progress_pct}%` }} />
+      <div className="mt-3 h-1.5 w-full max-w-full overflow-hidden rounded-full bg-white/70">
+        <div className={`h-full max-w-full rounded-full ${tone.bar}`} style={{ width: `${progress}%` }} />
       </div>
+      {images.length ? (
+        <div className="mt-2 flex min-w-0 gap-1 overflow-hidden" onClick={(event) => event.stopPropagation()}>
+          {images.map((file) => (
+            <img
+              key={file.id}
+              src={workFileHref(file.id)}
+              alt={file.file_name}
+              className="h-10 w-10 shrink-0 rounded-md object-cover"
+            />
+          ))}
+          {assignment.files.length > images.length ? (
+            <span className="flex h-10 items-center rounded-md bg-white/80 px-2 text-[11px] font-medium text-zinc-600">
+              +{assignment.files.length - images.length}
+            </span>
+          ) : null}
+        </div>
+      ) : assignment.files.length ? (
+        <p className="mt-2 truncate text-xs text-zinc-500">
+          {t('ops.asignaciones.attachmentCount', { count: assignment.files.length })}
+        </p>
+      ) : null}
       {visibleSubs.length ? (
         <ul className="mt-3 space-y-1">
           {visibleSubs.map((sub) => (
@@ -419,15 +466,16 @@ function WorkCard({
                   type="checkbox"
                   className="mt-0.5"
                   checked={sub.status === 'done'}
-                  onChange={() => onToggleSubtask(sub.id)}
+                  disabled={!canEdit}
+                  onChange={() => canEdit && onToggleSubtask(sub.id)}
                 />
-                <span className={sub.status === 'done' ? 'text-zinc-500 line-through' : ''}>{sub.title}</span>
+                <span className={`min-w-0 break-words ${sub.status === 'done' ? 'text-zinc-500 line-through' : ''}`}>{sub.title}</span>
               </label>
             </li>
           ))}
         </ul>
       ) : null}
-      {!expanded && subs.length > visibleSubs.length ? (
+      {!expanded && (subs.length > visibleSubs.length || canEdit) ? (
         <button
           type="button"
           className="mt-1 text-xs font-medium text-zinc-600 underline-offset-2 hover:underline"
@@ -436,23 +484,83 @@ function WorkCard({
             setExpanded(true);
           }}
         >
-          +{subs.length - visibleSubs.length}
+          {subs.length > visibleSubs.length
+            ? `+${subs.length - visibleSubs.length}`
+            : t('ops.asignaciones.addSubtask')}
         </button>
       ) : null}
-      {expanded ? (
-        <form onSubmit={submitSubtask} className="mt-2 flex gap-1" onClick={(event) => event.stopPropagation()}>
+      {expanded && canEdit ? (
+        <form onSubmit={submitSubtask} className="mt-2 flex min-w-0 gap-1" onClick={(event) => event.stopPropagation()}>
           <Input
             size="sm"
+            className="min-w-0 w-0 flex-1"
             value={newSubtask}
             onChange={(event) => setNewSubtask(event.target.value)}
             placeholder={t('ops.asignaciones.subtaskPlaceholder')}
           />
-          <Button type="submit" size="xs" variant="secondary" disabled={adding}>
+          <Button type="submit" size="xs" variant="secondary" className="shrink-0" disabled={adding}>
             {t('ops.asignaciones.addSubtask')}
           </Button>
         </form>
       ) : null}
     </article>
+  );
+}
+
+function WorkFileList({
+  files,
+  canEdit,
+  onRefresh,
+}: {
+  files: WorkFile[];
+  canEdit: boolean;
+  onRefresh: () => void;
+}) {
+  const { t } = useTranslation();
+  if (!files.length) return <EmptyState>{t('ops.asignaciones.noAttachments')}</EmptyState>;
+  return (
+    <ul className="space-y-2">
+      {files.map((file) => (
+        <li key={file.id} className="flex min-w-0 items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-2">
+          {file.kind === 'image' ? (
+            <a href={workFileHref(file.id)} target="_blank" rel="noreferrer" className="shrink-0">
+              <img src={workFileHref(file.id)} alt="" className="h-14 w-14 rounded-md object-cover" />
+            </a>
+          ) : (
+            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-white text-[10px] font-semibold uppercase text-zinc-500">
+              {file.file_name.split('.').pop() || 'file'}
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            <a
+              href={workFileHref(file.id)}
+              target="_blank"
+              rel="noreferrer"
+              className="block truncate text-sm font-medium text-codiva-primary"
+            >
+              {file.file_name}
+            </a>
+            <p className="text-xs text-zinc-500">{formatBytes(file.byte_size)}</p>
+          </div>
+          {canEdit ? (
+            <button
+              type="button"
+              className="shrink-0 text-xs font-medium text-zinc-500 hover:text-red-700"
+              onClick={async () => {
+                try {
+                  await deleteWorkAssignmentFile(file.id);
+                  onRefresh();
+                } catch (err) {
+                  toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
+                }
+              }}
+            >
+              {t('ops.fileInput.remove')}
+            </button>
+          ) : null}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -479,10 +587,10 @@ function CreateModal({
       title={t('ops.asignaciones.create')}
       closeLabel={t('common.buttons.close')}
       size="md"
-      className="max-w-lg"
+      className="flex max-h-[min(92vh,880px)] max-w-lg flex-col overflow-hidden"
     >
       <ToastForm
-        className="mt-4 space-y-3"
+        className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"
         success={t('ops.asignaciones.created')}
         action={async (fd) => {
           await createWorkAssignment(fd);
@@ -520,6 +628,9 @@ function CreateModal({
         </Field>
         <Field label={t('ops.asignaciones.addSubtask')} hint={t('ops.asignaciones.subtasksPlaceholder')}>
           <Textarea name="subtasks" rows={3} size="sm" placeholder={t('ops.asignaciones.subtasksPlaceholder')} />
+        </Field>
+        <Field label={t('ops.asignaciones.attachments')} hint={t('ops.asignaciones.attachmentsHint')}>
+          <WorkAttachmentField />
         </Field>
         <Button type="submit" size="sm">
           {t('ops.asignaciones.create')}
@@ -597,7 +708,9 @@ function DetailModal({
 }) {
   const { t } = useTranslation();
   const [comment, setComment] = useState('');
-  const canEdit = canManage || assignment.assignee_id === currentUserId;
+  const [newSubtask, setNewSubtask] = useState('');
+  const [addingSubtask, setAddingSubtask] = useState(false);
+  const canEdit = canMutateWorkAssignment(currentUserId, assignment.assignee_id, canManage);
   const events = [...assignment.stage_events].sort(
     (a, b) => Date.parse(a.entered_at) - Date.parse(b.entered_at)
   );
@@ -691,7 +804,7 @@ function DetailModal({
           </ToastForm>
         ) : (
           <div className="space-y-2 text-sm text-zinc-700">
-            <p>{assignment.description || '—'}</p>
+            <p className="break-words">{assignment.description || '—'}</p>
             {assignment.process_href ? (
               <Link href={assignment.process_href} className="font-medium text-codiva-primary hover:underline">
                 {assignment.process_label}
@@ -699,6 +812,26 @@ function DetailModal({
             ) : null}
           </div>
         )}
+
+        <section>
+          <h3 className="mb-2 text-sm font-semibold text-zinc-900">{t('ops.asignaciones.attachments')}</h3>
+          <WorkFileList files={assignment.files} canEdit={canEdit} onRefresh={onRefresh} />
+          {canEdit ? (
+            <ToastForm
+              className="mt-3 space-y-2"
+              success={t('ops.asignaciones.attachmentsAdded')}
+              action={async (fd) => {
+                await addWorkAssignmentFiles(assignment.id, fd);
+                onRefresh();
+              }}
+            >
+              <WorkAttachmentField />
+              <Button type="submit" size="xs" variant="secondary">
+                {t('ops.asignaciones.attach')}
+              </Button>
+            </ToastForm>
+          ) : null}
+        </section>
 
         <section>
           <h3 className="mb-2 text-sm font-semibold text-zinc-900">{t('ops.asignaciones.timeline')}</h3>
@@ -741,11 +874,42 @@ function DetailModal({
                     disabled={!canEdit}
                     onChange={() => canEdit && toggleWorkSubtask(sub.id).then(onRefresh)}
                   />
-                  <span className={sub.status === 'done' ? 'text-zinc-500 line-through' : ''}>{sub.title}</span>
+                  <span className={`min-w-0 break-words ${sub.status === 'done' ? 'text-zinc-500 line-through' : ''}`}>{sub.title}</span>
                 </label>
               </li>
             ))}
           </ul>
+          {canEdit ? (
+            <form
+              className="mt-2 flex min-w-0 gap-1"
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const title = newSubtask.trim();
+                if (!title || addingSubtask) return;
+                setAddingSubtask(true);
+                try {
+                  await createWorkSubtask(assignment.id, title);
+                  setNewSubtask('');
+                  onRefresh();
+                } catch (err) {
+                  toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
+                } finally {
+                  setAddingSubtask(false);
+                }
+              }}
+            >
+              <Input
+                size="sm"
+                className="min-w-0 w-0 flex-1"
+                value={newSubtask}
+                onChange={(event) => setNewSubtask(event.target.value)}
+                placeholder={t('ops.asignaciones.subtaskPlaceholder')}
+              />
+              <Button type="submit" size="xs" variant="secondary" className="shrink-0" disabled={addingSubtask}>
+                {t('ops.asignaciones.addSubtask')}
+              </Button>
+            </form>
+          ) : null}
         </section>
 
         <section>

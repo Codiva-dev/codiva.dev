@@ -1879,7 +1879,17 @@
       "noEvents": "Sin movimientos todavía.",
       "fromTo": "{{from}} → {{to}}",
       "createdAt": "Creada",
-      "progress": "Avance"
+      "progress": "Avance",
+      "attachments": "Archivos e imágenes",
+      "attachmentsHint": "Opcional. Hasta 6 archivos, 4 MB cada uno: imágenes, PDF u Office.",
+      "attachmentsAdded": "Archivos agregados",
+      "attachmentCount": "{{count}} archivos",
+      "attach": "Adjuntar",
+      "noAttachments": "Todavía no hay archivos.",
+      "fileRequired": "Elige al menos un archivo.",
+      "fileTooBig": "Cada archivo puede pesar hasta 4 MB.",
+      "tooManyFiles": "Máximo 6 archivos por asignación.",
+      "fileTypeRejected": "Ese tipo de archivo no se puede adjuntar."
     },
     "pendientes": {
       "title": "Pendientes",
