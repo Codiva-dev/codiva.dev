@@ -666,7 +666,7 @@
       "dashboard_finance": "Finanzas en el dashboard",
       "settings_profile": "Ver y cambiar su perfil",
       "assignments": "Ver tablero de asignaciones",
-      "assignments_manage": "Crear y reasignar trabajo interno"
+      "assignments_manage": "Crear, reasignar y cambiar el alcance del trabajo interno"
     },
     "settings": {
       "title": "Configuración",
@@ -1844,7 +1844,8 @@
       "loadFailed": "No se pudieron cargar las asignaciones.",
       "statusFailed": "No se pudo mover la tarjeta.",
       "notFound": "Asignación no encontrada.",
-      "forbiddenEdit": "Solo puedes editar las asignaciones que te tocaron.",
+      "forbiddenEdit": "Solo puedes avanzar las asignaciones que te tocaron.",
+      "forbiddenManage": "Solo quien administra el tablero puede cambiar el alcance. Pide el cambio.",
       "titleRequired": "El título es obligatorio.",
       "processRequired": "Elige el lead, proyecto, cotización o ticket.",
       "openSubtasks": "Cierra las subtareas pendientes antes de marcarla como hecha.",
@@ -1860,6 +1861,20 @@
       "dwell": "En esta columna",
       "subtaskCount": "{{done}} de {{total}}",
       "addSubtask": "Agregar subtarea",
+      "editSubtasks": "Editar",
+      "cancelEdit": "Cancelar",
+      "requestEdit": "Pedir cambio",
+      "requestSent": "Pedido enviado. Quien administra el tablero lo revisa.",
+      "requestPending": "{{name}} pide cambiar las subtareas",
+      "requestPendingBadge": "Pedido de cambio pendiente",
+      "applyRequest": "Aplicar",
+      "dismissRequest": "Descartar",
+      "subtasksSaved": "Subtareas actualizadas",
+      "editRequested": "Pedido enviado",
+      "requestApplied": "Pedido aplicado",
+      "requestDismissed": "Pedido descartado",
+      "requestClosed": "Ese pedido ya no está abierto.",
+      "subtasksTooLong": "El listado de subtareas es demasiado largo.",
       "subtaskPlaceholder": "Nueva subtarea",
       "titlePlaceholder": "Qué hay que hacer",
       "descriptionPlaceholder": "Contexto, criterio de listo, dependencias…",
@@ -1893,14 +1908,17 @@
     },
     "pendientes": {
       "title": "Pendientes",
-      "description": "Lo que te toca cerrar y las menciones que todavía no leíste.",
+      "description": "Lo que te toca cerrar, las menciones sin leer y, si administras el tablero, los pedidos de cambio.",
       "mine": "Tus asignaciones abiertas",
       "mineEmpty": "No tienes asignaciones abiertas.",
       "mentions": "Menciones sin leer",
       "mentionsEmpty": "Nadie te mencionó, o ya las leíste todas.",
       "mentionedBy": "{{name}} te mencionó",
       "markRead": "Marcar leída",
-      "mentionRead": "Mención marcada como leída"
+      "mentionRead": "Mención marcada como leída",
+      "editRequests": "Pedidos de cambio",
+      "editRequestsEmpty": "No hay pedidos de cambio de subtareas.",
+      "editRequestedBy": "{{name}} pide cambiar las subtareas"
     }
   },
   "auth": {

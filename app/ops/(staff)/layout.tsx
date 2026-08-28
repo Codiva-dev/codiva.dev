@@ -9,7 +9,9 @@ export default async function StaffLayout({ children }: { children: React.ReactN
   const { supabase, staff } = await requireStaff();
   const cookieStore = await cookies();
   const sidebarOpen = isOpsSidebarOpenCookie(cookieStore.get(OPS_SIDEBAR_OPEN_COOKIE)?.value);
-  const pendingCount = can(staff, 'assignments') ? await countWorkPending(supabase, staff.id) : 0;
+  const pendingCount = can(staff, 'assignments')
+    ? await countWorkPending(supabase, staff.id, can(staff, 'assignments_manage'))
+    : 0;
 
   return (
     <OpsStaffShell

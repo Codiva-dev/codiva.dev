@@ -666,7 +666,7 @@
       "dashboard_finance": "Dashboard finance",
       "settings_profile": "View and update their profile",
       "assignments": "View the assignments board",
-      "assignments_manage": "Create and reassign internal work"
+      "assignments_manage": "Create, reassign, and change the scope of internal work"
     },
     "settings": {
       "title": "Settings",
@@ -1848,7 +1848,8 @@
       "loadFailed": "Could not load assignments.",
       "statusFailed": "Could not move the card.",
       "notFound": "Assignment not found.",
-      "forbiddenEdit": "You can only edit assignments assigned to you.",
+      "forbiddenEdit": "You can only update assignments assigned to you.",
+      "forbiddenManage": "Only board admins can change the scope. Request the change.",
       "titleRequired": "Title is required.",
       "processRequired": "Choose the lead, project, quote, or ticket.",
       "openSubtasks": "Close open subtasks before marking it done.",
@@ -1864,6 +1865,20 @@
       "dwell": "In this column",
       "subtaskCount": "{{done}} of {{total}}",
       "addSubtask": "Add subtask",
+      "editSubtasks": "Edit",
+      "cancelEdit": "Cancel",
+      "requestEdit": "Request change",
+      "requestSent": "Request sent. A board admin will review it.",
+      "requestPending": "{{name}} asked to change the subtasks",
+      "requestPendingBadge": "Pending change request",
+      "applyRequest": "Apply",
+      "dismissRequest": "Dismiss",
+      "subtasksSaved": "Subtasks updated",
+      "editRequested": "Request sent",
+      "requestApplied": "Request applied",
+      "requestDismissed": "Request dismissed",
+      "requestClosed": "That request is no longer open.",
+      "subtasksTooLong": "The subtask list is too long.",
       "subtaskPlaceholder": "New subtask",
       "titlePlaceholder": "What needs to happen",
       "descriptionPlaceholder": "Context, done criteria, dependencies…",
@@ -1897,14 +1912,17 @@
     },
     "pendientes": {
       "title": "Pending",
-      "description": "Work still on you, and mentions you have not read yet.",
+      "description": "Work still on you, unread mentions, and — if you administer the board — subtask change requests.",
       "mine": "Your open assignments",
       "mineEmpty": "You have no open assignments.",
       "mentions": "Unread mentions",
       "mentionsEmpty": "No unread mentions.",
       "mentionedBy": "{{name}} mentioned you",
       "markRead": "Mark as read",
-      "mentionRead": "Mention marked as read"
+      "mentionRead": "Mention marked as read",
+      "editRequests": "Change requests",
+      "editRequestsEmpty": "No subtask change requests.",
+      "editRequestedBy": "{{name}} asked to change the subtasks"
     }
   },
   "auth": {

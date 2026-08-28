@@ -3,6 +3,7 @@ import OpsPageHeader from '@/components/ops/OpsPageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import MarkMentionReadButton from '@/components/ops/work-board/MarkMentionReadButton';
 import { requireCapability } from '@/lib/ops/auth';
+import { can } from '@/lib/ops/permissions';
 import { getT } from '@/i18n/locale';
 import { labelsFor } from '@/lib/ops/labels';
 import { listWorkPending } from '@/lib/ops/work-pending';
@@ -11,7 +12,8 @@ export default async function PendientesPage() {
   const { supabase, staff } = await requireCapability('assignments');
   const t = await getT();
   const { WORK_STATUS_LABELS, WORK_STREAM_LABELS, formatDate } = labelsFor(t.locale);
-  const { assignments, mentions } = await listWorkPending(supabase, staff.id);
+  const canManage = can(staff, 'assignments_manage');
+  const { assignments, mentions, editRequests } = await listWorkPending(supabase, staff.id, canManage);
 
   return (
     <div>
@@ -77,6 +79,34 @@ export default async function PendientesPage() {
           <EmptyState>{t('ops.pendientes.mentionsEmpty')}</EmptyState>
         )}
       </section>
+
+      {canManage ? (
+        <section className="mt-10">
+          <h2 className="mb-3 text-sm font-semibold text-zinc-900">{t('ops.pendientes.editRequests')}</h2>
+          {editRequests.length ? (
+            <ul className="space-y-2">
+              {editRequests.map((row) => (
+                <li key={row.id}>
+                  <Link
+                    href={`/asignaciones?id=${row.assignment_id}`}
+                    className="block rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 no-underline hover:border-codiva-primary/40"
+                  >
+                    <p className="font-medium text-zinc-900">{row.assignment_title}</p>
+                    <p className="mt-1 text-sm text-zinc-600">
+                      {t('ops.pendientes.editRequestedBy', { name: row.requested_by_name })}
+                    </p>
+                    {row.payload ? (
+                      <p className="mt-1 line-clamp-3 whitespace-pre-wrap text-sm text-zinc-500">{row.payload}</p>
+                    ) : null}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState>{t('ops.pendientes.editRequestsEmpty')}</EmptyState>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }

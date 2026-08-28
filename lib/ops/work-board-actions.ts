@@ -14,6 +14,7 @@ import { scanUploadedBytes } from '@/lib/ops/malware-scan';
 import { deleteOpsFile, uploadOpsFile } from '@/lib/ops/storage';
 import {
   canMutateWorkAssignment,
+  canRequestWorkSubtaskEdit,
   isWorkProcessKind,
   isWorkStatus,
   isWorkStream,
@@ -21,6 +22,8 @@ import {
   mentionDisplayName,
   mentionPlainText,
   parentCannotMarkDoneWithOpenSubtasks,
+  parseSubtaskLines,
+  planWorkSubtaskRewrite,
   rollupProgressFromSubtasks,
   WORK_FILE_MAX_BYTES,
   WORK_FILE_MAX_COUNT,
@@ -52,6 +55,60 @@ async function assertCanMutate(assignment: AssignmentRow, staffId: string, manag
   if (canMutateWorkAssignment(staffId, assignment.assignee_id, manage)) return;
   const t = await getT();
   throw new Error(t('ops.asignaciones.forbiddenEdit'));
+}
+
+async function rewriteSubtaskLines(
+  supabase: Awaited<ReturnType<typeof assertCapability>>['supabase'],
+  assignmentId: string,
+  text: string
+) {
+  const { data: current, error } = await supabase
+    .from('work_assignment_subtasks')
+    .select('id, title, sort_order')
+    .eq('assignment_id', assignmentId)
+    .order('sort_order');
+  if (error) throw await throwDb(error);
+  const plan = planWorkSubtaskRewrite(current ?? [], parseSubtaskLines(text));
+  for (const row of plan.updates) {
+    const { error: upd } = await supabase
+      .from('work_assignment_subtasks')
+      .update({ title: row.title, sort_order: row.sort_order })
+      .eq('id', row.id);
+    if (upd) throw await throwDb(upd);
+  }
+  if (plan.inserts.length) {
+    const { error: ins } = await supabase.from('work_assignment_subtasks').insert(
+      plan.inserts.map((row) => ({
+        assignment_id: assignmentId,
+        title: row.title,
+        sort_order: row.sort_order,
+      }))
+    );
+    if (ins) throw await throwDb(ins);
+  }
+  if (plan.deleteIds.length) {
+    const { error: del } = await supabase.from('work_assignment_subtasks').delete().in('id', plan.deleteIds);
+    if (del) throw await throwDb(del);
+  }
+  await syncProgress(supabase, assignmentId);
+}
+
+async function closeOpenEditRequest(
+  supabase: Awaited<ReturnType<typeof assertCapability>>['supabase'],
+  assignmentId: string,
+  staffId: string,
+  status: 'applied' | 'dismissed'
+) {
+  const { error } = await supabase
+    .from('work_assignment_edit_requests')
+    .update({
+      status,
+      resolved_at: new Date().toISOString(),
+      resolved_by: staffId,
+    })
+    .eq('assignment_id', assignmentId)
+    .eq('status', 'open');
+  if (error) throw await throwDb(error);
 }
 
 function filesFromForm(formData: FormData) {
@@ -182,11 +239,7 @@ export async function createWorkAssignment(formData: FormData) {
     throw new Error(t('ops.asignaciones.processRequired'));
   }
 
-  const subtaskLines = String(formData.get('subtasks') || '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(0, 40);
+  const subtaskLines = parseSubtaskLines(String(formData.get('subtasks') || ''));
 
   const { data: row, error } = await access.supabase
     .from('work_assignments')
@@ -247,9 +300,8 @@ export async function createWorkAssignment(formData: FormData) {
 }
 
 export async function updateWorkAssignment(assignmentId: string, formData: FormData) {
-  const access = await assertAssignmentsAccess();
+  const access = await assertCapability('assignments_manage');
   const t = await getT();
-  const manage = can(access.staff, 'assignments_manage');
 
   const { data: current, error: loadErr } = await access.supabase
     .from('work_assignments')
@@ -257,7 +309,6 @@ export async function updateWorkAssignment(assignmentId: string, formData: FormD
     .eq('id', assignmentId)
     .single();
   if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
-  await assertCanMutate(current, access.staff.id, manage);
 
   const title = String(formData.get('title') || '').trim();
   if (!title) throw new Error(t('ops.asignaciones.titleRequired'));
@@ -277,10 +328,8 @@ export async function updateWorkAssignment(assignmentId: string, formData: FormD
     due_at: dueAt,
     process_kind,
     process_id,
+    assignee_id: String(formData.get('assigneeId') || '').trim() || null,
   };
-  if (manage) {
-    patch.assignee_id = String(formData.get('assigneeId') || '').trim() || null;
-  }
 
   const { error } = await access.supabase.from('work_assignments').update(patch).eq('id', assignmentId);
   if (error) throw await throwDb(error);
@@ -351,9 +400,8 @@ export async function updateWorkAssignmentStatus(
 }
 
 export async function createWorkSubtask(assignmentId: string, title: string) {
-  const access = await assertAssignmentsAccess();
+  const access = await assertCapability('assignments_manage');
   const t = await getT();
-  const manage = can(access.staff, 'assignments_manage');
   const trimmed = title.trim();
   if (!trimmed) throw new Error(t('ops.asignaciones.subtaskRequired'));
 
@@ -363,7 +411,6 @@ export async function createWorkSubtask(assignmentId: string, title: string) {
     .eq('id', assignmentId)
     .single();
   if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
-  await assertCanMutate(current, access.staff.id, manage);
 
   const { data: last } = await access.supabase
     .from('work_assignment_subtasks')
@@ -383,34 +430,192 @@ export async function createWorkSubtask(assignmentId: string, title: string) {
   revalidateBoard();
 }
 
-export async function toggleWorkSubtask(subtaskId: string) {
+export async function replaceWorkSubtasks(assignmentId: string, text: string) {
+  const access = await assertCapability('assignments_manage');
+  const t = await getT();
+  if (String(text || '').length > 8000) throw new Error(t('ops.asignaciones.subtasksTooLong'));
+
+  const { data: current, error: loadErr } = await access.supabase
+    .from('work_assignments')
+    .select('id, title, status, assignee_id')
+    .eq('id', assignmentId)
+    .single();
+  if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
+
+  await rewriteSubtaskLines(access.supabase, assignmentId, text);
+  await closeOpenEditRequest(access.supabase, assignmentId, access.staff.id, 'dismissed');
+  await logActivity({
+    entityType: 'work_assignment',
+    entityId: assignmentId,
+    action: 'subtasks_replaced',
+    metadata: { lines: parseSubtaskLines(text).length },
+    actorId: access.staff.id,
+  });
+  revalidateBoard();
+}
+
+export async function requestWorkSubtaskEdit(assignmentId: string, text: string) {
   const access = await assertAssignmentsAccess();
   const t = await getT();
   const manage = can(access.staff, 'assignments_manage');
+  const payload = String(text || '');
+  if (payload.length > 8000) throw new Error(t('ops.asignaciones.subtasksTooLong'));
+
+  const { data: current, error: loadErr } = await access.supabase
+    .from('work_assignments')
+    .select('id, title, status, assignee_id')
+    .eq('id', assignmentId)
+    .single();
+  if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
+  if (!canRequestWorkSubtaskEdit(access.staff.id, current.assignee_id, manage)) {
+    throw new Error(t('ops.asignaciones.forbiddenManage'));
+  }
+
+  const { data: existing, error: existingErr } = await access.supabase
+    .from('work_assignment_edit_requests')
+    .select('id')
+    .eq('assignment_id', assignmentId)
+    .eq('status', 'open')
+    .maybeSingle();
+  if (existingErr) throw await throwDb(existingErr);
+
+  if (existing) {
+    const { error } = await access.supabase
+      .from('work_assignment_edit_requests')
+      .update({ payload })
+      .eq('id', existing.id);
+    if (error) throw await throwDb(error);
+  } else {
+    const { error } = await access.supabase.from('work_assignment_edit_requests').insert({
+      assignment_id: assignmentId,
+      requested_by: access.staff.id,
+      payload,
+      status: 'open',
+    });
+    if (error) throw await throwDb(error);
+    void notifyWorkEditRequest({
+      requesterId: access.staff.id,
+      requesterName: access.staff.full_name || 'Staff',
+      assignmentId,
+      title: current.title,
+      payload,
+    });
+  }
+
+  await logActivity({
+    entityType: 'work_assignment',
+    entityId: assignmentId,
+    action: 'subtask_edit_requested',
+    metadata: { lines: parseSubtaskLines(payload).length },
+    actorId: access.staff.id,
+  });
+  revalidateBoard();
+}
+
+export async function applyWorkSubtaskEditRequest(requestId: string) {
+  const access = await assertCapability('assignments_manage');
+  const t = await getT();
+
+  const { data: request, error: loadErr } = await access.supabase
+    .from('work_assignment_edit_requests')
+    .select('id, assignment_id, payload, status')
+    .eq('id', requestId)
+    .single();
+  if (loadErr || !request) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
+  if (request.status !== 'open') throw new Error(t('ops.asignaciones.requestClosed'));
+
+  await rewriteSubtaskLines(access.supabase, request.assignment_id, request.payload);
+  const { error } = await access.supabase
+    .from('work_assignment_edit_requests')
+    .update({
+      status: 'applied',
+      resolved_at: new Date().toISOString(),
+      resolved_by: access.staff.id,
+    })
+    .eq('id', request.id)
+    .eq('status', 'open');
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'work_assignment',
+    entityId: request.assignment_id,
+    action: 'subtask_edit_applied',
+    metadata: { requestId: request.id },
+    actorId: access.staff.id,
+  });
+  revalidateBoard();
+}
+
+export async function dismissWorkSubtaskEditRequest(requestId: string) {
+  const access = await assertCapability('assignments_manage');
+  const t = await getT();
+
+  const { data: request, error: loadErr } = await access.supabase
+    .from('work_assignment_edit_requests')
+    .select('id, assignment_id, status')
+    .eq('id', requestId)
+    .single();
+  if (loadErr || !request) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
+  if (request.status !== 'open') throw new Error(t('ops.asignaciones.requestClosed'));
+
+  const { error } = await access.supabase
+    .from('work_assignment_edit_requests')
+    .update({
+      status: 'dismissed',
+      resolved_at: new Date().toISOString(),
+      resolved_by: access.staff.id,
+    })
+    .eq('id', request.id)
+    .eq('status', 'open');
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'work_assignment',
+    entityId: request.assignment_id,
+    action: 'subtask_edit_dismissed',
+    metadata: { requestId: request.id },
+    actorId: access.staff.id,
+  });
+  revalidateBoard();
+}
+
+export async function toggleWorkSubtask(subtaskId: string, nextStatus: 'open' | 'done') {
+  const access = await assertAssignmentsAccess();
+  const manage = can(access.staff, 'assignments_manage');
+  if (nextStatus !== 'open' && nextStatus !== 'done') {
+    const t = await getT();
+    throw new Error(t('ops.asignaciones.notFound'));
+  }
 
   const { data: sub, error: loadErr } = await access.supabase
     .from('work_assignment_subtasks')
     .select('id, assignment_id, status')
     .eq('id', subtaskId)
     .single();
-  if (loadErr || !sub) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
+  if (loadErr || !sub) {
+    const t = await getT();
+    throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
+  }
 
   const { data: current, error: asgErr } = await access.supabase
     .from('work_assignments')
     .select('id, title, status, assignee_id')
     .eq('id', sub.assignment_id)
     .single();
-  if (asgErr || !current) throw await throwDb(asgErr, t('ops.asignaciones.notFound'));
+  if (asgErr || !current) {
+    const t = await getT();
+    throw await throwDb(asgErr, t('ops.asignaciones.notFound'));
+  }
   await assertCanMutate(current, access.staff.id, manage);
 
-  const next = sub.status === 'done' ? 'open' : 'done';
-  const { error } = await access.supabase
-    .from('work_assignment_subtasks')
-    .update({ status: next })
-    .eq('id', subtaskId);
-  if (error) throw await throwDb(error);
-  await syncProgress(access.supabase, sub.assignment_id);
-  revalidateBoard();
+  if (sub.status !== nextStatus) {
+    const { error } = await access.supabase
+      .from('work_assignment_subtasks')
+      .update({ status: nextStatus })
+      .eq('id', subtaskId);
+    if (error) throw await throwDb(error);
+    await syncProgress(access.supabase, sub.assignment_id);
+  }
 }
 
 export async function addWorkAssignmentComment(assignmentId: string, body: string) {
@@ -464,6 +669,53 @@ export async function addWorkAssignmentComment(assignmentId: string, body: strin
     actorId: access.staff.id,
   });
   revalidateBoard();
+}
+
+async function notifyWorkEditRequest({
+  requesterId,
+  requesterName,
+  assignmentId,
+  title,
+  payload,
+}: {
+  requesterId: string;
+  requesterName: string;
+  assignmentId: string;
+  title: string;
+  payload: string;
+}) {
+  try {
+    const admin = createAdminClient();
+    const href = `${opsBaseUrl()}/asignaciones?id=${assignmentId}`;
+    const preview = parseSubtaskLines(payload).slice(0, 8).join('\n');
+    const { data: managers } = await admin
+      .from('staff_profiles')
+      .select('id, full_name, role, capabilities, active')
+      .eq('active', true);
+    for (const profile of managers ?? []) {
+      if (profile.id === requesterId) continue;
+      if (!can(profile, 'assignments_manage')) continue;
+      const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
+      const email = authUser.user?.email;
+      if (!email) continue;
+      const name = mentionDisplayName(profile);
+      await sendClientEmail({
+        to: email,
+        from: 'ops',
+        subject: `${requesterName} pide cambiar subtareas en ${title}`,
+        html: templateStaffAlert(`${requesterName} pide un cambio`, [
+          `Hola ${name},`,
+          `${requesterName} pidió editar las subtareas de «${title}».`,
+          preview || '(lista vacía)',
+        ], {
+          ctaLabel: 'Abrir tablero',
+          ctaHref: href,
+        }),
+      });
+    }
+  } catch (err) {
+    console.error('work assignment edit request notify:', err);
+  }
 }
 
 async function notifyMentionedStaff({

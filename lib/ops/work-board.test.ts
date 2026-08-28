@@ -3,6 +3,7 @@ import {
   activeMentionQuery,
   buildMentionToken,
   canMutateWorkAssignment,
+  canRequestWorkSubtaskEdit,
   clampWorkProgress,
   dwellMsSince,
   filterMentionableStaff,
@@ -10,7 +11,10 @@ import {
   mentionedStaffIds,
   mentionPlainText,
   parentCannotMarkDoneWithOpenSubtasks,
+  parseSubtaskLines,
   patchWorkAssignmentStatus,
+  patchWorkSubtaskStatus,
+  planWorkSubtaskRewrite,
   processHref,
   rollupProgressFromSubtasks,
   splitMentionTokens,
@@ -35,11 +39,14 @@ describe('work-board progress', () => {
     expect(parentCannotMarkDoneWithOpenSubtasks([{ status: 'open' }, { status: 'done' }])).toBe(true);
   });
 
-  it('lets the assignee edit without manage', () => {
+  it('lets the assignee act without manage, but not rewrite the list', () => {
     expect(canMutateWorkAssignment('u1', 'u1', false)).toBe(true);
     expect(canMutateWorkAssignment('u1', 'u2', false)).toBe(false);
     expect(canMutateWorkAssignment('u1', null, false)).toBe(false);
     expect(canMutateWorkAssignment('u1', 'u2', true)).toBe(true);
+    expect(canRequestWorkSubtaskEdit('u1', 'u1', false)).toBe(true);
+    expect(canRequestWorkSubtaskEdit('u1', 'u1', true)).toBe(false);
+    expect(canRequestWorkSubtaskEdit('u1', 'u2', false)).toBe(false);
   });
 
   it('classifies work attachments', () => {
@@ -143,6 +150,7 @@ describe('work-board process links', () => {
           stage_events: [],
           comments: [],
           files: [],
+          subtask_edit_request: null,
         },
       ],
       'a',
@@ -151,5 +159,66 @@ describe('work-board process links', () => {
     );
     expect(next[0].status).toBe('build');
     expect(next[0].status_entered_at).toBe('2026-08-27T00:00:00.000Z');
+  });
+
+  it('patches a subtask and rolls up progress locally', () => {
+    const next = patchWorkSubtaskStatus(
+      [
+        {
+          id: 'a',
+          title: 't',
+          description: '',
+          stream: 'delivery',
+          status: 'backlog',
+          assignee_id: null,
+          assignee_name: '',
+          due_at: null,
+          progress_pct: 0,
+          process_kind: 'none',
+          process_id: null,
+          process_label: '',
+          process_href: null,
+          status_entered_at: '2026-01-01T00:00:00.000Z',
+          created_at: '2026-01-01T00:00:00.000Z',
+          created_by: null,
+          subtasks: [
+            { id: 's1', assignment_id: 'a', title: 'one', status: 'open', sort_order: 0, due_at: null },
+            { id: 's2', assignment_id: 'a', title: 'two', status: 'open', sort_order: 1, due_at: null },
+          ],
+          stage_events: [],
+          comments: [],
+          files: [],
+          subtask_edit_request: null,
+        },
+      ],
+      's1',
+      'done'
+    );
+    expect(next[0].subtasks[0].status).toBe('done');
+    expect(next[0].progress_pct).toBe(50);
+  });
+
+  it('rewrites subtask lines by index and keeps existing rows', () => {
+    expect(parseSubtaskLines('  a \n\nb\n')).toEqual(['a', 'b']);
+    const plan = planWorkSubtaskRewrite(
+      [
+        { id: '1', title: 'a', sort_order: 0 },
+        { id: '2', title: 'b', sort_order: 1 },
+        { id: '3', title: 'c', sort_order: 2 },
+      ],
+      ['a edited', 'b']
+    );
+    expect(plan.updates).toEqual([
+      { id: '1', title: 'a edited', sort_order: 0 },
+      { id: '2', title: 'b', sort_order: 1 },
+    ]);
+    expect(plan.inserts).toEqual([]);
+    expect(plan.deleteIds).toEqual(['3']);
+    expect(
+      planWorkSubtaskRewrite([{ id: '1', title: 'a', sort_order: 0 }], ['a', 'b', 'c']).inserts
+    ).toEqual([
+      { title: 'b', sort_order: 1 },
+      { title: 'c', sort_order: 2 },
+    ]);
   });
 });

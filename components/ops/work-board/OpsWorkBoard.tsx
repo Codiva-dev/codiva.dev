@@ -17,7 +17,6 @@ import {
   addWorkAssignmentComment,
   addWorkAssignmentFiles,
   createWorkAssignment,
-  createWorkSubtask,
   deleteWorkAssignmentFile,
   toggleWorkSubtask,
   updateWorkAssignment,
@@ -34,6 +33,7 @@ import {
   formatDwellDuration,
   isWorkStatus,
   patchWorkAssignmentStatus,
+  patchWorkSubtaskStatus,
   splitMentionTokens,
   stageEventDurationMs,
   workAssignmentPreview,
@@ -47,6 +47,7 @@ import {
 } from '@/lib/ops/work-board';
 import OpsMentionComposer, { type MentionStaff } from './OpsMentionComposer';
 import WorkAttachmentField from './WorkAttachmentField';
+import WorkSubtaskEditor from './WorkSubtaskEditor';
 import { isWorkCardInteractiveTarget, useWorkBoardDrag } from './useWorkBoardDrag';
 
 export type ProcessOption = {
@@ -157,19 +158,20 @@ export default function OpsWorkBoard({
   });
 
   async function onToggleSub(id: string) {
+    let from: 'open' | 'done' | null = null;
+    let next: 'open' | 'done' | null = null;
+    setAssignments((prev) => {
+      const current = prev.flatMap((row) => row.subtasks).find((sub) => sub.id === id);
+      if (!current) return prev;
+      from = current.status;
+      next = current.status === 'done' ? 'open' : 'done';
+      return patchWorkSubtaskStatus(prev, id, next);
+    });
+    if (!from || !next) return;
     try {
-      await toggleWorkSubtask(id);
-      router.refresh();
+      await toggleWorkSubtask(id, next);
     } catch (err) {
-      toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
-    }
-  }
-
-  async function onAddSub(assignmentId: string, title: string) {
-    try {
-      await createWorkSubtask(assignmentId, title);
-      router.refresh();
-    } catch (err) {
+      setAssignments((prev) => patchWorkSubtaskStatus(prev, id, from as 'open' | 'done'));
       toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
     }
   }
@@ -243,12 +245,14 @@ export default function OpsWorkBoard({
                       streamLabel={streamLabels[row.stream]}
                       compact
                       canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
+                      canManage={canManage}
+                      currentUserId={currentUserId}
                       isMine={canMutateWorkAssignment(currentUserId, row.assignee_id, false)}
                       draggable={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
                       isDragging={draggingId === row.id}
                       onOpen={() => setSelectedId(row.id)}
                       onToggleSubtask={onToggleSub}
-                      onAddSubtask={onAddSub}
+                      onRefresh={() => router.refresh()}
                       onPointerDownCard={onCardPointerDown}
                       consumeClickIfDragged={consumeClickIfDragged}
                     />
@@ -278,11 +282,13 @@ export default function OpsWorkBoard({
                         streamLabel={streamLabels[row.stream]}
                         showStatus
                         canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
+                        canManage={canManage}
+                        currentUserId={currentUserId}
                         isMine={canMutateWorkAssignment(currentUserId, row.assignee_id, false)}
                         statusLabel={statusLabels[row.status]}
                         onOpen={() => setSelectedId(row.id)}
                         onToggleSubtask={onToggleSub}
-                        onAddSubtask={onAddSub}
+                        onRefresh={() => router.refresh()}
                       />
                     ))}
                   </div>
@@ -317,6 +323,7 @@ export default function OpsWorkBoard({
           streamLabels={streamLabels}
           processLabels={processLabels}
           onRefresh={() => router.refresh()}
+          onToggleSubtask={onToggleSub}
         />
       ) : null}
     </div>
@@ -330,13 +337,15 @@ function WorkCard({
   statusLabel,
   compact = false,
   canEdit = false,
+  canManage = false,
+  currentUserId = '',
   isMine = false,
   draggable = false,
   showStatus = false,
   isDragging = false,
   onOpen,
   onToggleSubtask,
-  onAddSubtask,
+  onRefresh,
   onPointerDownCard,
   consumeClickIfDragged,
 }: {
@@ -346,25 +355,24 @@ function WorkCard({
   statusLabel?: string;
   compact?: boolean;
   canEdit?: boolean;
+  canManage?: boolean;
+  currentUserId?: string;
   isMine?: boolean;
   draggable?: boolean;
   showStatus?: boolean;
   isDragging?: boolean;
   onOpen: () => void;
   onToggleSubtask: (id: string) => void;
-  onAddSubtask: (assignmentId: string, title: string) => Promise<void>;
+  onRefresh: () => void;
   onPointerDownCard?: (event: React.PointerEvent<HTMLElement>, assignment: WorkAssignment) => void;
   consumeClickIfDragged?: () => boolean;
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(!compact || isMine);
-  const [newSubtask, setNewSubtask] = useState('');
-  const [adding, setAdding] = useState(false);
   const tone = workColorTone(assignment.stream);
   const preview = workAssignmentPreview(assignment, compact ? 110 : 220);
   const counts = workSubtaskCounts(assignment);
   const subs = assignment.subtasks;
-  const visibleSubs = expanded ? subs : subs.slice(0, 2);
   const dwell = formatDwellDuration(dwellMsSince(assignment.status_entered_at), locale);
   const progress = clampWorkProgress(assignment.progress_pct);
   const images = assignment.files.filter((file) => file.kind === 'image').slice(0, 3);
@@ -373,20 +381,6 @@ function WorkCard({
     if (isWorkCardInteractiveTarget(event.target)) return;
     if (consumeClickIfDragged?.()) return;
     onOpen();
-  }
-
-  async function submitSubtask(event: React.FormEvent) {
-    event.preventDefault();
-    event.stopPropagation();
-    const title = newSubtask.trim();
-    if (!title || adding) return;
-    setAdding(true);
-    try {
-      await onAddSubtask(assignment.id, title);
-      setNewSubtask('');
-    } finally {
-      setAdding(false);
-    }
   }
 
   return (
@@ -457,25 +451,17 @@ function WorkCard({
           {t('ops.asignaciones.attachmentCount', { count: assignment.files.length })}
         </p>
       ) : null}
-      {visibleSubs.length ? (
-        <ul className="mt-3 space-y-1">
-          {visibleSubs.map((sub) => (
-            <li key={sub.id}>
-              <label className="flex items-start gap-2 text-sm text-zinc-800" onClick={(event) => event.stopPropagation()}>
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={sub.status === 'done'}
-                  disabled={!canEdit}
-                  onChange={() => canEdit && onToggleSubtask(sub.id)}
-                />
-                <span className={`min-w-0 break-words ${sub.status === 'done' ? 'text-zinc-500 line-through' : ''}`}>{sub.title}</span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {!expanded && (subs.length > visibleSubs.length || canEdit) ? (
+      <WorkSubtaskEditor
+        assignment={assignment}
+        canAct={canEdit}
+        canManage={canManage}
+        currentUserId={currentUserId}
+        showEditor={expanded}
+        visibleLimit={expanded ? undefined : 2}
+        onToggle={onToggleSubtask}
+        onRefresh={onRefresh}
+      />
+      {!expanded && (subs.length > 2 || canEdit || canManage) ? (
         <button
           type="button"
           className="mt-1 text-xs font-medium text-zinc-600 underline-offset-2 hover:underline"
@@ -484,24 +470,8 @@ function WorkCard({
             setExpanded(true);
           }}
         >
-          {subs.length > visibleSubs.length
-            ? `+${subs.length - visibleSubs.length}`
-            : t('ops.asignaciones.addSubtask')}
+          {subs.length > 2 ? `+${subs.length - 2}` : t('ops.asignaciones.editSubtasks')}
         </button>
-      ) : null}
-      {expanded && canEdit ? (
-        <form onSubmit={submitSubtask} className="mt-2 flex min-w-0 gap-1" onClick={(event) => event.stopPropagation()}>
-          <Input
-            size="sm"
-            className="min-w-0 w-0 flex-1"
-            value={newSubtask}
-            onChange={(event) => setNewSubtask(event.target.value)}
-            placeholder={t('ops.asignaciones.subtaskPlaceholder')}
-          />
-          <Button type="submit" size="xs" variant="secondary" className="shrink-0" disabled={adding}>
-            {t('ops.asignaciones.addSubtask')}
-          </Button>
-        </form>
       ) : null}
     </article>
   );
@@ -693,6 +663,7 @@ function DetailModal({
   streamLabels,
   processLabels,
   onRefresh,
+  onToggleSubtask,
 }: {
   assignment: WorkAssignment;
   onClose: () => void;
@@ -705,14 +676,42 @@ function DetailModal({
   streamLabels: Record<string, string>;
   processLabels: Record<string, string>;
   onRefresh: () => void;
+  onToggleSubtask: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const [comment, setComment] = useState('');
-  const [newSubtask, setNewSubtask] = useState('');
-  const [addingSubtask, setAddingSubtask] = useState(false);
-  const canEdit = canMutateWorkAssignment(currentUserId, assignment.assignee_id, canManage);
+  const canAct = canMutateWorkAssignment(currentUserId, assignment.assignee_id, canManage);
   const events = [...assignment.stage_events].sort(
     (a, b) => Date.parse(a.entered_at) - Date.parse(b.entered_at)
+  );
+
+  async function onStatusChange(next: string) {
+    if (!isWorkStatus(next) || next === assignment.status) return;
+    try {
+      await updateWorkAssignmentStatus(assignment.id, next, 'detail');
+      onRefresh();
+    } catch (err) {
+      toast.error(toUserErrorMessage(err, t('ops.asignaciones.statusFailed')));
+    }
+  }
+
+  const statusSelect = canAct ? (
+    <Field label={t('ops.labels.workStatus.' + assignment.status)}>
+      <Select
+        size="sm"
+        key={assignment.status}
+        defaultValue={assignment.status}
+        onChange={(event) => void onStatusChange(event.target.value)}
+      >
+        {WORK_STATUSES.map((id) => (
+          <option key={id} value={id}>
+            {statusLabels[id]}
+          </option>
+        ))}
+      </Select>
+    </Field>
+  ) : (
+    <p className="self-end text-sm text-zinc-600">{statusLabels[assignment.status]}</p>
   );
 
   return (
@@ -725,7 +724,7 @@ function DetailModal({
       className="max-h-[min(92vh,880px)] max-w-2xl overflow-y-auto"
     >
       <div className="mt-4 space-y-6">
-        {canEdit ? (
+        {canManage ? (
           <ToastForm
             className="space-y-3"
             success={t('ops.asignaciones.saved')}
@@ -747,44 +746,17 @@ function DetailModal({
                   ))}
                 </Select>
               </Field>
-              <Field label={t('ops.labels.workStatus.' + assignment.status)}>
-                <Select
-                  size="sm"
-                  defaultValue={assignment.status}
-                  onChange={async (event) => {
-                    const next = event.target.value;
-                    if (!isWorkStatus(next) || next === assignment.status) return;
-                    try {
-                      await updateWorkAssignmentStatus(assignment.id, next, 'detail');
-                      onRefresh();
-                    } catch (err) {
-                      toast.error(toUserErrorMessage(err, t('ops.asignaciones.statusFailed')));
-                    }
-                  }}
-                >
-                  {WORK_STATUSES.map((id) => (
-                    <option key={id} value={id}>
-                      {statusLabels[id]}
+              {statusSelect}
+              <Field label={t('ops.asignaciones.assignee')}>
+                <Select name="assigneeId" size="sm" defaultValue={assignment.assignee_id || ''}>
+                  <option value="">{t('ops.asignaciones.unassigned')}</option>
+                  {staff.map((row) => (
+                    <option key={row.id} value={row.id}>
+                      {row.full_name}
                     </option>
                   ))}
                 </Select>
               </Field>
-              {canManage ? (
-                <Field label={t('ops.asignaciones.assignee')}>
-                  <Select name="assigneeId" size="sm" defaultValue={assignment.assignee_id || ''}>
-                    <option value="">{t('ops.asignaciones.unassigned')}</option>
-                    {staff.map((row) => (
-                      <option key={row.id} value={row.id}>
-                        {row.full_name}
-                      </option>
-                    ))}
-                  </Select>
-                </Field>
-              ) : (
-                <p className="self-end text-sm text-zinc-600">
-                  {assignment.assignee_name || t('ops.asignaciones.unassigned')}
-                </p>
-              )}
               <Field label={t('ops.asignaciones.due')}>
                 <Input name="dueAt" type="date" size="sm" defaultValue={dueInputValue(assignment.due_at)} />
               </Field>
@@ -803,20 +775,27 @@ function DetailModal({
             </Button>
           </ToastForm>
         ) : (
-          <div className="space-y-2 text-sm text-zinc-700">
+          <div className="space-y-3 text-sm text-zinc-700">
             <p className="break-words">{assignment.description || '—'}</p>
             {assignment.process_href ? (
               <Link href={assignment.process_href} className="font-medium text-codiva-primary hover:underline">
                 {assignment.process_label}
               </Link>
+            ) : assignment.process_label ? (
+              <p>{assignment.process_label}</p>
             ) : null}
+            <p>
+              {assignment.assignee_name || t('ops.asignaciones.unassigned')}
+              {assignment.due_at ? ` · ${assignment.due_at.slice(0, 10)}` : ''}
+            </p>
+            {statusSelect}
           </div>
         )}
 
         <section>
           <h3 className="mb-2 text-sm font-semibold text-zinc-900">{t('ops.asignaciones.attachments')}</h3>
-          <WorkFileList files={assignment.files} canEdit={canEdit} onRefresh={onRefresh} />
-          {canEdit ? (
+          <WorkFileList files={assignment.files} canEdit={canAct} onRefresh={onRefresh} />
+          {canAct ? (
             <ToastForm
               className="mt-3 space-y-2"
               success={t('ops.asignaciones.attachmentsAdded')}
@@ -863,53 +842,15 @@ function DetailModal({
 
         <section>
           <h3 className="mb-2 text-sm font-semibold text-zinc-900">{t('ops.asignaciones.progress')}</h3>
-          <ul className="space-y-1">
-            {assignment.subtasks.map((sub) => (
-              <li key={sub.id}>
-                <label className="flex items-start gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="mt-0.5"
-                    checked={sub.status === 'done'}
-                    disabled={!canEdit}
-                    onChange={() => canEdit && toggleWorkSubtask(sub.id).then(onRefresh)}
-                  />
-                  <span className={`min-w-0 break-words ${sub.status === 'done' ? 'text-zinc-500 line-through' : ''}`}>{sub.title}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-          {canEdit ? (
-            <form
-              className="mt-2 flex min-w-0 gap-1"
-              onSubmit={async (event) => {
-                event.preventDefault();
-                const title = newSubtask.trim();
-                if (!title || addingSubtask) return;
-                setAddingSubtask(true);
-                try {
-                  await createWorkSubtask(assignment.id, title);
-                  setNewSubtask('');
-                  onRefresh();
-                } catch (err) {
-                  toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
-                } finally {
-                  setAddingSubtask(false);
-                }
-              }}
-            >
-              <Input
-                size="sm"
-                className="min-w-0 w-0 flex-1"
-                value={newSubtask}
-                onChange={(event) => setNewSubtask(event.target.value)}
-                placeholder={t('ops.asignaciones.subtaskPlaceholder')}
-              />
-              <Button type="submit" size="xs" variant="secondary" className="shrink-0" disabled={addingSubtask}>
-                {t('ops.asignaciones.addSubtask')}
-              </Button>
-            </form>
-          ) : null}
+          <WorkSubtaskEditor
+            assignment={assignment}
+            canAct={canAct}
+            canManage={canManage}
+            currentUserId={currentUserId}
+            showEditor
+            onToggle={onToggleSubtask}
+            onRefresh={onRefresh}
+          />
         </section>
 
         <section>

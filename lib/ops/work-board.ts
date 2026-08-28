@@ -132,6 +132,16 @@ export type WorkAssignment = {
   stage_events: WorkStageEvent[];
   comments: WorkComment[];
   files: WorkFile[];
+  subtask_edit_request: WorkSubtaskEditRequest | null;
+};
+
+export type WorkSubtaskEditRequest = {
+  id: string;
+  assignment_id: string;
+  requested_by: string;
+  requested_by_name: string;
+  payload: string;
+  created_at: string;
 };
 
 export type MentionPart =
@@ -192,6 +202,21 @@ export function canMutateWorkAssignment(
   return Boolean(staff && assignee && staff === assignee);
 }
 
+export function canRequestWorkSubtaskEdit(
+  staffId: string,
+  assigneeId: string | null | undefined,
+  canManage: boolean
+) {
+  return !canManage && canMutateWorkAssignment(staffId, assigneeId, false);
+}
+
+export function workSubtaskEditorText(subtasks: Pick<WorkSubtask, 'title' | 'sort_order'>[]) {
+  return [...subtasks]
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map((row) => row.title)
+    .join('\n');
+}
+
 export const WORK_FILE_MAX_BYTES = 4 * 1024 * 1024;
 export const WORK_FILE_MAX_COUNT = 6;
 export const WORK_FILE_ACCEPT =
@@ -250,6 +275,46 @@ export function patchWorkAssignmentStatus(
   return assignments.map((row) =>
     row.id === assignmentId ? { ...row, status, status_entered_at: enteredAt } : row
   );
+}
+
+export function patchWorkSubtaskStatus(
+  assignments: WorkAssignment[],
+  subtaskId: string,
+  status: WorkSubtask['status']
+) {
+  return assignments.map((row) => {
+    if (!row.subtasks.some((sub) => sub.id === subtaskId)) return row;
+    const subtasks = row.subtasks.map((sub) => (sub.id === subtaskId ? { ...sub, status } : sub));
+    return { ...row, subtasks, progress_pct: rollupProgressFromSubtasks(subtasks) };
+  });
+}
+
+export function parseSubtaskLines(value: string) {
+  return String(value || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .slice(0, 40);
+}
+
+export function planWorkSubtaskRewrite(
+  current: Pick<WorkSubtask, 'id' | 'title' | 'sort_order'>[],
+  lines: string[]
+) {
+  const ordered = [...current].sort((a, b) => a.sort_order - b.sort_order);
+  const titles = parseSubtaskLines(lines.join('\n'));
+  const updates: { id: string; title: string; sort_order: number }[] = [];
+  const inserts: { title: string; sort_order: number }[] = [];
+  const deleteIds: string[] = [];
+  for (let i = 0; i < titles.length; i += 1) {
+    const row = ordered[i];
+    if (row) updates.push({ id: row.id, title: titles[i], sort_order: i });
+    else inserts.push({ title: titles[i], sort_order: i });
+  }
+  for (let i = titles.length; i < ordered.length; i += 1) {
+    deleteIds.push(ordered[i].id);
+  }
+  return { updates, inserts, deleteIds };
 }
 
 export function formatDwellDuration(ms: number, locale: 'es' | 'en' = 'es') {
