@@ -42,7 +42,7 @@ export default function Footer({ variant = 'marketing' }) {
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className="w-full px-6 md:px-12 py-10 text-sm bg-zinc-900 border-t border-zinc-800 font-inter"
     >
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="mx-auto flex min-w-0 max-w-6xl flex-col items-center justify-between gap-6 md:flex-row">
         <span className="text-zinc-400 text-center md:text-left">
           © {year}{' '}
           <CodivaWordmark size="sm" variant="footer" animate active={inView} />
@@ -50,7 +50,7 @@ export default function Footer({ variant = 'marketing' }) {
           {t('footer.rights')}
         </span>
 
-        <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
+        <div className="flex flex-col items-center gap-4 md:flex-row md:flex-wrap md:justify-end md:gap-6">
           <a
             href={careerBaseUrl()}
             className="text-zinc-300 hover:text-white font-medium transition-colors"
@@ -93,7 +93,7 @@ export default function Footer({ variant = 'marketing' }) {
 
           <a
             href={`mailto:${CODIVA_BRAND.urls.email}`}
-            className="text-zinc-300 hover:text-white font-medium transition-colors"
+            className="break-all text-zinc-300 transition-colors hover:text-white"
           >
             {CODIVA_BRAND.urls.email}
           </a>

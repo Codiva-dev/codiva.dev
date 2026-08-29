@@ -45,7 +45,7 @@ export default async function EmpleosPage() {
   const rows = postings ?? [];
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 pb-24 pt-28 md:px-12">
+    <main className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-24 pt-28 sm:px-6 md:px-12">
       <header className="mb-8 overflow-hidden rounded-2xl border border-codiva-primary/15 bg-gradient-to-br from-codiva-primary/5 via-white to-zinc-50 px-6 py-8 text-center sm:px-10">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-codiva-primary">
           {t('career.eyebrow')}
@@ -88,7 +88,7 @@ export default async function EmpleosPage() {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="font-semibold text-zinc-900 transition group-hover:text-codiva-primary">
+                      <p className="break-words font-semibold text-zinc-900 transition group-hover:text-codiva-primary">
                         {copy.title}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -101,7 +101,7 @@ export default async function EmpleosPage() {
                         ) : null}
                       </div>
                     </div>
-                    <span className="mt-0.5 text-sm font-medium text-codiva-primary opacity-0 transition group-hover:opacity-100">
+                    <span className="mt-0.5 hidden shrink-0 text-sm font-medium text-codiva-primary opacity-0 transition group-hover:opacity-100 sm:inline">
                       {t('career.view_role')}
                     </span>
                   </div>

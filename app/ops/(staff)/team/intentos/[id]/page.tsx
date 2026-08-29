@@ -184,7 +184,7 @@ export default async function AssessmentAttemptPage({
   }
 
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="max-w-3xl min-w-0 space-y-8">
       <OpsPageHeader
         title={attempt.full_name}
         description={t('ops.attempt.description')}
@@ -251,7 +251,7 @@ export default async function AssessmentAttemptPage({
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{t('ops.attempt.context')}</p>
-          <p className="mt-1 text-sm text-zinc-800">{attempt.email}</p>
+          <p className="mt-1 break-all text-sm text-zinc-800">{attempt.email}</p>
           <p className="mt-1 text-xs text-zinc-500">
             {attempt.timezone || t('ops.attempt.noTimezone')}
             {device ? ` · ${t('ops.attempt.device', { device })}` : ''}
@@ -411,15 +411,15 @@ export default async function AssessmentAttemptPage({
         ) : (
           <ol className="space-y-2">
             {events.map((event) => (
-              <li key={event.id} className="flex gap-3 text-sm">
-                <span className="w-36 shrink-0 tabular-nums text-zinc-400">
+              <li key={event.id} className="flex min-w-0 gap-3 text-sm">
+                <span className="w-[4.75rem] shrink-0 tabular-nums text-zinc-400 sm:w-36">
                   {new Date(event.created_at).toLocaleString(dateLocale(t.locale), {
                     hour: '2-digit',
                     minute: '2-digit',
                     second: '2-digit',
                   })}
                 </span>
-                <span className="text-zinc-800">
+                <span className="min-w-0 break-words text-zinc-800">
                   {t(`ops.attempt.events.${event.event_type}`, { defaultValue: event.event_type })}
                   {event.question_id ? ` · ${event.question_id}` : ''}
                 </span>

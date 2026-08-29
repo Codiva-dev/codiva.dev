@@ -23,14 +23,15 @@ export default function Hero() {
     >
       <Heading
         as="h1"
-        size="text-4xl md:text-6xl"
-        className="text-zinc-900 leading-tight mb-6"
+        size="text-3xl sm:text-4xl md:text-6xl"
+        className="mb-6 max-w-full text-balance leading-tight text-zinc-900"
       >
         {staticText1}{' '}
         <span className="text-codiva-primary">
           <TypewriterCycle className="text-codiva-primary" phrases={[staticText2]} loop={false} active />
         </span>
-        <br />
+        <br className="hidden sm:block" />
+        {' '}
         {staticText3}
       </Heading>
 

@@ -146,7 +146,7 @@ export default function FormularioCotizacion() {
     <form
       onSubmit={formik.handleSubmit}
       noValidate
-      className="max-w-2xl mx-auto p-8 bg-white rounded-2xl shadow-xl space-y-6"
+      className="mx-4 max-w-2xl space-y-6 rounded-2xl bg-white p-5 shadow-xl sm:mx-auto sm:p-8"
     >
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {['name', 'company', 'email', 'phone'].map((field) => (

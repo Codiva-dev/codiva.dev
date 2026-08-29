@@ -21,7 +21,7 @@ export async function generateMetadata() {
 
 export default function Home() {
   return (
-    <main className="flex w-full flex-col items-center justify-start px-6 md:px-12">
+    <main className="flex w-full min-w-0 flex-col items-center justify-start">
       <Hero />
       <About />
       <HowWeWork />

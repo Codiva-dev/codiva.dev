@@ -88,13 +88,13 @@ export default function CaseStudiesMobile({ logos }) {
   if (!project) return null;
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex min-w-0 flex-col items-center">
       <div
         ref={(node) => {
           containerRef.current = node;
           logosCopies.containerRef.current = node;
         }}
-        className="relative w-full overflow-x-auto scrollbar-hidden px-1 touch-pan-x overscroll-x-contain"
+        className="relative w-full min-w-0 overflow-x-auto overscroll-x-contain px-1 touch-pan-x scrollbar-hidden"
         {...logosMarquee.containerProps}
       >
         <div

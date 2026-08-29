@@ -59,14 +59,14 @@ export default function CaseStudies() {
         initial="hidden"
         whileInView="visible"
         viewport={{ once: false, amount: 0.3 }}
-        className="w-full max-w-4xl lg:max-w-6xl bg-white rounded-xl shadow-lg px-8 py-12 text-center"
+        className="w-full max-w-4xl min-w-0 rounded-xl bg-white px-5 py-8 text-center shadow-lg sm:px-8 sm:py-12 lg:max-w-6xl"
       >
         <motion.div variants={fadeInUp}>
           <Heading
             as="h2"
             id="casos-heading"
-            size="text-3xl md:text-4xl"
-            className="text-codiva-primary mb-6"
+            size="text-2xl sm:text-3xl md:text-4xl"
+            className="mb-6 text-balance text-codiva-primary"
           >
             {t('cases.title')}
           </Heading>

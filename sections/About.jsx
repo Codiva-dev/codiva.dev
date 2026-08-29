@@ -29,7 +29,7 @@ export default function About() {
     >
       <div
         ref={sectionRef}
-        className="glass-panel relative w-full max-w-4xl rounded-2xl px-8 py-12 text-center"
+        className="glass-panel relative w-full max-w-4xl rounded-2xl px-5 py-8 text-center sm:px-8 sm:py-12"
       >
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -39,8 +39,8 @@ export default function About() {
         >
           <Heading
             as="h2"
-            size="text-3xl md:text-4xl"
-            className="text-codiva-primary mb-6"
+            size="text-2xl sm:text-3xl md:text-4xl"
+            className="mb-6 text-balance text-codiva-primary"
             role="heading"
             aria-level={2}
           >

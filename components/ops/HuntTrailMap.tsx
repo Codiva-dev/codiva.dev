@@ -132,8 +132,8 @@ export default function HuntTrailMap({
               const reported = step.kind === 'reported';
               const last = index === steps.length - 1;
               return (
-                <li key={step.id} className="relative flex gap-4 pb-5 last:pb-0">
-                  <div className="flex w-16 shrink-0 flex-col items-end pt-0.5 text-right">
+                <li key={step.id} className="relative flex min-w-0 gap-3 pb-5 last:pb-0 sm:gap-4">
+                  <div className="flex w-12 shrink-0 flex-col items-end pt-0.5 text-right sm:w-16">
                     <time
                       dateTime={step.at}
                       className="text-xs tabular-nums text-zinc-500"
@@ -192,7 +192,7 @@ export default function HuntTrailMap({
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-0.5 font-mono text-xs text-zinc-400">
+                    <p className="mt-0.5 break-all font-mono text-xs text-zinc-400">
                       {(step.host || '') + step.path}
                     </p>
                     {reported && step.findingTitle ? (

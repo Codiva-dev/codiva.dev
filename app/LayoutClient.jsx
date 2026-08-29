@@ -54,7 +54,7 @@ export default function LayoutClient({ children, variant = 'marketing' }) {
   const showQuote = !isSatellite;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-codiva-background text-zinc-900 font-sans antialiased">
+    <div className="flex min-h-dvh min-w-0 flex-col overflow-x-clip bg-codiva-background font-sans text-zinc-900 antialiased">
       {/* Microdatos JSON-LD */}
       <script type="application/ld+json">
         {JSON.stringify(schemaOrgJsonLd)}

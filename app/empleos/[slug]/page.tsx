@@ -101,7 +101,7 @@ export default async function EmpleoDetailPage({ params, searchParams }: PagePro
   };
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 pb-24 pt-28 md:px-12">
+    <main className="mx-auto w-full min-w-0 max-w-5xl px-4 pb-24 pt-28 sm:px-6 md:px-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Link
         href={careerAppHref(host)}
@@ -116,7 +116,7 @@ export default async function EmpleoDetailPage({ params, searchParams }: PagePro
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-codiva-primary">
               {t('career.eyebrow')}
             </p>
-            <h1 className="mt-2 font-display text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
+            <h1 className="mt-2 break-words font-display text-2xl font-bold tracking-tight text-zinc-900 sm:text-3xl">
               {copy.title}
             </h1>
             <div className="mt-4 flex flex-wrap gap-2">

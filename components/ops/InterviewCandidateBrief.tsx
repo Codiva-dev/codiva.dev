@@ -95,34 +95,32 @@ export default function InterviewCandidateBrief({
         ) : (
           <ul className="mt-3 space-y-3">
             {brief.findings.map((finding, index) => (
-              <li key={`${finding.pageUrl}-${index}`} className="rounded-xl border border-zinc-100 p-3">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="font-medium text-zinc-900">{finding.title}</p>
-                  <div className="flex flex-wrap gap-1.5 text-[11px] font-medium">
-                    {finding.reviewDiscarded ? (
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
-                        {t('interviews.brief.discarded')}
-                      </span>
-                    ) : finding.counts ? (
-                      <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
-                        {t('interviews.brief.counts')}
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-800">
-                        {t('interviews.brief.doesNotCount')}
-                      </span>
-                    )}
-                    {finding.difficultyLabel ? (
-                      <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-800">
-                        {finding.difficultyLabel}
-                      </span>
-                    ) : null}
-                    {finding.evidenceCount > 0 ? (
-                      <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
-                        {t('interviews.brief.evidence', { n: finding.evidenceCount })}
-                      </span>
-                    ) : null}
-                  </div>
+              <li key={`${finding.pageUrl}-${index}`} className="min-w-0 rounded-xl border border-zinc-100 p-3">
+                <p className="break-words font-medium text-zinc-900">{finding.title}</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5 text-[11px] font-medium">
+                  {finding.reviewDiscarded ? (
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
+                      {t('interviews.brief.discarded')}
+                    </span>
+                  ) : finding.counts ? (
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                      {t('interviews.brief.counts')}
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-800">
+                      {t('interviews.brief.doesNotCount')}
+                    </span>
+                  )}
+                  {finding.difficultyLabel ? (
+                    <span className="rounded-full bg-sky-50 px-2 py-0.5 text-sky-800">
+                      {finding.difficultyLabel}
+                    </span>
+                  ) : null}
+                  {finding.evidenceCount > 0 ? (
+                    <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-zinc-600">
+                      {t('interviews.brief.evidence', { n: finding.evidenceCount })}
+                    </span>
+                  ) : null}
                 </div>
                 {finding.pageUrl ? (
                   <a
@@ -135,7 +133,7 @@ export default function InterviewCandidateBrief({
                   </a>
                 ) : null}
                 {finding.description ? (
-                  <p className="mt-2 whitespace-pre-line text-sm text-zinc-700">{finding.description}</p>
+                  <p className="mt-2 whitespace-pre-line break-words text-sm text-zinc-700">{finding.description}</p>
                 ) : null}
                 {finding.expected ? (
                   <p className="mt-2 text-sm text-zinc-500">

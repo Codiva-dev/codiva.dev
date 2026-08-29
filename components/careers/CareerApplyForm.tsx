@@ -387,7 +387,7 @@ export default function CareerApplyForm({
           accept="application/pdf,.pdf"
           required
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-          className="block w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-codiva-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-codiva-primary-dark"
+          className="block w-full min-w-0 max-w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-codiva-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-white hover:file:bg-codiva-primary-dark"
         />
         <p className="mt-1 text-xs text-zinc-500">{t('career.cv_hint')}</p>
       </div>

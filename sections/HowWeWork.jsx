@@ -51,14 +51,14 @@ export default function HowWeWork() {
       ref={sectionRef}
       className="section-spacing relative flex w-full scroll-mt-24 justify-center bg-zinc-50 px-6 md:scroll-mt-28 md:px-12"
     >
-      <div className="glass-panel relative w-full max-w-4xl rounded-2xl px-8 py-12">
+      <div className="glass-panel relative w-full max-w-4xl rounded-2xl px-5 py-8 sm:px-8 sm:py-12">
         <motion.div
           initial="hidden"
           animate={inView ? 'visible' : 'hidden'}
           variants={{ visible: { transition: { staggerChildren: 0.12 } } }}
         >
           <motion.div variants={fadeInUp} className="text-center">
-            <Heading as="h2" size="text-3xl md:text-4xl" className="mb-6 text-codiva-primary">
+            <Heading as="h2" size="text-2xl sm:text-3xl md:text-4xl" className="mb-6 text-balance text-codiva-primary">
               {t('process.title')}
             </Heading>
             <Paragraph className="mx-auto mb-10 max-w-2xl text-codiva-secondary">
@@ -92,7 +92,7 @@ export default function HowWeWork() {
                     setActive(index);
                   }}
                   onBlur={resume}
-                  className="flex cursor-pointer gap-4 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-codiva-primary/40 focus-visible:ring-offset-2 md:flex-col md:items-center md:gap-4"
+                  className="flex min-w-0 cursor-pointer gap-4 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-codiva-primary/40 focus-visible:ring-offset-2 md:flex-col md:items-center md:gap-4"
                 >
                   <div className="flex w-9 shrink-0 flex-col items-center self-stretch md:w-full md:flex-none">
                     <div className="relative flex h-9 w-full items-center justify-center">
@@ -150,7 +150,7 @@ export default function HowWeWork() {
                     }`}
                   >
                     <h3
-                      className={`mb-2 font-display text-base font-semibold leading-snug md:min-h-11 ${
+                      className={`mb-2 break-words font-display text-base font-semibold leading-snug md:min-h-11 ${
                         isCurrent ? 'text-codiva-primary' : 'text-zinc-900'
                       }`}
                     >

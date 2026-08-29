@@ -31,7 +31,7 @@ export default function Contact() {
       aria-labelledby="contact-heading"
       className="section-spacing w-full px-6 md:px-12 flex justify-center bg-zinc-50"
     >
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-md px-6 md:px-12 py-12">
+      <div className="w-full max-w-2xl rounded-xl bg-white px-5 py-8 shadow-md sm:px-8 sm:py-12 md:px-12">
         {/* Título */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
@@ -41,8 +41,8 @@ export default function Contact() {
           <Heading
             as="h2"
             id="contact-heading"
-            size="text-3xl md:text-4xl"
-            className="text-codiva-primary text-center mb-10"
+            size="text-2xl sm:text-3xl md:text-4xl"
+            className="mb-10 text-center text-balance text-codiva-primary"
           >
             {t('contact.title')}
           </Heading>

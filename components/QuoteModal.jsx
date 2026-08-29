@@ -43,7 +43,7 @@ export default function QuoteModal({ showForm, onShowForm, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
     >
       <motion.div
         ref={modalRef}
@@ -51,7 +51,7 @@ export default function QuoteModal({ showForm, onShowForm, onClose }) {
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 40 }}
         transition={{ duration: 0.3 }}
-        className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+        className="relative my-auto w-full max-w-md rounded-xl bg-white p-5 shadow-xl sm:p-6"
       >
         <button
           type="button"

@@ -51,7 +51,7 @@ export default function Services() {
       ref={sectionRef}
       className="section-spacing scroll-mt-24 md:scroll-mt-28 w-full px-6 md:px-12 flex justify-center bg-zinc-50"
     >
-      <div className="w-full max-w-6xl bg-white rounded-2xl shadow-md px-6 md:px-12 py-12 text-center">
+      <div className="w-full max-w-6xl rounded-2xl bg-white px-5 py-8 text-center shadow-md sm:px-8 sm:py-12 md:px-12">
         <motion.div
           variants={containerVariants}
           initial="hidden"
@@ -60,8 +60,8 @@ export default function Services() {
           <motion.div variants={fadeInUp}>
             <Heading
               as="h2"
-              size="text-3xl md:text-4xl"
-              className="text-codiva-primary mb-12"
+              size="text-2xl sm:text-3xl md:text-4xl"
+              className="mb-12 text-balance text-codiva-primary"
             >
               {t('services.title')}
             </Heading>
@@ -82,18 +82,22 @@ export default function Services() {
                   key={index}
                   variants={fadeInUp}
                   transition={{ duration: 0.5 }}
-                  className={`relative border ${
+                  className={`relative flex min-w-0 flex-col justify-start rounded-xl border p-5 shadow-sm transition-transform duration-300 hover:shadow-md sm:p-6 ${
                     service.badge ? 'border-codiva-primary/30 bg-codiva-primary/5' : 'border-zinc-100'
-                  } rounded-xl p-6 shadow-sm hover:shadow-md hover:scale-[1.015] transition-transform duration-300 flex flex-col justify-start`}
+                  }`}
                 >
                   {service.badge && (
-                    <span className="text-[11px] md:text-xs font-medium text-white bg-codiva-primary px-3 py-1 rounded-full absolute -top-2 -right-2 shadow-sm">
+                    <span className="absolute right-3 top-3 rounded-full bg-codiva-primary px-3 py-1 text-[11px] font-medium text-white shadow-sm md:right-2 md:top-2 md:text-xs">
                       {service.badge}
                     </span>
                   )}
 
                   <div>
-                    <h3 className="text-zinc-900 font-semibold text-xl mb-2 flex items-center gap-2">
+                    <h3
+                      className={`mb-2 flex items-start gap-2 text-xl font-semibold text-zinc-900 ${
+                        service.badge ? 'pr-16' : ''
+                      }`}
+                    >
                       {ICONS[index]}
                       {service.title}
                     </h3>
