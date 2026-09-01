@@ -46,8 +46,8 @@
     El repo no tiene aplicación ni superficie HTTP propia. El código ejecutable es configuración de Home Assistant y Node-RED. Los hallazgos son máquinas de estado que, copiadas a una instalación, mueven luces, clima y capturas de acceso.
   </div>
 
-  <h2>1. Premisa de aislamiento</h2>
-  <p>Sin internet el atacante remoto de H1 desaparece. Una casa “sin WAN” sigue teniendo LAN (WiFi, tablet, cámaras). Cero IP en absoluto apaga la exposición HTTP; no apaga apagar el clima con el grupo en <code>unknown</code>.</p>
+  <h2>1. Premisa de aislamiento (Tailscale)</h2>
+  <p>El cerebro sale a red por Tailscale: overlay autenticado, no internet público. Tailscale decide quién tiene ruta a :8123. No pone login en <code>/local/</code>, no repara un snapshot sin cámara y no impide el eco con el grupo en <code>unknown</code>. Si HA escucha en la LAN o hay Funnel, el overlay no es el perímetro.</p>
   <table>
     <thead>
       <tr><th>ID</th><th>Sin internet (LAN local)</th><th>Sin IP en absoluto</th></tr>
