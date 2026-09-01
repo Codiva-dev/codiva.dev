@@ -27,6 +27,7 @@ import {
   rollupProgressFromSubtasks,
   WORK_FILE_MAX_BYTES,
   WORK_FILE_MAX_COUNT,
+  isWorkFormFile,
   workFileKind,
   type WorkProcessKind,
   type WorkStatus,
@@ -112,9 +113,7 @@ async function closeOpenEditRequest(
 }
 
 function filesFromForm(formData: FormData) {
-  return formData
-    .getAll('files')
-    .filter((value): value is File => typeof File !== 'undefined' && value instanceof File && value.size > 0);
+  return formData.getAll('files').filter(isWorkFormFile);
 }
 
 async function saveWorkFiles({
@@ -339,6 +338,38 @@ export async function updateWorkAssignment(assignmentId: string, formData: FormD
     entityId: assignmentId,
     action: 'updated',
     metadata: { title },
+    actorId: access.staff.id,
+  });
+  revalidateBoard();
+}
+
+export async function deleteWorkAssignment(assignmentId: string) {
+  const access = await assertCapability('assignments_manage');
+  const t = await getT();
+
+  const { data: current, error: loadErr } = await access.supabase
+    .from('work_assignments')
+    .select('id, title, status, assignee_id')
+    .eq('id', assignmentId)
+    .single();
+  if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
+
+  const { data: files } = await access.supabase
+    .from('work_assignment_files')
+    .select('file_path')
+    .eq('assignment_id', assignmentId);
+  for (const file of files ?? []) {
+    if (file.file_path) await deleteOpsFile(file.file_path).catch(() => undefined);
+  }
+
+  const { error } = await access.supabase.from('work_assignments').delete().eq('id', assignmentId);
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'work_assignment',
+    entityId: assignmentId,
+    action: 'deleted',
+    metadata: { title: current.title },
     actorId: access.staff.id,
   });
   revalidateBoard();

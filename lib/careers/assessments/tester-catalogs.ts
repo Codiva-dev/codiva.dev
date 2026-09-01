@@ -778,148 +778,153 @@ export const TESTER_SECURITY: AssessmentCatalog = catalog(
 
 export const TESTER_GENERAL: AssessmentCatalog = catalog(
   'tester-general',
-  'Prueba de criterio · Tester',
-  'Ocho situaciones de testing en productos a la medida, sin especialidad única. Buscamos evidencia, severidad y no confundir defecto con preferencia. Tienes 15 minutos. Al aprobar, reportas un hallazgo de tu oficio en el sitio. Sin las dos partes no se habilita el CV.',
+  'Tester Integral',
+  'Examen de criterio — selección múltiple. 8 preguntas · tiempo estimado: 15 minutos. Al aprobar, reportas un hallazgo de cada oficio en el sitio (salvo «otro»). El tablero muestra lo encontrado y lo que falta. Sin las dos partes no se habilita el CV.',
   [
     {
-      id: 'tg-repro',
-      competency: 'Evidencia',
+      id: 'ti-tipos-prueba',
+      competency: 'Tipos de prueba',
       type: 'single',
-      points: 2,
-      prompt: 'No puedes reproducir un reporte del cliente. ¿Qué haces primero?',
+      points: 1,
+      prompt: '¿Cuál describe mejor una prueba unitaria?',
       options: [
-        { key: 'a', label: 'Cerrar como no reproducible.' },
+        { key: 'a', label: 'Verifica un flujo completo de usuario en el navegador' },
         {
           key: 'b',
-          label:
-            'Pedir ambiente, usuario, hora y pasos; intentar esas condiciones; dejar constancia de lo que sí/no viste.',
+          label: 'Verifica una unidad pequeña de código (función o método) de forma aislada',
         },
-        { key: 'c', label: 'Marcar P0 y parar el release sin datos.' },
-        { key: 'd', label: 'Pedirle al cliente un rediseño.' },
+        { key: 'c', label: 'Verifica el rendimiento del sistema con muchos usuarios simultáneos' },
       ],
       correct: ['b'],
     },
     {
-      id: 'tg-severity',
-      competency: 'Severidad',
+      id: 'ti-pruebas-funcionales',
+      competency: 'Pruebas funcionales',
       type: 'single',
-      points: 2,
-      prompt: '¿Qué describe mejor severidad vs. prioridad?',
+      points: 1,
+      prompt: 'En una prueba funcional, ¿qué se valida principalmente?',
       options: [
-        { key: 'a', label: 'Son lo mismo.' },
         {
-          key: 'b',
-          label:
-            'Severidad = impacto en producto/usuario. Prioridad = cuándo conviene atacarlo dado el negocio y la entrega.',
+          key: 'a',
+          label: 'Que el sistema cumpla el comportamiento esperado según requisitos o reglas de negocio',
         },
-        { key: 'c', label: 'Prioridad la pone QA; severidad el cliente.' },
-        { key: 'd', label: 'Severidad es el número de casos fallidos.' },
+        { key: 'b', label: 'Que el servidor soporte miles de usuarios concurrentes' },
+        { key: 'c', label: 'Que el código fuente esté bien indentado' },
       ],
-      correct: ['b'],
+      correct: ['a'],
     },
     {
-      id: 'tg-uat',
-      competency: 'UAT',
+      id: 'ti-api-postman',
+      competency: 'API / Postman',
       type: 'single',
-      points: 2,
-      context:
-        'El cliente en UAT marca «ok» un flujo que en staging falla con el usuario de prueba. Quiere salir mañana.',
-      prompt: '¿Qué haces?',
-      options: [
-        { key: 'a', label: 'Liberar: el cliente firmó.' },
-        {
-          key: 'b',
-          label:
-            'Mostrar la evidencia de staging, no contradecir de a gratis, y no comunicar listo hasta cerrar el hueco o aceptar el riesgo por escrito.',
-        },
-        { key: 'c', label: 'Callar para no tensar.' },
-        { key: 'd', label: 'Reabrir todos los tickets del sprint.' },
-      ],
-      correct: ['b'],
-    },
-    {
-      id: 'tg-scope',
-      competency: 'Alcance',
-      type: 'multi',
-      points: 2,
-      prompt: 'Marca prácticas sanas cuando el tiempo de prueba se acorta a la mitad.',
-      options: [
-        { key: 'a', label: 'Declarar qué flujos críticos sí cubres y cuáles no.' },
-        { key: 'b', label: 'Mentir el alcance para que el tablero se vea verde.' },
-        { key: 'c', label: 'Priorizar dinero, acceso y pérdida de datos.' },
-        { key: 'd', label: 'Dejar rastros de lo no probado para PM/dev.' },
-        { key: 'e', label: 'Probar solo el color del logo.' },
-      ],
-      correct: ['a', 'c', 'd'],
-    },
-    {
-      id: 'tg-rank-triage',
-      competency: 'Prioridad',
-      type: 'rank',
-      points: 2,
-      prompt: 'Ordena el triage de una hora (1 = primero).',
-      options: [
-        { key: 'a', label: 'No se puede entrar o no se puede cobrar.' },
-        { key: 'b', label: 'Datos mal guardados en un flujo usado diario.' },
-        { key: 'c', label: 'Typo en un texto de ayuda.' },
-        { key: 'd', label: 'Un filtro secundario mal ordenado.' },
-      ],
-      correct: ['a', 'b', 'd', 'c'],
-    },
-    {
-      id: 'tg-fix-verify',
-      competency: 'Regresión',
-      type: 'single',
-      points: 2,
-      prompt: 'Dev dice «ya quedó». ¿Qué confirma el arreglo?',
-      options: [
-        { key: 'a', label: 'El ticket pasó a done.' },
-        {
-          key: 'b',
-          label:
-            'Reproducir el caso original en el ambiente acordado y una regresión corta de lo tocado.',
-        },
-        { key: 'c', label: 'Una captura del diff, sin ejecutar el flujo.' },
-        { key: 'd', label: 'Confiar: ya conoces al dev.' },
-      ],
-      correct: ['b'],
-    },
-    {
-      id: 'tg-env',
-      competency: 'Ambiente',
-      type: 'single',
-      points: 2,
-      prompt: 'Prod, staging y tu local no coinciden. El bug solo aparece en staging. ¿Qué reportas?',
-      options: [
-        { key: 'a', label: 'Nada: si local está bien, no existe.' },
-        {
-          key: 'b',
-          label:
-            'El defecto en staging, con ambiente explícito, y la diferencia que viste. No lo escondas porque local «está limpio».',
-        },
-        { key: 'c', label: 'Solo prod: staging no cuenta.' },
-        { key: 'd', label: 'Borrar staging y rehacerlo sin avisar.' },
-      ],
-      correct: ['b'],
-    },
-    {
-      id: 'tg-not-a-bug',
-      competency: 'Criterio',
-      type: 'single',
-      points: 2,
+      points: 1,
       prompt:
-        'El cliente quiere una columna nueva que nunca estuvo en alcance. El flujo actual cumple el criterio.',
+        'Al probar con Postman un POST /usuarios que crea un recurso, ¿qué indica normalmente una creación exitosa?',
       options: [
-        { key: 'a', label: 'Bug: el cliente siempre tiene razón.' },
+        { key: 'a', label: 'Código HTTP 200 o 201 y un cuerpo coherente con lo creado' },
+        { key: 'b', label: 'Código HTTP 500 con mensaje “OK”' },
+        { key: 'c', label: 'Código HTTP 404 porque el recurso aún no existía' },
+      ],
+      correct: ['a'],
+    },
+    {
+      id: 'ti-casos-unitarios',
+      competency: 'Diseño de casos de prueba unitarios',
+      type: 'single',
+      points: 1,
+      context:
+        'Función: aplicarDescuento\nRecibe un precio y un porcentaje de descuento.\nEl precio debe ser un número mayor que cero.\nEl porcentaje debe ser un número entre 0 y 100, ambos inclusive.\nSi las entradas son válidas, devuelve el precio final después de aplicar el descuento.\nSi el precio o el porcentaje no cumplen esas reglas, la operación se rechaza (error / no aplica el descuento).',
+      prompt:
+        'A partir de la siguiente descripción (fragmento de especificación), ¿cuál diseño de casos de prueba es el más correcto y completo?',
+      options: [
+        {
+          key: 'a',
+          label:
+            '1. Descuento habitual — precio 100, porcentaje 10 → precio final 90',
+        },
         {
           key: 'b',
           label:
-            'Cambio de alcance: se documenta y se escala a PM, no se cuela como defecto para «que lo saquen».',
+            '1. Descuento habitual — precio 100, porcentaje 10 → precio final 90\n2. Sin descuento (límite inferior) — precio 100, porcentaje 0 → precio final 100\n3. Descuento total (límite superior) — precio 100, porcentaje 100 → precio final 0\n4. Otro valor válido — precio 50, porcentaje 50 → precio final 25\n5. Precio inválido (cero) — precio 0, porcentaje 10 → rechazo / error\n6. Precio inválido (negativo) — precio -10, porcentaje 10 → rechazo / error\n7. Porcentaje por debajo del rango — precio 100, porcentaje -5 → rechazo / error\n8. Porcentaje por encima del rango — precio 100, porcentaje 101 → rechazo / error',
         },
-        { key: 'c', label: 'Se implementa callado para quedar bien.' },
-        { key: 'd', label: 'Se rechaza al cliente sin dejar rastro.' },
+        {
+          key: 'c',
+          label:
+            '1. Descuento habitual — precio 100, porcentaje 10 → precio final 90\n2. Mismo escenario otra vez — precio 100, porcentaje 10 → precio final 90\n3. Flujo de compra en pantalla — el usuario abre la tienda, agrega un producto y aplica un cupón → la compra muestra descuento',
+        },
       ],
       correct: ['b'],
+    },
+    {
+      id: 'ti-criterio-profesional',
+      competency: 'Criterio profesional',
+      type: 'single',
+      points: 1,
+      prompt: 'Un fallo solo ocurre “a veces”. ¿Cuál es la mejor primera acción?',
+      options: [
+        { key: 'a', label: 'Reportarlo sin pasos porque es intermitente' },
+        {
+          key: 'b',
+          label:
+            'Intentar reproducirlo, anotar condiciones (datos, ambiente, pasos) y reportar con evidencia',
+        },
+        { key: 'c', label: 'Esperar a que un usuario lo reporte en producción' },
+      ],
+      correct: ['b'],
+    },
+    {
+      id: 'ti-jmeter',
+      competency: 'Rendimiento / carga (JMeter)',
+      type: 'single',
+      points: 1,
+      prompt: '¿Para qué se usa principalmente JMeter?',
+      options: [
+        { key: 'a', label: 'Diseñar la interfaz visual de la aplicación' },
+        {
+          key: 'b',
+          label:
+            'Simular carga (usuarios o peticiones) y observar tiempos de respuesta y estabilidad',
+        },
+        { key: 'c', label: 'Sustituir por completo las pruebas unitarias' },
+      ],
+      correct: ['b'],
+    },
+    {
+      id: 'ti-seguridad',
+      competency: 'Seguridad',
+      type: 'single',
+      points: 1,
+      prompt: 'Al probar una API de inicio de sesión, ¿qué enfoque es el más adecuado?',
+      options: [
+        { key: 'a', label: 'Probar solo el acceso con usuario y contraseña correctos' },
+        {
+          key: 'b',
+          label:
+            'Probar también credenciales inválidas, acceso sin token y que no se expongan datos sensibles en la respuesta',
+        },
+        { key: 'c', label: 'Desactivar HTTPS para inspeccionar el tráfico con más facilidad' },
+      ],
+      correct: ['b'],
+    },
+    {
+      id: 'ti-automatizacion',
+      competency: 'Automatización',
+      type: 'single',
+      points: 1,
+      prompt: '¿Qué conviene automatizar primero?',
+      options: [
+        {
+          key: 'a',
+          label:
+            'Escenarios estables, repetitivos y de alto valor (por ejemplo, login y una API crítica)',
+        },
+        { key: 'b', label: 'Solo las pantallas con mejor diseño visual' },
+        {
+          key: 'c',
+          label: 'Todo el sistema de punta a punta desde el primer día, sin pruebas unitarias',
+        },
+      ],
+      correct: ['a'],
     },
   ]
 );

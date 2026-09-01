@@ -97,7 +97,11 @@ export async function POST(request: Request) {
 
   const match = matchHuntReport({ pageUrl, title, description, expected, discipline });
   const huntBefore = catalogKey
-    ? await huntProgressForAttempt({ email, catalogKey })
+    ? await huntProgressForAttempt({
+        email,
+        catalogKey,
+        jobPostingId: jobPostingId || undefined,
+      })
     : null;
   const admin = createAdminClient();
 
@@ -175,7 +179,13 @@ export async function POST(request: Request) {
     },
   });
 
-  const hunt = catalogKey ? await huntProgressForAttempt({ email, catalogKey }) : null;
+  const hunt = catalogKey
+    ? await huntProgressForAttempt({
+        email,
+        catalogKey,
+        jobPostingId: jobPostingId || undefined,
+      })
+    : null;
   if (hunt?.ready && !huntBefore?.ready && jobPostingId) {
     await notifyCandidateApplyReady({
       email,
@@ -207,5 +217,13 @@ export async function POST(request: Request) {
     ok: true,
     report_id: inserted?.id || null,
     hunt_ready: hunt?.ready ?? null,
+    hunt_cover_all: hunt?.coverAllCrafts ?? false,
+    hunt_matched: hunt?.matched ?? null,
+    hunt_needed: hunt?.needed ?? null,
+    hunt_crafts: hunt?.coverAllCrafts
+      ? hunt.crafts.map((slot) => ({ craft: slot.craft, found: slot.found }))
+      : [],
+    matched_craft: match?.craft && match.craft !== 'other' ? match.craft : null,
+    counts_for_craft: match?.countsForCraft ?? false,
   });
 }

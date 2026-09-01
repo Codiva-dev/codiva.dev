@@ -20,6 +20,8 @@ import {
   splitMentionTokens,
   workFileKind,
   workSubtaskCounts,
+  appendWorkFormFiles,
+  isWorkFormFile,
 } from './work-board';
 
 describe('work-board progress', () => {
@@ -56,6 +58,19 @@ describe('work-board progress', () => {
     expect(workFileKind('application/x-msdownload', 'x.exe')).toBeNull();
     expect(clampWorkProgress(140)).toBe(100);
     expect(clampWorkProgress(-4)).toBe(0);
+  });
+
+  it('keeps selected files in FormData for the server action', () => {
+    const file = new File(['hola'], 'nota.txt', { type: 'text/plain' });
+    expect(isWorkFormFile(file)).toBe(true);
+    expect(isWorkFormFile('files')).toBe(false);
+    const fd = new FormData();
+    fd.append('files', 'stale');
+    appendWorkFormFiles(fd, [file]);
+    const stored = fd.getAll('files');
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toBeInstanceOf(File);
+    expect((stored[0] as File).name).toBe('nota.txt');
   });
 
   it('counts subtasks on a card', () => {

@@ -254,6 +254,21 @@ export function workFileHref(id: string) {
   return `/api/ops/assignment-file?id=${encodeURIComponent(id)}`;
 }
 
+export function isWorkFormFile(value: FormDataEntryValue): value is File {
+  if (typeof value !== 'object' || value === null) return false;
+  const file = value as File;
+  if (!(Number(file.size) > 0)) return false;
+  if (typeof File !== 'undefined' && value instanceof File) return true;
+  return typeof file.name === 'string' && typeof file.arrayBuffer === 'function';
+}
+
+export function appendWorkFormFiles(formData: FormData, files: File[], field = 'files') {
+  formData.delete(field);
+  for (const file of files) {
+    if (file.size > 0) formData.append(field, file, file.name);
+  }
+}
+
 export function clampWorkProgress(pct: number) {
   if (!Number.isFinite(pct)) return 0;
   return Math.max(0, Math.min(100, Math.round(pct)));

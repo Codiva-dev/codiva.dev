@@ -7,7 +7,7 @@ import {
   safeCareerStr,
 } from '@/lib/ops/careers';
 import { loadAttemptByToken } from '@/lib/careers/assessments/server';
-import { huntRequiredForCatalog } from '@/lib/careers/hunt/seeds';
+import { postingRequiresHunt } from '@/lib/careers/hunt/progress';
 import {
   applyHuntCookie,
   readHuntTokenFromRequest,
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     !attempt ||
     attempt.status !== 'completed' ||
     !attempt.passed ||
-    !huntRequiredForCatalog(attempt.catalog_key)
+    !(await postingRequiresHunt(attempt.job_posting_id, attempt.catalog_key))
   ) {
     return noContent();
   }

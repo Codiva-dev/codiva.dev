@@ -35,6 +35,42 @@ describe('isCandidateReadyForCv', () => {
     ).toBe(true);
   });
 
+  it('requires every craft when huntNeeded is 6', () => {
+    expect(
+      isCandidateReadyForCv({
+        email: 'a@x.com',
+        passed: true,
+        catalogKey: 'tester-general',
+        craftHits: 5,
+        leftActiveQueueEmails: queue([]),
+        huntNeeded: 6,
+      })
+    ).toBe(false);
+    expect(
+      isCandidateReadyForCv({
+        email: 'a@x.com',
+        passed: true,
+        catalogKey: 'tester-general',
+        craftHits: 6,
+        leftActiveQueueEmails: queue([]),
+        huntNeeded: 6,
+      })
+    ).toBe(true);
+  });
+
+  it('honors an explicit huntRequired flag over the catalog', () => {
+    expect(
+      isCandidateReadyForCv({
+        email: 'a@x.com',
+        passed: true,
+        catalogKey: tester,
+        craftHits: 0,
+        leftActiveQueueEmails: queue([]),
+        huntRequired: false,
+      })
+    ).toBe(true);
+  });
+
   it('rejects a failed attempt, a tester without a craft hit, or someone already in the queue', () => {
     expect(
       isCandidateReadyForCv({

@@ -88,7 +88,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: job, error: jobErr } = await admin
     .from('ops_job_postings')
-    .select('id, title, slug, status, assessment_key')
+    .select('id, title, slug, status, assessment_key, asks_discipline, requires_hunt')
     .eq('id', jobPostingId)
     .maybeSingle();
 
@@ -99,13 +99,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'job_not_available' }, { status: 400 });
   }
 
-  const asksDiscipline = postingAsksDiscipline(job.slug);
+  const asksDiscipline = postingAsksDiscipline(job);
   const discipline = isCareerDiscipline(disciplineRaw) ? disciplineRaw : null;
   if (asksDiscipline && !discipline) {
     return NextResponse.json({ ok: false, error: 'missing_or_invalid_discipline' }, { status: 400 });
   }
 
-  const catalog = catalogForApplication(job.assessment_key, job.slug, discipline);
+  const catalog = catalogForApplication(job.assessment_key, job.slug, discipline, job.asks_discipline);
   let assessmentAttemptId: string | null = null;
   let assessmentScorePct: number | null = null;
   if (catalog) {
@@ -137,6 +137,8 @@ export async function POST(request: Request) {
     const hunt = await huntProgressForAttempt({
       email: attempt.email,
       catalogKey: attempt.catalog_key,
+      jobPostingId: job.id,
+      required: job.requires_hunt,
     });
     if (hunt.required && !hunt.ready) {
       return NextResponse.json({ ok: false, error: 'hunt_required' }, { status: 400 });

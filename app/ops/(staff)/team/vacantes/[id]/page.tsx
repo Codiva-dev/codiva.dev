@@ -1,6 +1,7 @@
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
 import CopyableUrl from '@/components/ops/CopyableUrl';
 import ToastForm from '@/components/ops/ToastForm';
+import JobPostingProcessFields from '@/components/ops/JobPostingProcessFields';
 import { requireAdminStaff } from '@/lib/ops/auth';
 import { updateJobPosting } from '@/lib/ops/career-actions';
 import {
@@ -23,7 +24,7 @@ export default async function VacanteEditPage({
   const { data: posting } = await supabase
     .from('ops_job_postings')
     .select(
-      'id, slug, title, title_en, description, description_en, requirements, requirements_en, location, location_en, employment_type, status, sort_order'
+      'id, slug, title, title_en, description, description_en, requirements, requirements_en, location, location_en, employment_type, status, sort_order, assessment_key, asks_discipline, requires_hunt, careers_pipeline, hire_ops_role'
     )
     .eq('id', id)
     .maybeSingle();
@@ -178,6 +179,14 @@ export default async function VacanteEditPage({
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
           />
         </label>
+        <JobPostingProcessFields
+          t={t}
+          assessmentKey={posting.assessment_key}
+          asksDiscipline={Boolean(posting.asks_discipline)}
+          requiresHunt={Boolean(posting.requires_hunt)}
+          careersPipeline={Boolean(posting.careers_pipeline)}
+          hireOpsRole={posting.hire_ops_role}
+        />
         <button type="submit" className="rounded-lg bg-codiva-primary px-4 py-2 text-sm text-white">
           {t('ops.careers.save')}
         </button>

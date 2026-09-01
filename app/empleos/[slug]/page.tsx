@@ -27,7 +27,7 @@ async function loadPublishedPosting(slug: string) {
   if (!isSupabaseConfigured()) return null;
   const { data } = await createAdminClient()
     .from('ops_job_postings')
-    .select('id, slug, title, title_en, description, description_en, requirements, requirements_en, location, location_en, employment_type, published_at, assessment_key')
+    .select('id, slug, title, title_en, description, description_en, requirements, requirements_en, location, location_en, employment_type, published_at, assessment_key, asks_discipline, requires_hunt')
     .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle();
@@ -71,7 +71,7 @@ export default async function EmpleoDetailPage({ params, searchParams }: PagePro
 
   const employment = jobEmploymentLabel(posting.employment_type, t.locale);
   const DISCIPLINE_LABELS = careerDisciplineLabels(t.locale);
-  const asksDiscipline = postingAsksDiscipline(posting.slug);
+  const asksDiscipline = postingAsksDiscipline(posting);
   const initialDiscipline = isCareerDiscipline(disciplineRaw ?? '')
     ? (disciplineRaw as typeof CAREER_DISCIPLINES[number])
     : undefined;
@@ -128,7 +128,7 @@ export default async function EmpleoDetailPage({ params, searchParams }: PagePro
                   ))
                 : null}
             </div>
-            {asksDiscipline ? (
+            {asksDiscipline || posting.requires_hunt ? (
               <p className="mt-4 text-sm leading-relaxed text-zinc-600">{t('career.two_parts_note')}</p>
             ) : null}
           </header>

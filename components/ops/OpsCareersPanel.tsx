@@ -1,4 +1,5 @@
 import CopyableUrl from '@/components/ops/CopyableUrl';
+import JobPostingProcessFields from '@/components/ops/JobPostingProcessFields';
 import Link from 'next/link';
 import { ChevronDown } from 'lucide-react';
 import ToastForm from '@/components/ops/ToastForm';
@@ -36,13 +37,13 @@ import {
   updateJobApplicationStatus,
 } from '@/lib/ops/career-actions';
 import { huntSeedById } from '@/lib/careers/hunt/seeds';
+import { huntCoversAllCrafts, huntProgressFromReports } from '@/lib/careers/hunt/progress';
 import { matchedSeedCountsForDiscipline } from '@/lib/careers/hunt/match';
 import { splitHuntReports } from '@/lib/careers/hunt/review';
 import { careerEmailKey as emailKey, isCandidateReadyForCv } from '@/lib/careers/recruiting-stage';
 import {
   huntConsiderationLabel,
   huntDifficultyLabel,
-  scoreHuntReports,
   type HuntConsideration,
 } from '@/lib/careers/hunt/score';
 import { disciplineFromCatalogKey } from '@/lib/ops/career-disciplines';
@@ -64,6 +65,8 @@ export type OpsJobPostingRow = {
   employment_type: string | null;
   status: string;
   updated_at: string;
+  careers_pipeline?: boolean | null;
+  requires_hunt?: boolean | null;
 };
 
 export type OpsJobApplicationRow = {
@@ -78,7 +81,10 @@ export type OpsJobApplicationRow = {
   original_filename: string | null;
   assessment_attempt_id?: string | null;
   cover_letter?: string | null;
-  ops_job_postings: { title: string; slug: string } | { title: string; slug: string }[] | null;
+  ops_job_postings:
+    | { title: string; slug: string; careers_pipeline?: boolean | null }
+    | { title: string; slug: string; careers_pipeline?: boolean | null }[]
+    | null;
 };
 
 export type OpsHuntReportRow = {
@@ -248,16 +254,25 @@ function CareersTag({
 function huntForCandidate(
   reports: OpsHuntReportRow[],
   email: string,
-  discipline?: string | null
+  discipline?: string | null,
+  catalogKey?: string | null
 ) {
   const rows = reports.filter((row) => emailKey(row.email) === emailKey(email));
   const { active } = splitHuntReports(rows);
-  const craftHits = active.filter((row) =>
-    discipline && isCareerDiscipline(discipline)
-      ? matchedSeedCountsForDiscipline(row.matched_seed_id, discipline)
-      : Boolean(row.matched_seed_id)
-  );
-  return { rows, total: rows.length, craftHits: craftHits.length, score: scoreHuntReports(active, discipline) };
+  const coverAllCrafts = huntCoversAllCrafts({ catalogKey });
+  const craft = discipline && isCareerDiscipline(discipline) ? discipline : null;
+  const progress = huntProgressFromReports(active, {
+    required: true,
+    coverAllCrafts,
+    discipline: coverAllCrafts ? null : craft,
+  });
+  return {
+    rows,
+    total: rows.length,
+    craftHits: progress.matched,
+    huntNeeded: progress.needed,
+    score: progress.score,
+  };
 }
 
 function HuntFindingEmbed({
@@ -743,6 +758,7 @@ export default async function OpsCareersPanel({
   }
 
   const attemptById = new Map(attempts.map((row) => [row.id, row]));
+  const postingById = new Map(postings.map((row) => [row.id, row]));
   const attemptByEmail = new Map<string, OpsJobAttemptRow>();
   for (const row of attempts) {
     const key = emailKey(row.email);
@@ -776,8 +792,8 @@ export default async function OpsCareersPanel({
         return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
       }
       if (originFilter && aShared && bShared && aHash !== bHash) return aHash.localeCompare(bHash);
-      const ha = huntForCandidate(huntReports, a.email, disciplineFromCatalogKey(a.catalog_key));
-      const hb = huntForCandidate(huntReports, b.email, disciplineFromCatalogKey(b.catalog_key));
+      const ha = huntForCandidate(huntReports, a.email, disciplineFromCatalogKey(a.catalog_key), a.catalog_key);
+      const hb = huntForCandidate(huntReports, b.email, disciplineFromCatalogKey(b.catalog_key), b.catalog_key);
       const diff = considerationRank(hb.score.consideration) - considerationRank(ha.score.consideration);
       if (diff) return diff;
       return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
@@ -786,7 +802,7 @@ export default async function OpsCareersPanel({
       if (originFilter && (originSize.get(String(row.ip_hash || '').trim()) || 0) < 2) return false;
       if (!signalFilter) return true;
       return (
-        huntForCandidate(huntReports, row.email, disciplineFromCatalogKey(row.catalog_key)).score
+        huntForCandidate(huntReports, row.email, disciplineFromCatalogKey(row.catalog_key), row.catalog_key).score
           .consideration === signalFilter
       );
     });
@@ -831,8 +847,10 @@ export default async function OpsCareersPanel({
       const hunt = huntForCandidate(
         huntReports,
         row.email,
-        disciplineFromCatalogKey(row.catalog_key)
+        disciplineFromCatalogKey(row.catalog_key),
+        row.catalog_key
       );
+      const postingHunt = postingById.get(row.job_posting_id)?.requires_hunt;
       if (
         !isCandidateReadyForCv({
           email: row.email,
@@ -840,6 +858,8 @@ export default async function OpsCareersPanel({
           catalogKey: row.catalog_key,
           craftHits: hunt.craftHits,
           leftActiveQueueEmails,
+          huntRequired: typeof postingHunt === 'boolean' ? postingHunt : undefined,
+          huntNeeded: hunt.huntNeeded,
         })
       ) {
         return false;
@@ -848,8 +868,8 @@ export default async function OpsCareersPanel({
       return true;
     })
     .sort((a, b) => {
-      const ha = huntForCandidate(huntReports, a.email, disciplineFromCatalogKey(a.catalog_key));
-      const hb = huntForCandidate(huntReports, b.email, disciplineFromCatalogKey(b.catalog_key));
+      const ha = huntForCandidate(huntReports, a.email, disciplineFromCatalogKey(a.catalog_key), a.catalog_key);
+      const hb = huntForCandidate(huntReports, b.email, disciplineFromCatalogKey(b.catalog_key), b.catalog_key);
       const diff = considerationRank(hb.score.consideration) - considerationRank(ha.score.consideration);
       if (diff) return diff;
       return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
@@ -998,6 +1018,7 @@ export default async function OpsCareersPanel({
             />
           </label>
           <p className="text-xs text-zinc-500 sm:col-span-2">{t('ops.careers.enHint')}</p>
+          <JobPostingProcessFields t={t} />
         </div>
         <button type="submit" className="rounded-lg bg-codiva-primary px-4 py-2 text-sm text-white">
           {t('ops.careers.createSubmit')}
@@ -1235,7 +1256,7 @@ export default async function OpsCareersPanel({
                   {readyForCv.map((row) => {
                     const posting = postings.find((p) => p.id === row.job_posting_id);
                     const discipline = disciplineFromCatalogKey(row.catalog_key);
-                    const hunt = huntForCandidate(huntReports, row.email, discipline);
+                    const hunt = huntForCandidate(huntReports, row.email, discipline, row.catalog_key);
                     const role = applicationRoleLabel({
                       postingTitle: posting?.title,
                       discipline,
@@ -1414,7 +1435,7 @@ export default async function OpsCareersPanel({
                   {attemptsActive.slice(0, 40).map((row) => {
                     const posting = postings.find((p) => p.id === row.job_posting_id);
                     const discipline = disciplineFromCatalogKey(row.catalog_key);
-                    const hunt = huntForCandidate(huntReports, row.email, discipline);
+                    const hunt = huntForCandidate(huntReports, row.email, discipline, row.catalog_key);
                     const role = applicationRoleLabel({
                       postingTitle: posting?.title,
                       discipline,

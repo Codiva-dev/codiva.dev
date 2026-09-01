@@ -654,5 +654,17 @@ export const ASSESSMENT_CATALOGS: Record<string, AssessmentCatalog> = {
 
 export function getAssessmentCatalog(key: string | null | undefined): AssessmentCatalog | null {
   if (!key) return null;
+  if (key === 'tester') return TESTER_GENERAL;
   return ASSESSMENT_CATALOGS[key] ?? null;
+}
+
+export function isAssessmentCatalogKey(key: string | null | undefined): boolean {
+  return Boolean(key && (key === 'tester' || ASSESSMENT_CATALOGS[key]));
+}
+
+export function assessmentCatalogChoices(): { key: string; title: string }[] {
+  return Object.values(ASSESSMENT_CATALOGS).map((catalog) => ({
+    key: catalog.key,
+    title: catalog.title,
+  }));
 }

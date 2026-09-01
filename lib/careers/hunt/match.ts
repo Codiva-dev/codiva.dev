@@ -124,7 +124,9 @@ export function matchHuntReport(input: {
     const strong = anchors.some(isStrongToken);
     if (!strong && support.length < 1) continue;
 
-    const countsForCraft = discipline ? seedCountsForDiscipline(seed, discipline) : false;
+    const countsForCraft = discipline
+      ? seedCountsForDiscipline(seed, discipline)
+      : seed.craft !== 'other';
     const score =
       anchors.length * 25 +
       support.length * 8 +

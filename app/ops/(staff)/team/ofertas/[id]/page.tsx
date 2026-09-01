@@ -1,4 +1,5 @@
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import ToastForm from '@/components/ops/ToastForm';
 import OpsOfferCareerFile from '@/components/ops/OpsOfferCareerFile';
 import { requireAdminStaff } from '@/lib/ops/auth';
@@ -68,14 +69,12 @@ export default async function TeamOfferDetailPage({
             >
               {t('ops.offer.downloadPdf')}
             </a>
-            <a
+            <PreviewPopupLink
               href={`/api/ops/alta-personal/${id}/carta`}
-              target="_blank"
-              rel="noreferrer"
               className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
             >
               {t('ops.offer.openHtml')}
-            </a>
+            </PreviewPopupLink>
             <Link
               href="/team?tab=ofertas"
               className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"

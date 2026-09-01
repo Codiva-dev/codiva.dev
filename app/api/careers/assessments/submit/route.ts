@@ -14,7 +14,7 @@ import {
   parseAnswers,
   recordAssessmentEvent,
 } from '@/lib/careers/assessments/server';
-import { huntRequiredForCatalog } from '@/lib/careers/hunt/seeds';
+import { postingRequiresHunt } from '@/lib/careers/hunt/progress';
 import { applyHuntCookie } from '@/lib/careers/hunt/events';
 import { notifyCandidateHuntPartTwo } from '@/lib/careers/hunt/notify-candidate';
 
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
   });
 
   const passed = Boolean(updated?.passed ?? scored.passed);
-  if (passed && huntRequiredForCatalog(row.catalog_key)) {
+  if (passed && (await postingRequiresHunt(row.job_posting_id, row.catalog_key))) {
     await notifyCandidateHuntPartTwo({
       email: row.email,
       name: row.full_name,

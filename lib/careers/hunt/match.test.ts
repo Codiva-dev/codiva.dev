@@ -101,4 +101,34 @@ describe('matchHuntReport', () => {
     });
     expect(match).toBeNull();
   });
+
+  it('matches the ghost platform-engineer card', () => {
+    const match = matchHuntReport({
+      pageUrl: 'https://career.codiva.dev/',
+      title: 'Ingeniero de plataforma 404',
+      description: 'La tarjeta Ingeniero de plataforma del listado apunta a /ingeniero-plataforma y no existe.',
+      discipline: 'qa',
+    });
+    expect(match?.seedId).toBe('career-ghost-job');
+  });
+
+  it('matches GET 201 on the public feed', () => {
+    const match = matchHuntReport({
+      pageUrl: 'https://career.codiva.dev/api/careers/feed',
+      title: 'El GET del feed responde 201 Created',
+      description: 'Pedí el feed JSON y el status HTTP 201 Created en un GET.',
+      discipline: 'backend',
+    });
+    expect(match?.seedId).toBe('feed-get-201');
+  });
+
+  it('matches the health db typo', () => {
+    const match = matchHuntReport({
+      pageUrl: 'https://career.codiva.dev/api/careers/health',
+      title: 'db conected',
+      description: 'El JSON de estado tiene db: "conected" con el typo.',
+      discipline: 'backend',
+    });
+    expect(match?.seedId).toBe('health-db-conected');
+  });
 });

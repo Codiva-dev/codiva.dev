@@ -683,12 +683,14 @@ export function templateCareerHuntPartTwo({
   pruebaHref,
   huntHref,
   locale = DEFAULT_LOCALE,
+  coverAll = false,
 }: {
   name: string;
   craft: string;
   pruebaHref: string;
   huntHref: string;
   locale?: Locale;
+  coverAll?: boolean;
 }): string {
   return emailLayout({
     preview: tSync(locale, 'email.careerHunt.preview'),
@@ -696,7 +698,11 @@ export function templateCareerHuntPartTwo({
     locale,
     bodyHtml: `
       <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.hello'))} ${escapeHtml(name)},</p>
-      <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.careerHunt.body1', { craft }))}</p>
+      <p style="margin:0 0 12px;">${escapeHtml(
+        coverAll
+          ? tSync(locale, 'email.careerHunt.body1All')
+          : tSync(locale, 'email.careerHunt.body1', { craft })
+      )}</p>
       <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.careerHunt.body2'))}</p>
       <p style="margin:0;">${escapeHtml(tSync(locale, 'email.careerHunt.body3'))}<br/>
         <a href="${escapeHtml(huntHref)}" style="color:${BRAND.primary};">${escapeHtml(huntHref)}</a>
@@ -711,10 +717,12 @@ export function templateCareerApplyReady({
   name,
   applyHref,
   locale = DEFAULT_LOCALE,
+  coverAll = false,
 }: {
   name: string;
   applyHref: string;
   locale?: Locale;
+  coverAll?: boolean;
 }): string {
   return emailLayout({
     preview: tSync(locale, 'email.careerApplyReady.preview'),
@@ -722,7 +730,9 @@ export function templateCareerApplyReady({
     locale,
     bodyHtml: `
       <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.hello'))} ${escapeHtml(name)},</p>
-      <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.careerApplyReady.body1'))}</p>
+      <p style="margin:0 0 12px;">${escapeHtml(
+        tSync(locale, coverAll ? 'email.careerApplyReady.body1All' : 'email.careerApplyReady.body1')
+      )}</p>
       <p style="margin:0;">${escapeHtml(tSync(locale, 'email.careerApplyReady.body2'))}</p>
     `,
     cta: { label: tSync(locale, 'email.careerApplyReady.cta'), href: applyHref },
@@ -735,11 +745,13 @@ export function templateCareerHuntNudge({
   pruebaHref,
   huntHref,
   locale = DEFAULT_LOCALE,
+  coverAll = false,
 }: {
   name: string;
   pruebaHref: string;
   huntHref: string;
   locale?: Locale;
+  coverAll?: boolean;
 }): string {
   return emailLayout({
     preview: tSync(locale, 'email.careerHuntNudge.preview'),
@@ -747,7 +759,9 @@ export function templateCareerHuntNudge({
     locale,
     bodyHtml: `
       <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.hello'))} ${escapeHtml(name)},</p>
-      <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.careerHuntNudge.body1'))}</p>
+      <p style="margin:0 0 12px;">${escapeHtml(
+        tSync(locale, coverAll ? 'email.careerHuntNudge.body1All' : 'email.careerHuntNudge.body1')
+      )}</p>
       <p style="margin:0;">${escapeHtml(tSync(locale, 'email.careerHuntNudge.body2'))}<br/>
         <a href="${escapeHtml(huntHref)}" style="color:${BRAND.primary};">${escapeHtml(huntHref)}</a>
       </p>
@@ -761,10 +775,12 @@ export function templateCareerCvNudge({
   name,
   applyHref,
   locale = DEFAULT_LOCALE,
+  coverAll = false,
 }: {
   name: string;
   applyHref: string;
   locale?: Locale;
+  coverAll?: boolean;
 }): string {
   return emailLayout({
     preview: tSync(locale, 'email.careerCvNudge.preview'),
@@ -772,7 +788,9 @@ export function templateCareerCvNudge({
     locale,
     bodyHtml: `
       <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.hello'))} ${escapeHtml(name)},</p>
-      <p style="margin:0 0 12px;">${escapeHtml(tSync(locale, 'email.careerCvNudge.body1'))}</p>
+      <p style="margin:0 0 12px;">${escapeHtml(
+        tSync(locale, coverAll ? 'email.careerCvNudge.body1All' : 'email.careerCvNudge.body1')
+      )}</p>
       <p style="margin:0;">${escapeHtml(tSync(locale, 'email.careerCvNudge.body2'))}</p>
     `,
     cta: { label: tSync(locale, 'email.careerCvNudge.cta'), href: applyHref },

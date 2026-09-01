@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -17,6 +17,7 @@ import {
   addWorkAssignmentComment,
   addWorkAssignmentFiles,
   createWorkAssignment,
+  deleteWorkAssignment,
   deleteWorkAssignmentFile,
   toggleWorkSubtask,
   updateWorkAssignment,
@@ -40,6 +41,7 @@ import {
   workColorTone,
   workFileHref,
   workSubtaskCounts,
+  appendWorkFormFiles,
   type WorkAssignment,
   type WorkFile,
   type WorkProcessKind,
@@ -572,6 +574,7 @@ function CreateModal({
   processLabels: Record<string, string>;
 }) {
   const { t } = useTranslation();
+  const filesRef = useRef<File[]>([]);
   return (
     <Modal
       open={open}
@@ -585,6 +588,7 @@ function CreateModal({
         className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"
         success={t('ops.asignaciones.created')}
         action={async (fd) => {
+          appendWorkFormFiles(fd, filesRef.current);
           await createWorkAssignment(fd);
           onClose();
         }}
@@ -622,7 +626,7 @@ function CreateModal({
           <Textarea name="subtasks" rows={3} size="sm" placeholder={t('ops.asignaciones.subtasksPlaceholder')} />
         </Field>
         <Field label={t('ops.asignaciones.attachments')} hint={t('ops.asignaciones.attachmentsHint')}>
-          <WorkAttachmentField />
+          <WorkAttachmentField onFilesChange={(files) => { filesRef.current = files; }} />
         </Field>
         <Button type="submit" size="sm">
           {t('ops.asignaciones.create')}
@@ -702,6 +706,7 @@ function DetailModal({
 }) {
   const { t } = useTranslation();
   const [comment, setComment] = useState('');
+  const filesRef = useRef<File[]>([]);
   const canAct = canMutateWorkAssignment(currentUserId, assignment.assignee_id, canManage);
   const events = [...assignment.stage_events].sort(
     (a, b) => Date.parse(a.entered_at) - Date.parse(b.entered_at)
@@ -747,6 +752,7 @@ function DetailModal({
     >
       <div className="mt-4 space-y-6">
         {canManage ? (
+          <div className="space-y-3">
           <ToastForm
             className="space-y-3"
             success={t('ops.asignaciones.saved')}
@@ -796,6 +802,22 @@ function DetailModal({
               {t('ops.asignaciones.save')}
             </Button>
           </ToastForm>
+          <ToastForm
+            success={t('ops.asignaciones.deleted')}
+            confirmTitle={t('ops.asignaciones.deleteConfirmTitle')}
+            confirmMessage={t('ops.asignaciones.deleteConfirm')}
+            confirmLabel={t('ops.asignaciones.delete')}
+            action={async () => {
+              await deleteWorkAssignment(assignment.id);
+              onClose();
+              onRefresh();
+            }}
+          >
+            <Button type="submit" size="xs" variant="danger">
+              {t('ops.asignaciones.delete')}
+            </Button>
+          </ToastForm>
+          </div>
         ) : (
           <div className="space-y-3 text-sm text-zinc-700">
             <p className="break-words">{assignment.description || '-'}</p>
@@ -822,11 +844,17 @@ function DetailModal({
               className="mt-3 space-y-2"
               success={t('ops.asignaciones.attachmentsAdded')}
               action={async (fd) => {
+                appendWorkFormFiles(fd, filesRef.current);
                 await addWorkAssignmentFiles(assignment.id, fd);
                 onRefresh();
               }}
             >
-              <WorkAttachmentField />
+              <WorkAttachmentField
+                key={`${assignment.id}-${assignment.files.length}`}
+                onFilesChange={(files) => {
+                  filesRef.current = files;
+                }}
+              />
               <Button type="submit" size="xs" variant="secondary">
                 {t('ops.asignaciones.attach')}
               </Button>

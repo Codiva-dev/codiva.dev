@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/admin';
-import { huntProgressForAttempt } from '@/lib/careers/hunt/progress';
+import { huntProgressForAttempt, postingRequiresHunt } from '@/lib/careers/hunt/progress';
 import { notifyCandidateHuntNudge } from '@/lib/careers/hunt/notify-candidate';
-import { huntRequiredForCatalog } from '@/lib/careers/hunt/seeds';
 
 export const runtime = 'nodejs';
 
@@ -48,11 +47,15 @@ export async function GET(request: Request) {
   let sent = 0;
   let skipped = 0;
   for (const row of rows ?? []) {
-    if (!huntRequiredForCatalog(row.catalog_key)) {
+    if (!(await postingRequiresHunt(row.job_posting_id, row.catalog_key))) {
       skipped += 1;
       continue;
     }
-    const hunt = await huntProgressForAttempt({ email: row.email, catalogKey: row.catalog_key });
+    const hunt = await huntProgressForAttempt({
+      email: row.email,
+      catalogKey: row.catalog_key,
+      jobPostingId: row.job_posting_id,
+    });
     if (hunt.ready) {
       await admin.from('ops_job_assessment_attempts').update({ hunt_nudge_sent_at: new Date().toISOString() }).eq('id', row.id);
       skipped += 1;

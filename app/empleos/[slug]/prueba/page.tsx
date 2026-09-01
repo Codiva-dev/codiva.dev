@@ -27,7 +27,7 @@ async function loadPublishedPosting(slug: string) {
   if (!isSupabaseConfigured()) return null;
   const { data } = await createAdminClient()
     .from('ops_job_postings')
-    .select('id, slug, title, title_en, status, assessment_key')
+    .select('id, slug, title, title_en, status, assessment_key, asks_discipline, requires_hunt')
     .eq('slug', slug)
     .eq('status', 'published')
     .maybeSingle();
@@ -56,7 +56,7 @@ export default async function EmpleoPruebaPage({ params, searchParams }: PagePro
   const DISCIPLINE_LABELS = careerDisciplineLabels(t.locale);
   const copy = localizedJobPostingCopy(posting, t.locale);
 
-  const asksDiscipline = postingAsksDiscipline(posting.slug);
+  const asksDiscipline = postingAsksDiscipline(posting);
   const discipline: CareerDiscipline | null = isCareerDiscipline(disciplineRaw ?? '')
     ? (disciplineRaw as CareerDiscipline)
     : null;
@@ -99,7 +99,7 @@ export default async function EmpleoPruebaPage({ params, searchParams }: PagePro
   }
 
   const catalog = asksDiscipline
-    ? catalogForApplication(posting.assessment_key, posting.slug, discipline)
+    ? catalogForApplication(posting.assessment_key, posting.slug, discipline, true)
     : catalogForPosting(posting.assessment_key, posting.slug);
   if (!catalog) notFound();
 
@@ -127,6 +127,7 @@ export default async function EmpleoPruebaPage({ params, searchParams }: PagePro
         applyHref={applyHref}
         listHref={listHref}
         discipline={discipline || undefined}
+        huntRequired={Boolean(posting.requires_hunt)}
       />
     </main>
   );

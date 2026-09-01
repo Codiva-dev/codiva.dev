@@ -1,4 +1,8 @@
-import { isCareerDiscipline, type CareerDiscipline } from '@/lib/ops/career-disciplines';
+import {
+  HUNT_COVER_CRAFTS,
+  isCareerDiscipline,
+  type CareerDiscipline,
+} from '@/lib/ops/career-disciplines';
 import { matchedSeedCountsForDiscipline } from './match';
 import { huntSeedById, HUNT_DIFFICULTY_POINTS, type HuntDifficulty } from './seeds';
 
@@ -26,12 +30,15 @@ export const EMPTY_HUNT_SCORE: HuntScore = {
 
 export function scoreHuntReports(
   reports: { matched_seed_id?: string | null }[],
-  discipline?: string | null
+  discipline?: string | null,
+  options?: { coverAllCrafts?: boolean }
 ): HuntScore {
+  const coverAllCrafts = Boolean(options?.coverAllCrafts);
   const craft: CareerDiscipline | null = isCareerDiscipline(discipline ?? '')
     ? (discipline as CareerDiscipline)
     : null;
   const seen = new Set<string>();
+  const coveredCrafts = new Set<string>();
   const byDifficulty: Record<HuntDifficulty, number> = { easy: 0, medium: 0, hard: 0 };
   let points = 0;
   let craftHits = 0;
@@ -51,9 +58,18 @@ export function scoreHuntReports(
       unknown += 1;
       continue;
     }
-    const counts = craft ? matchedSeedCountsForDiscipline(seed.id, craft) : true;
-    if (!counts) continue;
-    craftHits += 1;
+    if (coverAllCrafts) {
+      if (seed.craft === 'other' || !HUNT_COVER_CRAFTS.includes(seed.craft as (typeof HUNT_COVER_CRAFTS)[number])) {
+        continue;
+      }
+      const firstForCraft = !coveredCrafts.has(seed.craft);
+      coveredCrafts.add(seed.craft);
+      if (firstForCraft) craftHits += 1;
+    } else {
+      const counts = craft ? matchedSeedCountsForDiscipline(seed.id, craft) : true;
+      if (!counts) continue;
+      craftHits += 1;
+    }
     points += HUNT_DIFFICULTY_POINTS[seed.difficulty];
     byDifficulty[seed.difficulty] += 1;
     if (seed.difficulty === 'hard') hardest = 'hard';
@@ -62,7 +78,11 @@ export function scoreHuntReports(
   }
 
   let consideration: HuntConsideration = 'none';
-  if (craftHits >= 1) {
+  if (coverAllCrafts) {
+    if (craftHits >= HUNT_COVER_CRAFTS.length) consideration = 'strong';
+    else if (craftHits >= 3 || hardest === 'hard' || points >= 6) consideration = 'solid';
+    else if (craftHits >= 1) consideration = 'minimum';
+  } else if (craftHits >= 1) {
     if (hardest === 'hard' || points >= 6) {
       consideration = 'strong';
     } else if (hardest === 'medium' || craftHits >= 2 || points >= 3) {

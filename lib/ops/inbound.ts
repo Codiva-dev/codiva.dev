@@ -144,7 +144,7 @@ export async function loadInboundItems({
     showCareer
       ? supabase
           .from('ops_job_applications')
-          .select('id, full_name, email, discipline, created_at, ops_job_postings(title, slug)')
+          .select('id, full_name, email, discipline, created_at, ops_job_postings(title, slug, careers_pipeline)')
           .eq('status', 'new')
           .order('created_at', { ascending: false })
           .limit(perKind)
@@ -206,7 +206,11 @@ export async function loadInboundItems({
     const posting = firstRelated(row.ops_job_postings);
     if (
       careerTestersOnly &&
-      !isTesterPipelineItem({ postingSlug: posting?.slug, discipline: row.discipline })
+      !isTesterPipelineItem({
+        postingSlug: posting?.slug,
+        discipline: row.discipline,
+        careersPipeline: posting?.careers_pipeline,
+      })
     ) {
       continue;
     }

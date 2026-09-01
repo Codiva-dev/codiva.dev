@@ -13,15 +13,18 @@ import {
   isCareerDiscipline,
   isJobApplicationStatus,
   isJobEmploymentType,
+  isJobHireOpsRole,
   isJobInterviewKind,
   isJobInterviewOutcome,
   isJobInterviewRoundStatus,
   isJobPostingStatus,
   normalizeJobSlug,
+  postingHireOpsRole,
   uniqueJobSlugCandidate,
   CAREER_DISCIPLINE_LABELS,
   DEFAULT_INTERVIEW_ROUND_KINDS,
 } from '@/lib/ops/careers';
+import { isAssessmentCatalogKey } from '@/lib/careers/assessments/catalog';
 import { notifyCandidateApplicationStatus } from '@/lib/careers/notify-application-status';
 import { syncRoundAssignee } from '@/lib/ops/interview-actions';
 import {
@@ -41,8 +44,8 @@ function isUuid(value: string) {
 
 function postingFromApplication(application: {
   ops_job_postings?:
-    | { slug?: string | null; title?: string | null }
-    | { slug?: string | null; title?: string | null }[]
+    | { slug?: string | null; title?: string | null; careers_pipeline?: boolean | null }
+    | { slug?: string | null; title?: string | null; careers_pipeline?: boolean | null }[]
     | null;
 }) {
   return Array.isArray(application.ops_job_postings)
@@ -59,7 +62,7 @@ async function requireApplicationForReview(
 
   const { data: application } = await supabase
     .from('ops_job_applications')
-    .select('id, status, discipline, ops_job_postings(slug)')
+    .select('id, status, discipline, ops_job_postings(slug, careers_pipeline)')
     .eq('id', applicationId)
     .maybeSingle();
 
@@ -71,6 +74,7 @@ async function requireApplicationForReview(
     !isTesterPipelineItem({
       postingSlug: posting?.slug,
       discipline: application.discipline,
+      careersPipeline: posting?.careers_pipeline,
     })
   ) {
     throw new Error('No tienes permiso para esta postulación');
@@ -155,10 +159,17 @@ function parsePostingFields(formData: FormData) {
   const employmentRaw = String(formData.get('employmentType') || '').trim();
   const statusRaw = String(formData.get('status') || 'draft').trim();
   const sortOrder = Number(formData.get('sortOrder') || 0);
+  const assessmentRaw = String(formData.get('assessmentKey') || '').trim();
+  const hireRaw = String(formData.get('hireOpsRole') || 'dev').trim();
+  const asksDiscipline = formChecked(formData, 'asksDiscipline');
+  const requiresHunt = formChecked(formData, 'requiresHunt');
+  const careersPipeline = formChecked(formData, 'careersPipeline');
 
   if (title.length < 2) throw new Error('Título requerido');
   if (!isJobPostingStatus(statusRaw)) throw new Error('Estado inválido');
   const employmentType = employmentRaw && isJobEmploymentType(employmentRaw) ? employmentRaw : null;
+  const assessmentKey = assessmentRaw && isAssessmentCatalogKey(assessmentRaw) ? assessmentRaw : null;
+  const hireOpsRole = isJobHireOpsRole(hireRaw) ? hireRaw : 'dev';
 
   return {
     title,
@@ -173,7 +184,17 @@ function parsePostingFields(formData: FormData) {
     employmentType,
     status: statusRaw,
     sortOrder: Number.isFinite(sortOrder) ? Math.floor(sortOrder) : 0,
+    assessmentKey,
+    asksDiscipline,
+    requiresHunt,
+    careersPipeline,
+    hireOpsRole,
   };
+}
+
+function formChecked(formData: FormData, name: string) {
+  const value = String(formData.get(name) || '').trim();
+  return value === '1' || value === 'on' || value === 'true';
 }
 
 export async function createJobPosting(formData: FormData) {
@@ -197,6 +218,11 @@ export async function createJobPosting(formData: FormData) {
       employment_type: fields.employmentType,
       status: fields.status,
       sort_order: fields.sortOrder,
+      assessment_key: fields.assessmentKey,
+      asks_discipline: fields.asksDiscipline,
+      requires_hunt: fields.requiresHunt,
+      careers_pipeline: fields.careersPipeline,
+      hire_ops_role: fields.hireOpsRole,
       published_at: publishedAt,
       created_by: user.id,
     })
@@ -249,6 +275,11 @@ export async function updateJobPosting(postingId: string, formData: FormData) {
       employment_type: fields.employmentType,
       status: fields.status,
       sort_order: fields.sortOrder,
+      assessment_key: fields.assessmentKey,
+      asks_discipline: fields.asksDiscipline,
+      requires_hunt: fields.requiresHunt,
+      careers_pipeline: fields.careersPipeline,
+      hire_ops_role: fields.hireOpsRole,
       published_at: publishedAt,
     })
     .eq('id', postingId);
@@ -515,7 +546,7 @@ export async function createPersonnelOfferFromApplication(applicationId: string)
 
   const { data: application, error } = await supabase
     .from('ops_job_applications')
-    .select('id, full_name, email, cover_letter, discipline, personnel_offer_id, ops_job_postings(title, slug)')
+    .select('id, full_name, email, cover_letter, discipline, personnel_offer_id, ops_job_postings(title, slug, hire_ops_role)')
     .eq('id', applicationId)
     .single();
 
@@ -534,7 +565,6 @@ export async function createPersonnelOfferFromApplication(applicationId: string)
   const disciplineLabel = discipline ? CAREER_DISCIPLINE_LABELS[discipline] : null;
   const positionTitle =
     discipline && discipline !== 'other' ? disciplineLabel || posting?.title || 'Colaborador' : posting?.title || 'Colaborador';
-  const isPm = posting?.slug === 'project-manager';
   const careerEmail = application.email.toLowerCase();
   const notes = [
     `Origen: bolsa de trabajo (${posting?.slug || 'vacante'}).`,
@@ -579,7 +609,7 @@ export async function createPersonnelOfferFromApplication(applicationId: string)
       email: application.email,
       career_email: careerEmail,
       position_title: positionTitle,
-      ops_role: isPm ? 'pm' : 'dev',
+      ops_role: postingHireOpsRole(posting),
       monthly_compensation: 1200,
       currency: 'USD',
       work_modality: 'remote',

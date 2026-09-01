@@ -13,15 +13,16 @@ import {
 } from '@/lib/ops/careers';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { disciplineFromCatalogKey } from '@/lib/ops/career-disciplines';
-import { huntRequiredForCatalog } from './seeds';
+import { huntCoversAllCrafts } from './progress';
+import { huntRequiredForPosting } from './seeds';
 
-async function postingSlug(jobPostingId: string): Promise<string | null> {
+async function postingProcess(jobPostingId: string) {
   const { data } = await createAdminClient()
     .from('ops_job_postings')
-    .select('slug')
+    .select('slug, requires_hunt, asks_discipline')
     .eq('id', jobPostingId)
     .maybeSingle();
-  return data?.slug ? String(data.slug) : null;
+  return data;
 }
 
 function applyHref(slug: string, discipline: string | null): string {
@@ -30,25 +31,37 @@ function applyHref(slug: string, discipline: string | null): string {
     : publicCareerUrl(slug);
 }
 
+async function huntNotifyContext(input: { catalogKey: string; jobPostingId: string }) {
+  const posting = await postingProcess(input.jobPostingId);
+  if (!huntRequiredForPosting(posting?.requires_hunt, input.catalogKey)) return null;
+  const slug = posting?.slug ? String(posting.slug) : '';
+  if (!slug) return null;
+  const coverAll = huntCoversAllCrafts({
+    asksDiscipline: posting?.asks_discipline,
+    catalogKey: input.catalogKey,
+  });
+  const discipline = coverAll ? null : disciplineFromCatalogKey(input.catalogKey);
+  return { slug, discipline, coverAll };
+}
+
 export async function notifyCandidateHuntPartTwo(input: {
   email: string;
   name: string;
   catalogKey: string;
   jobPostingId: string;
 }): Promise<void> {
-  if (!huntRequiredForCatalog(input.catalogKey)) return;
-  const discipline = disciplineFromCatalogKey(input.catalogKey);
-  const slug = await postingSlug(input.jobPostingId);
-  if (!slug) return;
-  const craft = careerDisciplineLabel(discipline) || 'Tester';
+  const ctx = await huntNotifyContext(input);
+  if (!ctx) return;
+  const craft = careerDisciplineLabel(ctx.discipline) || 'Tester';
   await sendClientEmail({
     to: input.email,
-    subject: 'Siguiente: un hallazgo de tu oficio',
+    subject: ctx.coverAll ? 'Siguiente: un hallazgo de cada oficio' : 'Siguiente: un hallazgo de tu oficio',
     html: templateCareerHuntPartTwo({
       name: input.name,
       craft,
-      pruebaHref: publicCareerPruebaUrl(slug, discipline),
-      huntHref: publicCareerHuntUrl(discipline),
+      pruebaHref: publicCareerPruebaUrl(ctx.slug, ctx.discipline),
+      huntHref: publicCareerHuntUrl(ctx.discipline),
+      coverAll: ctx.coverAll,
     }),
   }).catch(() => {});
 }
@@ -59,16 +72,15 @@ export async function notifyCandidateApplyReady(input: {
   catalogKey: string;
   jobPostingId: string;
 }): Promise<void> {
-  if (!huntRequiredForCatalog(input.catalogKey)) return;
-  const discipline = disciplineFromCatalogKey(input.catalogKey);
-  const slug = await postingSlug(input.jobPostingId);
-  if (!slug) return;
+  const ctx = await huntNotifyContext(input);
+  if (!ctx) return;
   await sendClientEmail({
     to: input.email,
     subject: 'Ya puedes postular a Codiva.dev',
     html: templateCareerApplyReady({
       name: input.name,
-      applyHref: applyHref(slug, discipline),
+      applyHref: applyHref(ctx.slug, ctx.discipline),
+      coverAll: ctx.coverAll,
     }),
   }).catch(() => {});
 }
@@ -79,17 +91,16 @@ export async function notifyCandidateHuntNudge(input: {
   catalogKey: string;
   jobPostingId: string;
 }): Promise<void> {
-  if (!huntRequiredForCatalog(input.catalogKey)) return;
-  const discipline = disciplineFromCatalogKey(input.catalogKey);
-  const slug = await postingSlug(input.jobPostingId);
-  if (!slug) return;
+  const ctx = await huntNotifyContext(input);
+  if (!ctx) return;
   await sendClientEmail({
     to: input.email,
     subject: 'Cuando quieras, sigue con el hallazgo',
     html: templateCareerHuntNudge({
       name: input.name,
-      pruebaHref: publicCareerPruebaUrl(slug, discipline),
-      huntHref: publicCareerHuntUrl(discipline),
+      pruebaHref: publicCareerPruebaUrl(ctx.slug, ctx.discipline),
+      huntHref: publicCareerHuntUrl(ctx.discipline),
+      coverAll: ctx.coverAll,
     }),
   }).catch(() => {});
 }
@@ -100,16 +111,15 @@ export async function notifyCandidateCvNudge(input: {
   catalogKey: string;
   jobPostingId: string;
 }): Promise<void> {
-  if (!huntRequiredForCatalog(input.catalogKey)) return;
-  const discipline = disciplineFromCatalogKey(input.catalogKey);
-  const slug = await postingSlug(input.jobPostingId);
-  if (!slug) return;
+  const ctx = await huntNotifyContext(input);
+  if (!ctx) return;
   await sendClientEmail({
     to: input.email,
     subject: 'Falta tu CV para postular',
     html: templateCareerCvNudge({
       name: input.name,
-      applyHref: applyHref(slug, discipline),
+      applyHref: applyHref(ctx.slug, ctx.discipline),
+      coverAll: ctx.coverAll,
     }),
   }).catch(() => {});
 }

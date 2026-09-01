@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { logActivity } from '@/lib/ops/activity';
 import { htmlToPdf } from '@/lib/ops/html-to-pdf';
 import { can, canAny } from '@/lib/ops/permissions';
-import { isTesterCatalogKey, TESTER_JOB_SLUG } from '@/lib/ops/career-disciplines';
+import { isCareersPipelinePosting, isTesterCatalogKey } from '@/lib/ops/career-disciplines';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requestAuditFromHeaders } from '@/lib/ops/request-audit';
 import {
@@ -100,13 +100,34 @@ export async function GET(request: Request) {
       const admin = createAdminClient();
       const { data: testerJob } = await admin
         .from('ops_job_postings')
-        .select('id')
-        .eq('slug', TESTER_JOB_SLUG)
+        .select('id, careers_pipeline, slug')
+        .eq('careers_pipeline', true)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
-      if (jobId && jobId !== testerJob?.id) {
-        return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+      const fallback =
+        testerJob ||
+        (
+          await admin
+            .from('ops_job_postings')
+            .select('id, careers_pipeline, slug')
+            .in('slug', ['tester', 'tester-qa'])
+            .limit(1)
+            .maybeSingle()
+        ).data;
+      if (jobId && jobId !== fallback?.id) {
+        const { data: requested } = await admin
+          .from('ops_job_postings')
+          .select('id, careers_pipeline, slug')
+          .eq('id', jobId)
+          .maybeSingle();
+        if (!requested || !isCareersPipelinePosting(requested)) {
+          return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+        }
+        pipelineJobId = requested.id;
+      } else {
+        pipelineJobId = fallback?.id;
       }
-      pipelineJobId = testerJob?.id;
     }
     const pack = await loadRecruitingPipeline(pipelineJobId);
     html = renderRecruitingPipelineHtml(pack);

@@ -1,8 +1,11 @@
 import {
+  HUNT_PROGRESS_EVENT,
   HUNT_SESSION_EVENT,
   parseHuntCookieHeader,
   serializeHuntCookie,
 } from '@/lib/careers/hunt/cookie';
+
+export { HUNT_PROGRESS_EVENT, HUNT_SESSION_EVENT } from '@/lib/careers/hunt/cookie';
 
 export type HuntContext = {
   jobPostingId: string;
@@ -34,6 +37,11 @@ export function writeHuntCookie(token: string) {
 export function announceHuntSession() {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new Event(HUNT_SESSION_EVENT));
+}
+
+export function announceHuntProgress() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(HUNT_PROGRESS_EVENT));
 }
 
 export function readAttemptToken(jobPostingId: string, discipline?: string): string {

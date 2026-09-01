@@ -26,7 +26,7 @@ import {
   safeTimezone,
   type AssessmentAttemptRow,
 } from '@/lib/careers/assessments/server';
-import { huntProgressForAttempt } from '@/lib/careers/hunt/progress';
+import { EMPTY_HUNT_PROGRESS, huntProgressForAttempt, toPublicHuntSession, type HuntProgress } from '@/lib/careers/hunt/progress';
 import { applyHuntCookie } from '@/lib/careers/hunt/events';
 
 export const runtime = 'nodejs';
@@ -35,7 +35,7 @@ function publicSession(
   row: AssessmentAttemptRow,
   catalogTitle: string,
   questions: ReturnType<typeof publicQuestionsForAttempt>,
-  hunt?: { required: boolean; ready: boolean }
+  hunt?: HuntProgress
 ) {
   return {
     token: row.public_token,
@@ -52,8 +52,7 @@ function publicSession(
     title: catalogTitle,
     questions: row.status === 'started' ? questions : [],
     answers: row.answers ?? {},
-    hunt_required: hunt?.required ?? false,
-    hunt_ready: hunt?.ready ?? true,
+    ...toPublicHuntSession(hunt ?? EMPTY_HUNT_PROGRESS),
   };
 }
 
@@ -102,7 +101,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'assessment_not_available' }, { status: 400 });
   }
   const { catalog, posting } = loaded;
-  if (postingAsksDiscipline(posting.slug) && !discipline) {
+  if (postingAsksDiscipline(posting) && !discipline) {
     return NextResponse.json({ ok: false, error: 'missing_or_invalid_discipline' }, { status: 400 });
   }
 
@@ -128,7 +127,12 @@ export async function POST(request: Request) {
     (r) => r.passed && r.status === 'completed' && new Date(r.completed_at || r.started_at).getTime() >= passSince
   );
   if (passed) {
-    const hunt = await huntProgressForAttempt({ email: passed.email, catalogKey: passed.catalog_key });
+    const hunt = await huntProgressForAttempt({
+      email: passed.email,
+      catalogKey: passed.catalog_key,
+      jobPostingId: posting.id,
+      required: posting.requires_hunt,
+    });
     return applyHuntCookie(
       NextResponse.json({
         ok: true,

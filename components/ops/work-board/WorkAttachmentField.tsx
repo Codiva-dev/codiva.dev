@@ -1,31 +1,35 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '@/lib/format-bytes';
 import { WORK_FILE_ACCEPT, WORK_FILE_MAX_COUNT } from '@/lib/ops/work-board';
 
 export default function WorkAttachmentField({
-  name = 'files',
   hint,
+  onFilesChange,
 }: {
-  name?: string;
   hint?: string;
+  onFilesChange?: (files: File[]) => void;
 }) {
   const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
+  const onFilesChangeRef = useRef(onFilesChange);
+  onFilesChangeRef.current = onFilesChange;
 
   function sync(next: File[]) {
     const unique = next.slice(0, WORK_FILE_MAX_COUNT);
     setFiles(unique);
-    if (!inputRef.current) return;
-    const transfer = new DataTransfer();
-    for (const file of unique) transfer.items.add(file);
-    inputRef.current.files = transfer.files;
+    onFilesChangeRef.current?.(unique);
   }
+
+  useEffect(() => {
+    onFilesChangeRef.current?.([]);
+    return () => onFilesChangeRef.current?.([]);
+  }, []);
 
   function add(list: FileList | File[] | null) {
     if (!list?.length) return;
@@ -37,13 +41,13 @@ export default function WorkAttachmentField({
       <input
         ref={inputRef}
         id={inputId}
-        name={name}
         type="file"
         multiple
         accept={WORK_FILE_ACCEPT}
         className="sr-only"
         onChange={(event) => {
           add(event.target.files);
+          event.target.value = '';
         }}
       />
       <label

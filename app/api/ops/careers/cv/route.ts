@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   const { user, supabase, staff } = await requireCareersReview();
   const { data: application, error } = await supabase
     .from('ops_job_applications')
-    .select('id, job_posting_id, cv_storage_path, original_filename, discipline, ops_job_postings(slug)')
+    .select('id, job_posting_id, cv_storage_path, original_filename, discipline, ops_job_postings(slug, careers_pipeline)')
     .eq('id', applicationId)
     .maybeSingle();
 
@@ -31,7 +31,11 @@ export async function GET(request: Request) {
     : application.ops_job_postings;
   if (
     !can(staff, 'team') &&
-    !isTesterPipelineItem({ postingSlug: posting?.slug, discipline: application.discipline })
+    !isTesterPipelineItem({
+      postingSlug: posting?.slug,
+      discipline: application.discipline,
+      careersPipeline: posting?.careers_pipeline,
+    })
   ) {
     return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
   }

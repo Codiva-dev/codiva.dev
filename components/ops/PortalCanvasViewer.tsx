@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 
 export type PortalCanvasItem = {
   id: string;
@@ -206,14 +207,12 @@ export default function PortalCanvasViewer({ items }: { items: PortalCanvasItem[
                 </a>
               )}
               {src && (
-                <a
+                <PreviewPopupLink
                   href={src}
-                  target="_blank"
-                  rel="noreferrer"
                   className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
                 >
                   {t('portal.proposal.fullscreen')}
-                </a>
+                </PreviewPopupLink>
               )}
             </div>
           </div>
@@ -234,9 +233,9 @@ export default function PortalCanvasViewer({ items }: { items: PortalCanvasItem[
           ) : src ? (
             <div className="p-6 text-sm text-zinc-600">
               {t('portal.proposal.cannotPreview')}{' '}
-              <a href={src} target="_blank" rel="noreferrer" className="text-codiva-primary hover:underline">
+              <PreviewPopupLink href={src} className="text-codiva-primary hover:underline">
                 {t('portal.proposal.openIt')}
-              </a>
+              </PreviewPopupLink>
             </div>
           ) : (
             <div className="p-6 text-sm text-zinc-500">{t('portal.proposal.noFile')}</div>

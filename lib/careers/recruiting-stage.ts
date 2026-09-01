@@ -13,11 +13,18 @@ export function isCandidateReadyForCv(input: {
   catalogKey: string | null | undefined;
   craftHits: number;
   leftActiveQueueEmails: Iterable<string>;
+  huntRequired?: boolean;
+  huntNeeded?: number;
 }): boolean {
   const left = new Set([...input.leftActiveQueueEmails].map(careerEmailKey));
   if (left.has(careerEmailKey(input.email))) return false;
   if (!input.passed) return false;
-  if (huntRequiredForCatalog(input.catalogKey) && input.craftHits < 1) return false;
+  const huntRequired =
+    typeof input.huntRequired === 'boolean'
+      ? input.huntRequired
+      : huntRequiredForCatalog(input.catalogKey);
+  const huntNeeded = Math.max(1, input.huntNeeded ?? 1);
+  if (huntRequired && input.craftHits < huntNeeded) return false;
   return true;
 }
 
@@ -29,6 +36,8 @@ export function classifyRecruitingStage(input: {
   applicationStatus?: string | null;
   leftActiveQueueEmails: Iterable<string>;
   settledOffer?: boolean;
+  huntRequired?: boolean;
+  huntNeeded?: number;
 }): RecruitingStage {
   const status = input.applicationStatus || null;
   if (status === 'rejected') return 'discarded';
@@ -42,6 +51,8 @@ export function classifyRecruitingStage(input: {
       catalogKey: input.catalogKey,
       craftHits: input.craftHits,
       leftActiveQueueEmails: input.leftActiveQueueEmails,
+      huntRequired: input.huntRequired,
+      huntNeeded: input.huntNeeded,
     })
   ) {
     return 'ready';

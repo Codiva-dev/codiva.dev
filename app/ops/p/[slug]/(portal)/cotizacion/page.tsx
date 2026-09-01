@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import ToastForm from '@/components/ops/ToastForm';
 import PortalCanvasViewer from '@/components/ops/PortalCanvasViewer';
 import { redirect } from 'next/navigation';
@@ -181,14 +182,12 @@ export default async function PortalQuotePage({
                 {formatCurrency(preferred.total_amount, preferred.currency)}
               </p>
             </div>
-            <a
+            <PreviewPopupLink
               href={src}
-              target="_blank"
-              rel="noreferrer"
               className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
             >
               {t('portal.quote.fullscreen')}
-            </a>
+            </PreviewPopupLink>
           </div>
           <iframe
             title={preferred.title}

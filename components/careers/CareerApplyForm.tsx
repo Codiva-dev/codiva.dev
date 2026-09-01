@@ -259,14 +259,19 @@ export default function CareerApplyForm({
   }
 
   if (needsAssessment && huntPending && !assessmentReady) {
+    const coverAllHunt = !asksDiscipline;
     const craftHintKey = discipline
       ? `career.hunt_craft_hint_${String(discipline).replaceAll('-', '_')}`
-      : 'career.hunt_craft_hint_other';
+      : coverAllHunt
+        ? 'career.hunt_craft_hint_all'
+        : 'career.hunt_craft_hint_other';
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-semibold text-zinc-900">{t('career.apply_title')}</h2>
-          <p className="mt-2 text-sm leading-relaxed text-zinc-600">{t('career.hunt_gate')}</p>
+          <p className="mt-2 text-sm leading-relaxed text-zinc-600">
+            {coverAllHunt ? t('career.hunt_gate_all') : t('career.hunt_gate')}
+          </p>
           <p className="mt-2 text-sm leading-relaxed text-zinc-600">{t(craftHintKey)}</p>
           <DisciplineField />
         </div>
@@ -274,7 +279,7 @@ export default function CareerApplyForm({
           defaultName={fullName}
           defaultEmail={email}
           assessmentToken={assessmentToken}
-          discipline={discipline || undefined}
+          discipline={asksDiscipline ? discipline || undefined : undefined}
           lockIdentity={Boolean(fullName && email)}
           onReported={(ready) => {
             if (ready) {

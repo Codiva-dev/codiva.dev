@@ -27,6 +27,10 @@ type Session = {
   answers: Record<string, string[]>;
   hunt_required?: boolean;
   hunt_ready?: boolean;
+  hunt_cover_all?: boolean;
+  hunt_matched?: number;
+  hunt_needed?: number;
+  hunt_crafts?: { craft: string; found: boolean }[];
 };
 
 type Props = {
@@ -36,6 +40,7 @@ type Props = {
   applyHref: string;
   listHref: string;
   discipline?: string;
+  huntRequired?: boolean;
 };
 
 function formatMmSs(ms: number) {
@@ -45,7 +50,14 @@ function formatMmSs(ms: number) {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-export default function CareerAssessment({ jobPostingId, jobTitle, applyHref, listHref, discipline }: Props) {
+export default function CareerAssessment({
+  jobPostingId,
+  jobTitle,
+  applyHref,
+  listHref,
+  discipline,
+  huntRequired: huntRequiredProp = false,
+}: Props) {
   const { t } = useTranslation();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -96,7 +108,7 @@ export default function CareerAssessment({ jobPostingId, jobTitle, applyHref, li
         setResult({ passed: Boolean(data.passed), score_pct: data.score_pct ?? null });
         setSession((prev) => (prev ? { ...prev, status: 'completed', passed: Boolean(data.passed) } : prev));
         if (data.passed) {
-          const required = String(session?.catalog_key || '').startsWith('tester-');
+          const required = huntRequiredProp || Boolean(session?.hunt_required);
           setHuntRequired(required);
           setHuntReady(!required);
           announceHuntSession();
@@ -109,7 +121,7 @@ export default function CareerAssessment({ jobPostingId, jobTitle, applyHref, li
         submittingRef.current = false;
       }
     },
-    [answers, session?.catalog_key, session?.token, t]
+    [answers, huntRequiredProp, session?.hunt_required, session?.token, t]
   );
 
   useEffect(() => {
@@ -267,9 +279,12 @@ export default function CareerAssessment({ jobPostingId, jobTitle, applyHref, li
 
   if (result) {
     const showHunt = result.passed && huntRequired && !huntReady;
+    const coverAll = Boolean(session?.hunt_cover_all);
     const craftHintKey = discipline
       ? `career.hunt_craft_hint_${discipline.replaceAll('-', '_')}`
-      : 'career.hunt_craft_hint_other';
+      : coverAll
+        ? 'career.hunt_craft_hint_all'
+        : 'career.hunt_craft_hint_other';
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-codiva-primary/15 bg-white px-5 py-8 shadow-sm sm:px-8">
@@ -314,7 +329,7 @@ export default function CareerAssessment({ jobPostingId, jobTitle, applyHref, li
               defaultName={session.full_name}
               defaultEmail={session.email}
               assessmentToken={session.token}
-              discipline={discipline}
+              discipline={discipline || undefined}
               lockIdentity
               onReported={(ready) => {
                 if (ready) setHuntReady(true);
@@ -340,14 +355,14 @@ export default function CareerAssessment({ jobPostingId, jobTitle, applyHref, li
             {t('career.assessment_start_title')}
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-zinc-600">
-            {t(discipline ? 'career.assessment_start_intro_tester' : 'career.assessment_start_intro', {
+            {t(huntRequiredProp ? 'career.assessment_start_intro_tester' : 'career.assessment_start_intro', {
               role: jobTitle,
             })}
           </p>
           <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-zinc-600">
             <li>{t('career.assessment_rule_time')}</li>
             <li>{t('career.assessment_rule_pass')}</li>
-            {discipline ? <li>{t('career.assessment_rule_hunt')}</li> : null}
+            {huntRequiredProp ? <li>{t('career.assessment_rule_hunt')}</li> : null}
             <li>{t('career.assessment_rule_required')}</li>
           </ul>
         </div>
@@ -433,7 +448,7 @@ export default function CareerAssessment({ jobPostingId, jobTitle, applyHref, li
       </div>
 
       {question.context ? (
-        <p className="mb-3 rounded-xl bg-codiva-primary/5 px-4 py-3 text-sm leading-relaxed text-zinc-700">
+        <p className="mb-3 whitespace-pre-wrap rounded-xl bg-codiva-primary/5 px-4 py-3 text-sm leading-relaxed text-zinc-700">
           {question.context}
         </p>
       ) : null}
@@ -499,7 +514,7 @@ export default function CareerAssessment({ jobPostingId, jobTitle, applyHref, li
                       else setAnswer(question.id, [opt.key], 'single');
                     }}
                   />
-                  <span className="text-zinc-800">{opt.label}</span>
+                  <span className="whitespace-pre-wrap text-zinc-800">{opt.label}</span>
                 </label>
               );
             })}

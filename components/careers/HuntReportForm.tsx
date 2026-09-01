@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
 import Input, { Textarea } from '@/components/ui/Input';
-import { readHuntContext, type HuntContext } from '@/components/careers/hunt-context';
+import HuntCraftTracker, { type HuntCraftPublic } from '@/components/careers/HuntCraftTracker';
+import { announceHuntProgress, readHuntContext, type HuntContext } from '@/components/careers/hunt-context';
 
 type Props = {
   defaultUrl?: string;
@@ -41,7 +42,12 @@ export default function HuntReportForm({
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [keepGoing, setKeepGoing] = useState(false);
+  const [keepGoingKind, setKeepGoingKind] = useState<'unmatched' | 'duplicate' | 'remaining'>('remaining');
   const [error, setError] = useState('');
+  const [coverAll, setCoverAll] = useState(false);
+  const [crafts, setCrafts] = useState<HuntCraftPublic[]>([]);
+  const [matched, setMatched] = useState(0);
+  const [needed, setNeeded] = useState(0);
 
   useEffect(() => {
     if (assessmentToken) return;
@@ -62,6 +68,12 @@ export default function HuntReportForm({
       if (cancelled || !res.ok || !data?.session) return;
       if (data.session.full_name) setFullName(data.session.full_name);
       if (data.session.email) setEmail(data.session.email);
+      if (data.session.hunt_cover_all) {
+        setCoverAll(true);
+        setCrafts(Array.isArray(data.session.hunt_crafts) ? data.session.hunt_crafts : []);
+        setMatched(Number(data.session.hunt_matched) || 0);
+        setNeeded(Number(data.session.hunt_needed) || 0);
+      }
     })();
     return () => {
       cancelled = true;
@@ -160,7 +172,7 @@ export default function HuntReportForm({
           title: title.trim(),
           description: description.trim(),
           expected: expected.trim() || undefined,
-          discipline: craft || undefined,
+          discipline: craft && craft !== 'other' ? craft : undefined,
           assessment_token: token || undefined,
           evidence_paths: evidencePaths,
         }),
@@ -168,6 +180,13 @@ export default function HuntReportForm({
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'report_failed');
       const ready = typeof data.hunt_ready === 'boolean' ? data.hunt_ready : null;
+      if (data.hunt_cover_all) {
+        setCoverAll(true);
+        setCrafts(Array.isArray(data.hunt_crafts) ? data.hunt_crafts : []);
+        setMatched(Number(data.hunt_matched) || 0);
+        setNeeded(Number(data.hunt_needed) || 0);
+      }
+      announceHuntProgress();
       onReported?.(ready);
       if (ready === false) {
         setTitle('');
@@ -179,6 +198,9 @@ export default function HuntReportForm({
         });
         setError('');
         setKeepGoing(true);
+        if (!data.counts_for_craft && !data.matched_craft) setKeepGoingKind('unmatched');
+        else if (data.hunt_cover_all && data.matched_craft) setKeepGoingKind('duplicate');
+        else setKeepGoingKind('remaining');
         return;
       }
       setDone(true);
@@ -195,14 +217,25 @@ export default function HuntReportForm({
 
   if (done) {
     return (
-      <div className="rounded-2xl border border-codiva-primary/20 bg-codiva-primary/5 px-5 py-6 text-zinc-900 shadow-sm">
-        <p className="font-semibold">{t('career.hunt_success')}</p>
-        <p className="mt-2 text-sm text-zinc-600">{t('career.hunt_success_body')}</p>
+      <div className="space-y-4">
+        {coverAll && crafts.length ? (
+          <HuntCraftTracker crafts={crafts} matched={matched} needed={needed} />
+        ) : null}
+        <div className="rounded-2xl border border-codiva-primary/20 bg-codiva-primary/5 px-5 py-6 text-zinc-900 shadow-sm">
+          <p className="font-semibold">{t('career.hunt_success')}</p>
+          <p className="mt-2 text-sm text-zinc-600">
+            {coverAll ? t('career.hunt_success_body_all') : t('career.hunt_success_body')}
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
+    <div className="space-y-4">
+      {coverAll && crafts.length ? (
+        <HuntCraftTracker crafts={crafts} matched={matched} needed={needed} />
+      ) : null}
     <form
       className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6"
       onSubmit={onSubmit}
@@ -212,7 +245,13 @@ export default function HuntReportForm({
         <h2 className="text-lg font-semibold text-zinc-900">{t('career.hunt_form_title')}</h2>
         <p className="mt-1 text-sm text-zinc-500">{t('career.hunt_form_intro')}</p>
         {keepGoing ? (
-          <p className="mt-2 text-sm text-codiva-primary">{t('career.hunt_keep_going')}</p>
+          <p className="mt-2 text-sm text-codiva-primary">
+            {coverAll
+              ? keepGoingKind === 'unmatched'
+                ? t('career.hunt_keep_going_unmatched')
+                : t('career.hunt_keep_going_all', { count: Math.max(0, needed - matched) })
+              : t('career.hunt_keep_going')}
+          </p>
         ) : null}
       </div>
       {!identityLocked ? (
@@ -329,5 +368,6 @@ export default function HuntReportForm({
         {submitting ? t('career.hunt_submitting') : t('career.hunt_submit')}
       </Button>
     </form>
+    </div>
   );
 }

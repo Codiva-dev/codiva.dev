@@ -173,9 +173,11 @@ export function catalogForPosting(assessmentKey: string | null | undefined, slug
 export function catalogForApplication(
   assessmentKey: string | null | undefined,
   slug: string,
-  discipline?: string | null
+  discipline?: string | null,
+  asksDiscipline?: boolean | null
 ) {
-  if (postingAsksDiscipline(slug)) {
+  const asks = typeof asksDiscipline === 'boolean' ? asksDiscipline : postingAsksDiscipline(slug);
+  if (asks) {
     if (!isCareerDiscipline(discipline ?? '')) return null;
     return getAssessmentCatalog(CAREER_DISCIPLINE_CATALOG[discipline as CareerDiscipline]);
   }

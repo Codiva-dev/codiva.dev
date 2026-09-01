@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
   },
+  async redirects() {
+    return [
+      { source: '/empleos/tester-qa', destination: '/empleos/tester', permanent: true },
+      { source: '/empleos/tester-qa/:path*', destination: '/empleos/tester/:path*', permanent: true },
+      { source: '/tester-qa', destination: '/tester', permanent: true },
+      { source: '/tester-qa/:path*', destination: '/tester/:path*', permanent: true },
+    ];
+  },
   async headers() {
     return [
       ...nextSecurityHeaderSources(),

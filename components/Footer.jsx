@@ -88,6 +88,14 @@ export default function Footer({ variant = 'marketing' }) {
               {t('footer.feed')}
             </a>
           ) : null}
+          {isCareer ? (
+            <a
+              href="/api/careers/health"
+              className="text-zinc-300 hover:text-white font-medium transition-colors"
+            >
+              {t('footer.health')}
+            </a>
+          ) : null}
           <LegalLink href={`${legalBase}/legal/terminos`}>{t('footer.terms')}</LegalLink>
           <LegalLink href={`${legalBase}/legal/aviso-privacidad`}>{t('footer.privacy')}</LegalLink>
 

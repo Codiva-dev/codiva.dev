@@ -22,8 +22,8 @@ import {
 import { labelsFor } from '@/lib/ops/labels';
 import { can, canAny, isCustomizedCapabilities } from '@/lib/ops/permissions';
 import {
+  isCareersPipelinePosting,
   isTesterCatalogKey,
-  isTesterJobSlug,
   isTesterPipelineItem,
 } from '@/lib/ops/career-disciplines';
 import { getT } from '@/i18n/locale';
@@ -88,12 +88,12 @@ export default async function TeamPage({
       .order('created_at', { ascending: false }),
     supabase
       .from('ops_job_postings')
-      .select('id, slug, title, location, employment_type, status, updated_at')
+      .select('id, slug, title, location, employment_type, status, updated_at, careers_pipeline, requires_hunt')
       .order('updated_at', { ascending: false }),
     supabase
       .from('ops_job_applications')
       .select(
-        'id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug)'
+        'id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline)'
       )
       .order('created_at', { ascending: false }),
     supabase
@@ -129,16 +129,20 @@ export default async function TeamPage({
   }
 
   const testerPostingIds = new Set(
-    (postings ?? []).filter((row) => isTesterJobSlug(row.slug)).map((row) => row.id)
+    (postings ?? []).filter((row) => isCareersPipelinePosting(row)).map((row) => row.id)
   );
   const visiblePostings = canManageTeam
     ? postings
-    : (postings ?? []).filter((row) => isTesterJobSlug(row.slug));
+    : (postings ?? []).filter((row) => isCareersPipelinePosting(row));
   const visibleApplications = canManageTeam
     ? applications
     : (applications ?? []).filter((row) => {
         const posting = Array.isArray(row.ops_job_postings) ? row.ops_job_postings[0] : row.ops_job_postings;
-        return isTesterPipelineItem({ postingSlug: posting?.slug, discipline: row.discipline });
+        return isTesterPipelineItem({
+          postingSlug: posting?.slug,
+          discipline: row.discipline,
+          careersPipeline: posting?.careers_pipeline,
+        });
       });
   const visibleAttempts = canManageTeam
     ? attempts

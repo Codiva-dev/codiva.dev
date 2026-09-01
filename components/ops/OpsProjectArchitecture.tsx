@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import ToastForm from '@/components/ops/ToastForm';
 import {
   createArchitectureCanvas,
@@ -120,13 +121,12 @@ export default async function OpsProjectArchitecture({
                   >
                     {t('ops.architecture.editInOps')}
                   </Link>
-                  <Link
+                  <PreviewPopupLink
                     href={portalCanvasPath(slug, item.id)}
-                    target="_blank"
                     className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
                   >
                     {t('ops.architecture.openCanvas')}
-                  </Link>
+                  </PreviewPopupLink>
                   <Link
                     href={portalCanvasPdfPath(slug, item.id)}
                     className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"

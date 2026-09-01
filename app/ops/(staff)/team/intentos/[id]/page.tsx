@@ -3,9 +3,9 @@ import { requireCareersReview } from '@/lib/ops/auth';
 import { getAssessmentCatalog } from '@/lib/careers/assessments/catalog';
 import { parseAnswers } from '@/lib/careers/assessments/server';
 import { reviewRowsForAttempt, scoreAnswers } from '@/lib/careers/assessments/engine';
-import { matchedSeedCountsForDiscipline } from '@/lib/careers/hunt/match';
+import { huntCoversAllCrafts, huntProgressFromReports } from '@/lib/careers/hunt/progress';
 import { splitHuntReports } from '@/lib/careers/hunt/review';
-import { huntConsiderationLabel, scoreHuntReports } from '@/lib/careers/hunt/score';
+import { huntConsiderationLabel } from '@/lib/careers/hunt/score';
 import { summarizeHuntTrail, buildHuntTrailSteps } from '@/lib/careers/hunt/trail';
 import HuntTrailMap from '@/components/ops/HuntTrailMap';
 import { HuntFindingsBlock, type OpsHuntReportRow } from '@/components/ops/OpsCareersPanel';
@@ -66,7 +66,7 @@ export default async function AssessmentAttemptPage({
 
   const [{ data: posting }, { data: events }, { data: application }, { data: huntByAttempt }, { data: huntByEmail }, { data: huntTrail }, { data: sameOrigin }] =
     await Promise.all([
-    supabase.from('ops_job_postings').select('id, title, slug').eq('id', attempt.job_posting_id).maybeSingle(),
+    supabase.from('ops_job_postings').select('id, title, slug, careers_pipeline').eq('id', attempt.job_posting_id).maybeSingle(),
     supabase
       .from('ops_job_assessment_events')
       .select('id, event_type, question_id, payload, created_at')
@@ -124,7 +124,11 @@ export default async function AssessmentAttemptPage({
 
   if (
     !can(staff, 'team') &&
-    !isTesterPipelineItem({ catalogKey: attempt.catalog_key, postingSlug: posting?.slug })
+    !isTesterPipelineItem({
+      catalogKey: attempt.catalog_key,
+      postingSlug: posting?.slug,
+      careersPipeline: posting?.careers_pipeline,
+    })
   ) {
     notFound();
   }
@@ -147,10 +151,14 @@ export default async function AssessmentAttemptPage({
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
   const { active: huntScoring } = splitHuntReports(huntReports);
-  const craftHits = huntScoring.filter((row) =>
-    discipline ? matchedSeedCountsForDiscipline(row.matched_seed_id, discipline) : Boolean(row.matched_seed_id)
-  ).length;
-  const huntScore = scoreHuntReports(huntScoring, discipline);
+  const coverAllCrafts = huntCoversAllCrafts({ catalogKey: attempt.catalog_key });
+  const huntProgress = huntProgressFromReports(huntScoring, {
+    required: true,
+    coverAllCrafts,
+    discipline: coverAllCrafts ? null : discipline,
+  });
+  const craftHits = huntProgress.matched;
+  const huntScore = huntProgress.score;
   const locale = t.locale === 'en' ? 'en' : 'es';
   const trail = summarizeHuntTrail({
     passedAt: attempt.completed_at,

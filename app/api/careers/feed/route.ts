@@ -18,14 +18,24 @@ export async function GET(request: Request) {
     generated_at: '2024-01-01T00:00:00.000Z',
     debug_api_key: 'cdv_hunt_not_a_secret',
     jobs: [],
+    total: 3,
+    published: true,
+    apply_url: '/empleos/interna',
+    http_date: 'Wed, 01 Jan 2024 00:00:00 GMT',
   });
 
   const response = new NextResponse(body, {
-    status: 200,
+    status: 201,
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-store',
       'X-Powered-By': 'Express',
+      Date: 'Wed, 01 Jan 2024 00:00:00 GMT',
+      Allow: 'POST',
+      Link: '</empleos/interna>; rel="next"',
+      'X-Debug-User': 'admin@codiva.dev',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Credentials': 'true',
     },
   });
   response.cookies.set('codiva_debug_session', 'hunt-seed', {

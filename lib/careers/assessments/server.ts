@@ -107,12 +107,17 @@ export async function loadPublishedPostingForAssessment(
   const admin = createAdminClient();
   const { data, error } = await admin
     .from('ops_job_postings')
-    .select('id, slug, title, status, assessment_key')
+    .select('id, slug, title, status, assessment_key, asks_discipline, requires_hunt')
     .eq('id', jobPostingId)
     .maybeSingle();
   if (error) await throwDb(error);
   if (!data?.id || data.status !== 'published') return null;
-  const catalog = catalogForApplication(data.assessment_key, data.slug, discipline);
+  const catalog = catalogForApplication(
+    data.assessment_key,
+    data.slug,
+    discipline,
+    data.asks_discipline
+  );
   if (!catalog) return null;
   return { posting: data, catalog };
 }

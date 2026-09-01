@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import BrandedFileInput from '@/components/ops/BrandedFileInput';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
 import PortalClientUrl from '@/components/ops/PortalClientUrl';
 import StatusBadge, { chargeTone, projectTone } from '@/components/ops/StatusBadge';
@@ -498,13 +499,12 @@ export default async function ProjectDetailPage({
                 >
                   {t('ops.project.editInOps')}
                 </Link>
-                <Link
+                <PreviewPopupLink
                   href={`/quotes/${q.id}/preview`}
-                  target="_blank"
                   className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
                 >
                   {t('ops.project.preview')}
-                </Link>
+                </PreviewPopupLink>
                 {q.status === 'draft' && (
                   <ToastForm success={t('ops.project.quoteSent')} action={async () => { 'use server'; await sendQuote(q.id, id); }}>
                     <button type="submit" className="rounded-lg bg-codiva-primary px-3 py-1.5 text-sm text-white">

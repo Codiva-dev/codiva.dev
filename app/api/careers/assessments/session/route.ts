@@ -16,7 +16,7 @@ import {
   loadAttemptByToken,
   parseOptionOrders,
 } from '@/lib/careers/assessments/server';
-import { huntProgressForAttempt } from '@/lib/careers/hunt/progress';
+import { EMPTY_HUNT_PROGRESS, huntProgressForAttempt, toPublicHuntSession } from '@/lib/careers/hunt/progress';
 import { applyHuntCookie } from '@/lib/careers/hunt/events';
 
 export const runtime = 'nodejs';
@@ -61,8 +61,12 @@ export async function POST(request: Request) {
       : [];
   const hunt =
     row.status === 'completed' && row.passed
-      ? await huntProgressForAttempt({ email: row.email, catalogKey: row.catalog_key })
-      : { required: false, ready: true, readyAt: null, matched: 0, needed: 0, discipline: null };
+      ? await huntProgressForAttempt({
+          email: row.email,
+          catalogKey: row.catalog_key,
+          jobPostingId: row.job_posting_id,
+        })
+      : EMPTY_HUNT_PROGRESS;
 
   return applyHuntCookie(
     NextResponse.json({
@@ -82,8 +86,7 @@ export async function POST(request: Request) {
         title: catalog?.title ?? 'Prueba',
         questions,
         answers: row.answers ?? {},
-        hunt_required: hunt.required,
-        hunt_ready: hunt.ready,
+        ...toPublicHuntSession(hunt),
       },
     }),
     row.public_token,

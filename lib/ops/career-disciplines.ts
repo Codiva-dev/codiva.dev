@@ -13,6 +13,13 @@ export const CAREER_DISCIPLINES = [
 
 export type CareerDiscipline = (typeof CAREER_DISCIPLINES)[number];
 
+/** Oficios que hay que cubrir en la cacería integral. «Otro» no cuenta. */
+export const HUNT_COVER_CRAFTS = CAREER_DISCIPLINES.filter(
+  (craft): craft is Exclude<CareerDiscipline, 'other'> => craft !== 'other'
+);
+
+export type HuntCoverCraft = (typeof HUNT_COVER_CRAFTS)[number];
+
 export const CAREER_DISCIPLINE_LABELS: Record<CareerDiscipline, string> = {
   frontend: 'Tester frontend',
   backend: 'Tester backend',
@@ -70,26 +77,76 @@ export function disciplineFromCatalogKey(key: string | null | undefined): Career
   return found?.[0] ?? null;
 }
 
-/** PM no declara oficio; el resto de vacantes de entrega sí. */
-export function postingAsksDiscipline(slug: string | null | undefined): boolean {
-  return String(slug || '').trim().toLowerCase() !== 'project-manager';
+export const JOB_HIRE_OPS_ROLES = ['admin', 'pm', 'dev'] as const;
+export type JobHireOpsRole = (typeof JOB_HIRE_OPS_ROLES)[number];
+
+export function isJobHireOpsRole(value: string): value is JobHireOpsRole {
+  return (JOB_HIRE_OPS_ROLES as readonly string[]).includes(value);
 }
 
-export const TESTER_JOB_SLUG = 'tester-qa';
+export type JobPostingProcessFields = {
+  slug?: string | null;
+  assessment_key?: string | null;
+  asks_discipline?: boolean | null;
+  requires_hunt?: boolean | null;
+  careers_pipeline?: boolean | null;
+  hire_ops_role?: string | null;
+};
+
+function postingSlugOf(
+  posting: JobPostingProcessFields | string | null | undefined
+): string {
+  if (typeof posting === 'string' || posting == null) return String(posting || '').trim().toLowerCase();
+  return String(posting.slug || '').trim().toLowerCase();
+}
+
+/** Oficio en la postulación: solo el flag de la vacante. */
+export function postingAsksDiscipline(
+  posting: JobPostingProcessFields | string | null | undefined
+): boolean {
+  if (posting && typeof posting === 'object' && typeof posting.asks_discipline === 'boolean') {
+    return posting.asks_discipline;
+  }
+  return false;
+}
+
+export const TESTER_JOB_SLUG = 'tester';
+export const TESTER_JOB_SLUGS = ['tester-qa', 'tester'] as const;
 
 export function isTesterJobSlug(slug: string | null | undefined): boolean {
-  return String(slug || '').trim().toLowerCase() === TESTER_JOB_SLUG;
+  const value = String(slug || '').trim().toLowerCase();
+  return value === 'tester' || value === 'tester-qa' || value.startsWith('tester-');
 }
 
 export function isTesterCatalogKey(key: string | null | undefined): boolean {
   return String(key || '').trim().toLowerCase().startsWith('tester-');
 }
 
+export function isCareersPipelinePosting(
+  posting: JobPostingProcessFields | string | null | undefined
+): boolean {
+  if (posting && typeof posting === 'object' && typeof posting.careers_pipeline === 'boolean') {
+    return posting.careers_pipeline;
+  }
+  return isTesterJobSlug(postingSlugOf(posting));
+}
+
+export function postingHireOpsRole(
+  posting: JobPostingProcessFields | string | null | undefined
+): JobHireOpsRole {
+  if (posting && typeof posting === 'object' && posting.hire_ops_role && isJobHireOpsRole(posting.hire_ops_role)) {
+    return posting.hire_ops_role;
+  }
+  return postingSlugOf(posting) === 'project-manager' ? 'pm' : 'dev';
+}
+
 export function isTesterPipelineItem(input: {
   catalogKey?: string | null;
   postingSlug?: string | null;
   discipline?: string | null;
+  careersPipeline?: boolean | null;
 }): boolean {
+  if (typeof input.careersPipeline === 'boolean') return input.careersPipeline;
   return (
     isTesterCatalogKey(input.catalogKey) ||
     isTesterJobSlug(input.postingSlug) ||

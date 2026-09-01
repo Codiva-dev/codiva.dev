@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
 import CopyableUrl from '@/components/ops/CopyableUrl';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import ToastForm from '@/components/ops/ToastForm';
 import StatusBadge, { leadTone } from '@/components/ops/StatusBadge';
 import { requireCapability } from '@/lib/ops/auth';
@@ -261,13 +262,12 @@ export default async function LeadDetailPage({
                 >
                   {t('ops.leadDetail.editInOps')}
                 </Link>
-                <Link
+                <PreviewPopupLink
                   href={`/quotes/${q.id}/preview`}
-                  target="_blank"
                   className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
                 >
                   {t('ops.leadDetail.preview')}
-                </Link>
+                </PreviewPopupLink>
                 {q.status === 'draft' && (
                   <ToastForm success={t('ops.leadDetail.quoteSent')} action={async () => { 'use server'; await sendLeadQuote(q.id, id); }}>
                     <button type="submit" className="rounded-lg bg-codiva-primary px-3 py-1.5 text-sm text-white">

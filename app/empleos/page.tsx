@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/admin';
 import { jobEmploymentLabel, localizedJobPostingCopy, postingAsksDiscipline, publicCareerListUrl } from '@/lib/ops/careers';
 import { catalogForPosting } from '@/lib/careers/assessments/engine';
-import { careerAppHref } from '@/lib/ops/host';
+import { careerAppHref, isCareerHost, marketingBaseUrl } from '@/lib/ops/host';
+import CareerHuntPlants from '@/components/careers/CareerHuntPlants';
 import { getT } from '@/i18n/locale';
 import CodivaBrandText from '@/components/CodivaBrandText';
 import { headers } from 'next/headers';
@@ -11,10 +12,14 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata() {
   const t = await getT();
+  const host = (await headers()).get('host');
+  const careerHunt = isCareerHost(host);
   return {
     title: t('career.doc_title_list'),
-    description: t('career.meta_description_list'),
-    alternates: { canonical: publicCareerListUrl() },
+    description: careerHunt ? '0 vacantes abiertas en Codiva.dev.' : t('career.meta_description_list'),
+    alternates: {
+      canonical: careerHunt ? `${marketingBaseUrl()}/empleos` : publicCareerListUrl(),
+    },
   };
 }
 
@@ -31,11 +36,12 @@ export default async function EmpleosPage() {
   const locale = t.locale;
   const host = (await headers()).get('host');
   const huntHref = careerAppHref(host, '/hallazgos');
+  const careerHunt = isCareerHost(host);
   const postings = isSupabaseConfigured()
     ? (
         await createAdminClient()
           .from('ops_job_postings')
-          .select('id, slug, title, title_en, location, location_en, employment_type, published_at, assessment_key')
+          .select('id, slug, title, title_en, location, location_en, employment_type, published_at, assessment_key, asks_discipline, requires_hunt')
           .eq('status', 'published')
           .order('sort_order', { ascending: true })
           .order('published_at', { ascending: false })
@@ -68,6 +74,8 @@ export default async function EmpleosPage() {
         ) : null}
       </header>
 
+      {careerHunt ? <CareerHuntPlants placement="before" /> : null}
+
       {!rows.length ? (
         <div className="rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-12 text-center">
           <h2 className="font-semibold text-zinc-900">{t('career.empty_title')}</h2>
@@ -94,7 +102,7 @@ export default async function EmpleosPage() {
                       <div className="mt-3 flex flex-wrap gap-2">
                         {employment ? <MetaChip>{employment}</MetaChip> : null}
                         {copy.location ? <MetaChip>{copy.location}</MetaChip> : null}
-                        {postingAsksDiscipline(row.slug) ? (
+                        {postingAsksDiscipline(row) || row.requires_hunt ? (
                           <MetaChip>{t('career.assessment_chip_two_parts')}</MetaChip>
                         ) : catalogForPosting(row.assessment_key, row.slug) ? (
                           <MetaChip>{t('career.assessment_chip')}</MetaChip>
@@ -111,6 +119,7 @@ export default async function EmpleosPage() {
           })}
         </ul>
       )}
+      {careerHunt ? <CareerHuntPlants placement="after" /> : null}
     </main>
   );
 }
