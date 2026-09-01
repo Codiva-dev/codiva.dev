@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Revisión de código — Domus Mentat</title>
+  <title>Revisión de código: Domus Mentat</title>
   <style>
     :root { --ink:#121212; --muted:#555; --line:#ccc; --accent:#203c7f; --bg-soft:#f0f4fc; --danger:#8b1e1e; --warn:#8a5a00; }
     * { box-sizing: border-box; }
@@ -31,7 +31,7 @@
   </style>
 </head>
 <body>
-  <h1>Revisión de código — Domus Mentat</h1>
+  <h1>Revisión de código: Domus Mentat</h1>
   <p class="meta">Consultoría de negocio · Tenant · 1 sep 2026 · Codiva · alcance: <code>fcarral/domus-mentat-smart-home</code> (master, 14 ago 2026)</p>
 
   <div class="pills">
@@ -39,7 +39,7 @@
     <span class="pill"><strong>8</strong> medios</span>
     <span class="pill"><strong>3</strong> bajos</span>
     <span class="pill">0 tests / CI</span>
-    <span class="pill">Aislado de WAN: H1 baja; H2–H3 y luces siguen</span>
+    <span class="pill">Aislado de WAN: H1 baja; H2-H3 y luces siguen</span>
   </div>
 
   <div class="note">
@@ -69,7 +69,7 @@
         <td>Igual. Fallo de estado, no de perímetro.</td>
       </tr>
       <tr>
-        <td>M1–M3 luces</td>
+        <td>M1-M3 luces</td>
         <td>Igual. Ocupación física.</td>
         <td>Igual.</td>
       </tr>
@@ -98,15 +98,15 @@
 
   <h2>2. Hallazgos altos</h2>
 
-  <h3>H1 — <code>camera.snapshot</code> → <code>/config/www</code></h3>
+  <h3>H1: <code>camera.snapshot</code> → <code>/config/www</code></h3>
   <p>En <code>node-red/examples/03-access-capture-fanout.json</code> el filename es <code>/config/www/example_captures/{{payload}}_{{timestamp}}.jpg</code>. Home Assistant sirve <code>www/</code> en <code>/local/</code> sin login. El patrón de captura de acceso publica el JPEG.</p>
   <p>Sin WAN: baja a residual en LAN, nulo sin IP. Sigue siendo el destino equivocado. Destino sano: <code>/media/</code> o el proxy autenticado de la cámara. Interpola <code>payload</code> en la ruta: path traversal el día que el split reciba entity IDs.</p>
 
-  <h3>H2 — El fan-out no llama a ninguna cámara</h3>
+  <h3>H2: El fan-out no llama a ninguna cámara</h3>
   <p>El nodo <code>split</code> parte <code>msg.payload</code> por newline. Tras un <code>server-state-changed</code> el payload es el estado <code>on</code>, no una lista de cámaras. El call-service <code>camera.snapshot</code> no lleva <code>target.entity_id</code>. <code>dataType: jsonata</code> con mustache <code>{{payload}}</code>: JSONata no interpola llaves dobles.</p>
   <p>Importado, no captura nada. Un subflow con <code>cameras: []</code> en el env sería el contrato mínimo. <strong>No depende de la red.</strong></p>
 
-  <h3>H3 — Grupo <code>unavailable</code> ⇒ casa vacía ⇒ eco</h3>
+  <h3>H3: Grupo <code>unavailable</code> ⇒ casa vacía ⇒ eco</h3>
   <p>En <code>02-presence-departure.json</code>, <code>check-others-home</code> actúa si el grupo no es exactamente <code>home</code>. Un grupo inexistente, vacío o <code>unavailable</code> toma la rama de vacío y corre <code>climate.set_preset_mode eco</code>. Reload de HA, integración caída o typo apagan climatización con gente dentro.</p>
   <p>Fail-closed: solo actuar si el estado está en un enum explícito <code>not_home</code>, y si todos los trackers están available. El YAML de llegada no restaura el preset. <strong>En aire, peor:</strong> no hay operador remoto.</p>
 
@@ -203,7 +203,7 @@
         <td class="sev-b">B3</td><td>Baja</td><td>Higiene</td>
         <td>repo entero</td>
         <td>Cero tests / CI / schema</td>
-        <td>Los JSON de Node-RED no se validan. H1–H3 pasarían un import silencioso.</td>
+        <td>Los JSON de Node-RED no se validan. H1-H3 pasarían un import silencioso.</td>
       </tr>
     </tbody>
   </table>
@@ -222,6 +222,6 @@
 
   <h2>6. Fuera de alcance</h2>
   <p>No hay secretos ni config de la instalación real en este repo. XSS, CSRF y SQLi no aplican: no hay HTTP propio. Lo que no se revisó es Node-RED/HA de la casa viva, add-ons, proxy ni credenciales de DVR.</p>
-  <p class="meta">Fuente: node-red/examples/01–03, automations/examples/*.yaml, grafana/example-dashboard.json · If State de node-red-contrib-home-assistant-websocket · HA sirve /config/www como /local/ sin auth.</p>
+  <p class="meta">Fuente: node-red/examples/01-03, automations/examples/*.yaml, grafana/example-dashboard.json · If State de node-red-contrib-home-assistant-websocket · HA sirve /config/www como /local/ sin auth.</p>
 </body>
 </html>
