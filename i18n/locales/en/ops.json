@@ -1596,9 +1596,12 @@
       "module": "Module",
       "detail": "Detail (stack, scope…)",
       "hours": "Hours",
+      "hourlyRate": "Hourly rate",
+      "hourlyRateHint": "Changing it recalculates every module with hours, phase charges, and the total.",
       "rate": "Rate",
       "rateLabel": "MXN/hour",
       "subtotal": "Subtotal: {{amount}}",
+      "computedTotal": "Estimated total: {{amount}}",
       "remove": "Remove"
     },
     "quotePhases": {

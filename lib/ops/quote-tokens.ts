@@ -44,6 +44,7 @@ export type PublicQuotePayload = {
     line_items: unknown;
     phases?: unknown;
     total_amount: number | null;
+    hourly_rate?: number | null;
     currency: string | null;
     valid_until: string | null;
     version: number;
@@ -76,7 +77,7 @@ export async function getPublicQuoteByToken(token: string): Promise<PublicQuoteP
   const { data: quote } = await admin
     .from('quotes')
     .select(
-      'id, title, scope, service_type, project_state, deliverables, considerations, optional_extras, line_items, phases, total_amount, currency, valid_until, version, status, created_at, lead_id, project_id'
+      'id, title, scope, service_type, project_state, deliverables, considerations, optional_extras, line_items, phases, total_amount, hourly_rate, currency, valid_until, version, status, created_at, lead_id, project_id'
     )
     .eq('id', access.quote_id)
     .in('status', ['sent', 'accepted', 'rejected', 'expired'])
@@ -113,6 +114,7 @@ export async function getPublicQuoteByToken(token: string): Promise<PublicQuoteP
       line_items: quote.line_items,
       phases: quote.phases,
       total_amount: quote.total_amount,
+      hourly_rate: quote.hourly_rate,
       currency: quote.currency,
       valid_until: quote.valid_until,
       version: quote.version,

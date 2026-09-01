@@ -3,6 +3,7 @@ import {
   renderQuoteDocumentHtml,
   type QuoteDocumentData,
 } from '@/lib/ops/quote-document';
+import { applyQuoteHourlyRate, inferredQuoteHourlyRate, parseHourlyRate } from '@/lib/ops/quote-rate';
 
 type QuoteRow = {
   title: string;
@@ -15,6 +16,7 @@ type QuoteRow = {
   line_items?: unknown;
   phases?: unknown;
   total_amount?: number | null;
+  hourly_rate?: number | string | null;
   currency?: string | null;
   valid_until?: string | null;
   version?: number;
@@ -55,7 +57,7 @@ export function buildQuoteDocumentData(
     project?.organizations?.name ||
     clientLabel;
 
-  return quoteRowToDocumentData(quote, {
+  const data = quoteRowToDocumentData(quote, {
     clientLabel,
     projectName,
     clientName,
@@ -63,6 +65,20 @@ export function buildQuoteDocumentData(
     endClientCompany: lead?.end_client_company,
     serviceDescription: quote.title,
   });
+  const items = data.lineItems ?? [];
+  const priced = applyQuoteHourlyRate({
+    items,
+    phases: data.phases ?? [],
+    rate: parseHourlyRate(quote.hourly_rate),
+    previousRate: inferredQuoteHourlyRate(items),
+    fallbackTotal: data.totalAmount ?? null,
+  });
+  return {
+    ...data,
+    lineItems: priced.items,
+    phases: priced.phases,
+    totalAmount: priced.total,
+  };
 }
 
 export function buildQuoteDocumentHtml(

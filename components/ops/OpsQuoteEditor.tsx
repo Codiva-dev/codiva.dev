@@ -24,6 +24,7 @@ export default async function OpsQuoteEditor({
     optionalExtras: string;
     lineItems: QuoteLineItem[];
     phases: QuotePhase[];
+    hourlyRate: number | null;
     totalAmount: number | null;
     currency: string;
     validUntil: string | null;
@@ -91,19 +92,15 @@ export default async function OpsQuoteEditor({
           className="rounded-lg border border-zinc-300 px-3 py-2 text-sm md:col-span-2"
         />
         <div className="md:col-span-2">
-          <OpsQuoteLineItems initialItems={values.lineItems} />
+          <OpsQuoteLineItems
+            initialItems={values.lineItems}
+            initialHourlyRate={values.hourlyRate}
+            initialTotal={values.totalAmount}
+          />
         </div>
         <div className="md:col-span-2">
           <OpsQuotePhases initialPhases={values.phases} />
         </div>
-        <input
-          name="totalAmount"
-          type="number"
-          step="0.01"
-          defaultValue={values.totalAmount ?? ''}
-          placeholder={t('ops.quoteEditor.total')}
-          className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
-        />
         <select
           name="currency"
           defaultValue={values.currency || 'MXN'}

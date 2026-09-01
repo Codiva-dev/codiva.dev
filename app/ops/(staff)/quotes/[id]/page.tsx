@@ -8,6 +8,7 @@ import { can } from '@/lib/ops/permissions';
 import { updateQuote } from '@/lib/ops/actions';
 import { buildQuoteDocumentHtml } from '@/lib/ops/quote-preview';
 import { parseLineItemsJson, parsePhasesJson } from '@/lib/ops/quote-document';
+import { applyQuoteHourlyRate, inferredQuoteHourlyRate, parseHourlyRate } from '@/lib/ops/quote-rate';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
 import { staffPortalPreviewPath } from '@/lib/ops/host';
@@ -61,6 +62,15 @@ export default async function QuoteEditorPage({
 
   const html = buildQuoteDocumentHtml(quote, { lead, project }, t.locale);
   const isDraft = quote.status === 'draft';
+  const lineItems = parseLineItemsJson(quote.line_items);
+  const hourlyRate = parseHourlyRate(quote.hourly_rate) ?? inferredQuoteHourlyRate(lineItems);
+  const priced = applyQuoteHourlyRate({
+    items: lineItems,
+    phases: parsePhasesJson(quote.phases),
+    rate: hourlyRate,
+    previousRate: inferredQuoteHourlyRate(lineItems),
+    fallbackTotal: quote.total_amount != null ? Number(quote.total_amount) : null,
+  });
 
   return (
     <div className="space-y-6">
@@ -100,9 +110,10 @@ export default async function QuoteEditorPage({
           deliverables: quote.deliverables || '',
           considerations: quote.considerations || '',
           optionalExtras: quote.optional_extras || '',
-          lineItems: parseLineItemsJson(quote.line_items),
-          phases: parsePhasesJson(quote.phases),
-          totalAmount: quote.total_amount,
+          lineItems: priced.items,
+          phases: priced.phases,
+          hourlyRate,
+          totalAmount: priced.total,
           currency: quote.currency || 'MXN',
           validUntil: quote.valid_until,
           status: quote.status,

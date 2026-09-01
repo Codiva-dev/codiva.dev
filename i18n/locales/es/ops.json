@@ -1596,9 +1596,12 @@
       "module": "Módulo",
       "detail": "Detalle (stack, alcance…)",
       "hours": "Horas",
+      "hourlyRate": "Costo por hora",
+      "hourlyRateHint": "Al cambiarlo se recalculan todos los módulos con horas, los cobros de fase y el total.",
       "rate": "Tarifa",
       "rateLabel": "MXN/hora",
       "subtotal": "Subtotal: {{amount}}",
+      "computedTotal": "Total estimado: {{amount}}",
       "remove": "Quitar"
     },
     "quotePhases": {

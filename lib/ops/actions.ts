@@ -36,6 +36,7 @@ import {
 } from '@/lib/ops/document-ingest';
 import { getRequestAudit } from '@/lib/ops/request-audit';
 import { parseLineItemsJson, parsePhasesJson } from '@/lib/ops/quote-document';
+import { applyQuoteHourlyRate, inferredQuoteHourlyRate, parseHourlyRate } from '@/lib/ops/quote-rate';
 import { isInboxLane } from '@/lib/ops/inbox-lane';
 import { ensureQuoteAccessToken, publicQuoteUrl } from '@/lib/ops/quote-tokens';
 import { invitePortalUserCore } from '@/lib/ops/portal-invite';
@@ -47,7 +48,10 @@ import {
   readClientPackHtml,
 } from '@/lib/ops/architecture';
 
-function parseQuoteFormData(formData: FormData) {
+function parseQuoteFormData(
+  formData: FormData,
+  existing?: { hourly_rate?: number | string | null; line_items?: unknown }
+) {
   const lineItemsRaw = String(formData.get('lineItems') || '[]');
   let parsedLineItems: unknown = [];
   try {
@@ -63,6 +67,19 @@ function parseQuoteFormData(formData: FormData) {
     parsedPhases = [];
   }
 
+  const lineItems = parseLineItemsJson(parsedLineItems);
+  const phases = parsePhasesJson(parsedPhases);
+  const hourlyRate = parseHourlyRate(formData.get('hourlyRate'));
+  const previousRate =
+    parseHourlyRate(existing?.hourly_rate) ?? inferredQuoteHourlyRate(lineItems);
+  const priced = applyQuoteHourlyRate({
+    items: lineItems,
+    phases,
+    rate: hourlyRate,
+    previousRate,
+    fallbackTotal: parseFloat(String(formData.get('totalAmount') || '0')) || null,
+  });
+
   return {
     title: String(formData.get('title') || 'Propuesta comercial'),
     serviceType: String(formData.get('serviceType') || 'Web'),
@@ -71,9 +88,10 @@ function parseQuoteFormData(formData: FormData) {
     deliverables: String(formData.get('deliverables') || ''),
     considerations: String(formData.get('considerations') || ''),
     optionalExtras: String(formData.get('optionalExtras') || ''),
-    lineItems: parseLineItemsJson(parsedLineItems),
-    phases: parsePhasesJson(parsedPhases),
-    totalAmount: parseFloat(String(formData.get('totalAmount') || '0')) || null,
+    hourlyRate,
+    lineItems: priced.items,
+    phases: priced.phases,
+    totalAmount: priced.total,
     currency: String(formData.get('currency') || 'MXN'),
     validUntil: String(formData.get('validUntil') || '') || null,
   };
@@ -266,6 +284,7 @@ export async function createLeadQuote(leadId: string, formData: FormData) {
       deliverables: parsed.deliverables,
       considerations: parsed.considerations,
       optional_extras: parsed.optionalExtras,
+      hourly_rate: parsed.hourlyRate,
       line_items: parsed.lineItems,
       phases: parsed.phases,
       total_amount: parsed.totalAmount,
@@ -672,6 +691,7 @@ export async function createQuote(projectId: string, formData: FormData) {
       deliverables: parsed.deliverables,
       considerations: parsed.considerations,
       optional_extras: parsed.optionalExtras,
+      hourly_rate: parsed.hourlyRate,
       line_items: parsed.lineItems,
       phases: parsed.phases,
       total_amount: parsed.totalAmount,
@@ -691,17 +711,18 @@ export async function createQuote(projectId: string, formData: FormData) {
 export async function updateQuote(quoteId: string, formData: FormData) {
   const access = await assertCapability('quotes');
   const { supabase } = access;
-  const parsed = parseQuoteFormData(formData);
 
   const { data: existing } = await supabase
     .from('quotes')
-    .select('id, project_id, lead_id')
+    .select('id, project_id, lead_id, hourly_rate, line_items')
     .eq('id', quoteId)
     .maybeSingle();
   if (!existing) throw new Error('Cotización no encontrada');
   if (existing.project_id) {
     await assertProjectAccessOrThrow(access, existing.project_id);
   }
+
+  const parsed = parseQuoteFormData(formData, existing);
 
   const { error } = await supabase
     .from('quotes')
@@ -713,6 +734,7 @@ export async function updateQuote(quoteId: string, formData: FormData) {
       deliverables: parsed.deliverables,
       considerations: parsed.considerations,
       optional_extras: parsed.optionalExtras,
+      hourly_rate: parsed.hourlyRate,
       line_items: parsed.lineItems,
       phases: parsed.phases,
       total_amount: parsed.totalAmount,

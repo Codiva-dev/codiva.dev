@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Revisión de código — Domus Mentat</title>
+  <style>
+    :root { --ink:#121212; --muted:#555; --line:#ccc; --accent:#203c7f; --bg-soft:#f0f4fc; --danger:#8b1e1e; --warn:#8a5a00; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0 auto; padding: 16px 20px 28px;
+      font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      color: var(--ink); font-size: 9.5pt; line-height: 1.4; max-width: 920px;
+    }
+    h1 { font-size: 16pt; color: var(--accent); margin: 0 0 4px; border-bottom: 2px solid var(--accent); padding-bottom: 4px; }
+    h2 { font-size: 11.5pt; color: var(--accent); margin: 14px 0 6px; border-bottom: 1px solid var(--line); padding-bottom: 2px; }
+    h3 { font-size: 10pt; margin: 10px 0 4px; }
+    p, li { margin: 3px 0; }
+    code { font-family: Consolas, "Courier New", monospace; font-size: 8.5pt; background: var(--bg-soft); padding: 0 3px; }
+    .meta { color: var(--muted); font-size: 8.5pt; margin: 0 0 8px; }
+    .note { padding: 6px 8px; margin: 6px 0; font-size: 8.5pt; background: #fff8e6; border-left: 3px solid #c9a227; }
+    .danger { padding: 6px 8px; margin: 6px 0; font-size: 8.5pt; background: #f8ecec; border-left: 3px solid var(--danger); }
+    table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 8.5pt; }
+    th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .sev-a { color: var(--danger); font-weight: 700; }
+    .sev-m { color: var(--warn); font-weight: 700; }
+    .sev-b { color: var(--muted); font-weight: 700; }
+    .pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 10px; }
+    .pill { border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; font-size: 8pt; background: var(--bg-soft); }
+  </style>
+</head>
+<body>
+  <h1>Revisión de código — Domus Mentat</h1>
+  <p class="meta">Consultoría de negocio · Tenant · 1 sep 2026 · Codiva · alcance: <code>fcarral/domus-mentat-smart-home</code> (master, 14 ago 2026)</p>
+
+  <div class="pills">
+    <span class="pill"><strong>3</strong> altos</span>
+    <span class="pill"><strong>8</strong> medios</span>
+    <span class="pill"><strong>3</strong> bajos</span>
+    <span class="pill">0 tests / CI</span>
+    <span class="pill">Aislado de WAN: H1 baja; H2–H3 y luces siguen</span>
+  </div>
+
+  <div class="note">
+    El repo no tiene aplicación ni superficie HTTP propia. El código ejecutable es configuración de Home Assistant y Node-RED. Los hallazgos son máquinas de estado que, copiadas a una instalación, mueven luces, clima y capturas de acceso.
+  </div>
+
+  <h2>1. Premisa de aislamiento</h2>
+  <p>Sin internet el atacante remoto de H1 desaparece. Una casa “sin WAN” sigue teniendo LAN (WiFi, tablet, cámaras). Cero IP en absoluto apaga la exposición HTTP; no apaga apagar el clima con el grupo en <code>unknown</code>.</p>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Sin internet (LAN local)</th><th>Sin IP en absoluto</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>H1 <code>www/local</code></td>
+        <td>Sigue: quien esté en el WiFi pega a <code>/local/</code> sin login.</td>
+        <td>La exposición HTTP desaparece. El JPEG queda en el directorio que HA publicará en cuanto exista un túnel o un teléfono.</td>
+      </tr>
+      <tr>
+        <td>H2 snapshot roto</td>
+        <td>Igual. El flujo no captura. La red no entra.</td>
+        <td>Igual.</td>
+      </tr>
+      <tr>
+        <td>H3 unknown → eco</td>
+        <td>Igual, y peor: no hay operador remoto que vea el clima en eco.</td>
+        <td>Igual. Fallo de estado, no de perímetro.</td>
+      </tr>
+      <tr>
+        <td>M1–M3 luces</td>
+        <td>Igual. Ocupación física.</td>
+        <td>Igual.</td>
+      </tr>
+      <tr>
+        <td>M4 zona GPS</td>
+        <td>Si el tracker es teléfono/nube, este YAML casi no dispara. Si es router/Bluetooth, el blip sigue.</td>
+        <td>El patrón de <code>zone.enter</code> suele ser código muerto.</td>
+      </tr>
+      <tr>
+        <td>M5 <code>fill(previous)</code></td>
+        <td>Más grave: el tablero local es la única verdad y miente.</td>
+        <td>Igual.</td>
+      </tr>
+      <tr>
+        <td>M6 rate limit 60s</td>
+        <td>Igual. Se pierde la apertura real.</td>
+        <td>Igual.</td>
+      </tr>
+      <tr>
+        <td>M8 unavailable</td>
+        <td>Más grave: un sensor mudo no se diagnostica desde fuera.</td>
+        <td>Igual.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. Hallazgos altos</h2>
+
+  <h3>H1 — <code>camera.snapshot</code> → <code>/config/www</code></h3>
+  <p>En <code>node-red/examples/03-access-capture-fanout.json</code> el filename es <code>/config/www/example_captures/{{payload}}_{{timestamp}}.jpg</code>. Home Assistant sirve <code>www/</code> en <code>/local/</code> sin login. El patrón de captura de acceso publica el JPEG.</p>
+  <p>Sin WAN: baja a residual en LAN, nulo sin IP. Sigue siendo el destino equivocado. Destino sano: <code>/media/</code> o el proxy autenticado de la cámara. Interpola <code>payload</code> en la ruta: path traversal el día que el split reciba entity IDs.</p>
+
+  <h3>H2 — El fan-out no llama a ninguna cámara</h3>
+  <p>El nodo <code>split</code> parte <code>msg.payload</code> por newline. Tras un <code>server-state-changed</code> el payload es el estado <code>on</code>, no una lista de cámaras. El call-service <code>camera.snapshot</code> no lleva <code>target.entity_id</code>. <code>dataType: jsonata</code> con mustache <code>{{payload}}</code>: JSONata no interpola llaves dobles.</p>
+  <p>Importado, no captura nada. Un subflow con <code>cameras: []</code> en el env sería el contrato mínimo. <strong>No depende de la red.</strong></p>
+
+  <h3>H3 — Grupo <code>unavailable</code> ⇒ casa vacía ⇒ eco</h3>
+  <p>En <code>02-presence-departure.json</code>, <code>check-others-home</code> actúa si el grupo no es exactamente <code>home</code>. Un grupo inexistente, vacío o <code>unavailable</code> toma la rama de vacío y corre <code>climate.set_preset_mode eco</code>. Reload de HA, integración caída o typo apagan climatización con gente dentro.</p>
+  <p>Fail-closed: solo actuar si el estado está en un enum explícito <code>not_home</code>, y si todos los trackers están available. El YAML de llegada no restaura el preset. <strong>En aire, peor:</strong> no hay operador remoto.</p>
+
+  <h2>3. Máquinas de estado que no coinciden</h2>
+  <p>Node-RED 01: trigger en motion <code>on</code> → lux ≤ 40 → enciende y un timer 180s con <code>extend: true</code>. El extend solo corre si llega otro mensaje. Un PIR que se queda en <code>on</code> no reemite; a los 180s apaga con ocupación.</p>
+  <p>YAML: la automatización off no tiene condición. Motion off 3 min ⇒ apaga el pasillo aunque alguien lo haya encendido a mano. No hay <code>input_boolean</code> de autoría. El header afirma que es el mismo patrón que Node-RED; las semánticas de ocupación son distintas.</p>
+  <p>El patrón sano de ocupación es el del YAML (<code>to: off</code> + <code>for</code>), más un flag de “encendido por automatización”.</p>
+
+  <h2>4. Lista de hallazgos</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Pri</th><th>Tipo</th><th>Archivo</th><th>Qué</th><th>Por qué</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="sev-a">H1</td><td>Alta</td><td>Seguridad</td>
+        <td>03-access-capture-fanout.json</td>
+        <td>Snapshots a /config/www</td>
+        <td>HA sirve www en /local/ sin login. Sin WAN baja a residual; en LAN sigue.</td>
+      </tr>
+      <tr>
+        <td class="sev-a">H2</td><td>Alta</td><td>Correctitud</td>
+        <td>03-access-capture-fanout.json</td>
+        <td>snapshot sin cámara y plantilla rota</td>
+        <td>Call-service sin target. dataType jsonata con mustache {{payload}}.</td>
+      </tr>
+      <tr>
+        <td class="sev-a">H3</td><td>Alta</td><td>Lógica</td>
+        <td>02-presence-departure.json</td>
+        <td>unknown = casa vacía</td>
+        <td>Si el grupo no es home, dispara eco con gente dentro.</td>
+      </tr>
+      <tr>
+        <td class="sev-m">M1</td><td>Media</td><td>Lógica</td>
+        <td>01-motion-lux-gated-lighting.json</td>
+        <td>Timer desde motion=on</td>
+        <td>PIR que se queda en on no reinyecta; a los 180s apaga con ocupación.</td>
+      </tr>
+      <tr>
+        <td class="sev-m">M2</td><td>Media</td><td>Lógica</td>
+        <td>motion_lux_lighting.yaml</td>
+        <td>Off sin autoría</td>
+        <td>A los 3 min de motion=off apaga aunque se haya encendido a mano.</td>
+      </tr>
+      <tr>
+        <td class="sev-m">M3</td><td>Media</td><td>Contrato</td>
+        <td>YAML vs Node-RED 01</td>
+        <td>No son el mismo patrón</td>
+        <td>El comentario dice equivalente. YAML espera motion=off; Node-RED cuenta desde el último on.</td>
+      </tr>
+      <tr>
+        <td class="sev-m">M4</td><td>Media</td><td>Lógica</td>
+        <td>zone_arrival_scene.yaml</td>
+        <td>Enter de zona sin dwell</td>
+        <td>Un blip de GPS dispara scene.turn_on. Sin red este YAML suele ser código muerto.</td>
+      </tr>
+      <tr>
+        <td class="sev-m">M5</td><td>Media</td><td>Observabilidad</td>
+        <td>example-dashboard.json</td>
+        <td>fill(previous)</td>
+        <td>Un sensor muerto se ve vivo. En aire el tablero local es la única verdad.</td>
+      </tr>
+      <tr>
+        <td class="sev-m">M6</td><td>Media</td><td>Seguridad</td>
+        <td>03-access-capture-fanout.json</td>
+        <td>Rate limit 60s</td>
+        <td>Tras chatter del contact, la apertura real en esa ventana no se captura.</td>
+      </tr>
+      <tr>
+        <td class="sev-m">M7</td><td>Media</td><td>Empaque</td>
+        <td>02 y 03 *.json</td>
+        <td>Server node ausente</td>
+        <td>Solo 01 trae example-server-config. Importar 02 o 03 solos deja nodos huérfanos.</td>
+      </tr>
+      <tr>
+        <td class="sev-m">M8</td><td>Media</td><td>Robustez</td>
+        <td>01 y YAML de luz</td>
+        <td>Sin available</td>
+        <td>Lux o motion unavailable no se trata. Lux stuck en 0 enciende siempre.</td>
+      </tr>
+      <tr>
+        <td class="sev-b">B1</td><td>Baja</td><td>API</td>
+        <td>ambos YAML</td>
+        <td>service: deprecado</td>
+        <td>HA 2024.8+ espera action:. Plantilla no rehecha contra el runtime actual.</td>
+      </tr>
+      <tr>
+        <td class="sev-b">B2</td><td>Baja</td><td>UX</td>
+        <td>01 y YAML on</td>
+        <td>brightness 255</td>
+        <td>Sin tope nocturno. Único dato de actuación, hardcodeado.</td>
+      </tr>
+      <tr>
+        <td class="sev-b">B3</td><td>Baja</td><td>Higiene</td>
+        <td>repo entero</td>
+        <td>Cero tests / CI / schema</td>
+        <td>Los JSON de Node-RED no se validan. H1–H3 pasarían un import silencioso.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>5. Parches concretos</h2>
+  <ul>
+    <li><strong>Enum de estados.</strong> Actuar solo si <code>current_state ∈ {not_home}</code>, nunca si unknown / unavailable.</li>
+    <li><strong>Subflow con env.</strong> <code>cameras[]</code>, <code>lux_entity</code>, <code>lux_threshold</code>, <code>quiet_s</code> como propiedades, no IDs <code>example_*</code>.</li>
+    <li><strong>Snapshot autenticado.</strong> <code>/media</code> + notify.photo, o <code>camera.snapshot</code> al media_dir; jamás <code>www</code>.</li>
+    <li><strong>Autoría de la luz.</strong> <code>context.id</code> / <code>input_boolean</code> para que el off no pelee con el interruptor físico.</li>
+    <li><strong>Contrato YAML ↔ Node-RED.</strong> Un diagrama de estados compartido, o dejar de decir que son equivalentes.</li>
+    <li><strong>Grafana sin fill(previous).</strong> <code>fill(null)</code> + panel last_seen. Un hueco tiene que verse hueco.</li>
+    <li><strong>Server config en cada JSON.</strong> 02 y 03 no son importables solos.</li>
+    <li><strong><code>action:</code> en YAML</strong> y <code>unique_id</code> para que el UI de HA no duplique al recargar.</li>
+  </ul>
+
+  <h2>6. Fuera de alcance</h2>
+  <p>No hay secretos ni config de la instalación real en este repo. XSS, CSRF y SQLi no aplican: no hay HTTP propio. Lo que no se revisó es Node-RED/HA de la casa viva, add-ons, proxy ni credenciales de DVR.</p>
+  <p class="meta">Fuente: node-red/examples/01–03, automations/examples/*.yaml, grafana/example-dashboard.json · If State de node-red-contrib-home-assistant-websocket · HA sirve /config/www como /local/ sin auth.</p>
+</body>
+</html>

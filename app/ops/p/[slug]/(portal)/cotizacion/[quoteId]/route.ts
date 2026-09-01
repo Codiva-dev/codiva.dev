@@ -23,7 +23,7 @@ export async function GET(_request: Request, context: RouteContext) {
   const { data: quote } = await access.supabase
     .from('quotes')
     .select(
-      'id, title, scope, service_type, project_state, deliverables, considerations, optional_extras, line_items, phases, total_amount, currency, valid_until, version, status, created_at, visible_to_client, lead_id, project_id'
+      'id, title, scope, service_type, project_state, deliverables, considerations, optional_extras, line_items, phases, total_amount, hourly_rate, currency, valid_until, version, status, created_at, visible_to_client, lead_id, project_id'
     )
     .eq('id', quoteId)
     .eq('project_id', access.project.id)
