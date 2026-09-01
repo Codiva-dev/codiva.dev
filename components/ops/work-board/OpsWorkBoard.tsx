@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -10,6 +10,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import Field from '@/components/ui/Field';
 import Input, { Select, Textarea } from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ops/ConfirmDialog';
 import ToastForm from '@/components/ops/ToastForm';
 import { toUserErrorMessage } from '@/lib/user-error';
 import { formatBytes } from '@/lib/format-bytes';
@@ -90,6 +91,7 @@ export default function OpsWorkBoard({
   const [person, setPerson] = useState('');
   const [view, setView] = useState<'board' | 'list'>('board');
   const [createOpen, setCreateOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<WorkAssignment | null>(null);
   const urlId = initialAssignmentId || '';
   const [selectedId, setSelectedId] = useState(urlId);
 
@@ -174,6 +176,22 @@ export default function OpsWorkBoard({
       onDrop: onDropStatus,
     });
   useWorkBoardHoverScroll(scrollerRef, view === 'board' && !draggingId);
+
+  async function confirmDelete() {
+    const row = pendingDelete;
+    if (!row) return;
+    setPendingDelete(null);
+    const toastId = toast.loading(t('ops.toast.saving'));
+    try {
+      await deleteWorkAssignment(row.id);
+      if (selectedId === row.id) selectAssignment('');
+      setAssignments((prev) => prev.filter((item) => item.id !== row.id));
+      toast.success(t('ops.asignaciones.deleted'), { id: toastId });
+      router.refresh();
+    } catch (err) {
+      toast.error(toUserErrorMessage(err, t('common.status.actionFailed')), { id: toastId });
+    }
+  }
 
   async function onToggleSub(id: string) {
     let from: 'open' | 'done' | null = null;
@@ -276,6 +294,7 @@ export default function OpsWorkBoard({
                       onOpen={() => selectAssignment(row.id)}
                       onToggleSubtask={onToggleSub}
                       onRefresh={() => router.refresh()}
+                      onDelete={canManage ? () => setPendingDelete(row) : undefined}
                       onPointerDownCard={onCardPointerDown}
                       consumeClickIfDragged={consumeClickIfDragged}
                     />
@@ -312,6 +331,7 @@ export default function OpsWorkBoard({
                         onOpen={() => selectAssignment(row.id)}
                         onToggleSubtask={onToggleSub}
                         onRefresh={() => router.refresh()}
+                        onDelete={canManage ? () => setPendingDelete(row) : undefined}
                       />
                     ))}
                   </div>
@@ -347,8 +367,18 @@ export default function OpsWorkBoard({
           processLabels={processLabels}
           onRefresh={() => router.refresh()}
           onToggleSubtask={onToggleSub}
+          onDelete={canManage ? () => setPendingDelete(selected) : undefined}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title={t('ops.asignaciones.deleteConfirmTitle')}
+        message={t('ops.asignaciones.deleteConfirm')}
+        confirmLabel={t('ops.asignaciones.delete')}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => void confirmDelete()}
+      />
     </div>
   );
 }
@@ -371,6 +401,7 @@ function WorkCard({
   onRefresh,
   onPointerDownCard,
   consumeClickIfDragged,
+  onDelete,
 }: {
   assignment: WorkAssignment;
   locale: 'es' | 'en';
@@ -389,6 +420,7 @@ function WorkCard({
   onRefresh: () => void;
   onPointerDownCard?: (event: React.PointerEvent<HTMLElement>, assignment: WorkAssignment) => void;
   consumeClickIfDragged?: () => boolean;
+  onDelete?: () => void;
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(!compact || isMine);
@@ -429,6 +461,19 @@ function WorkCard({
           <span className="shrink-0 rounded-full bg-white/80 px-2 py-0.5 text-[11px] font-semibold text-zinc-600">
             {statusLabel}
           </span>
+        ) : null}
+        {onDelete ? (
+          <button
+            type="button"
+            className="shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-semibold text-red-700 hover:bg-red-50"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation();
+              onDelete();
+            }}
+          >
+            {t('ops.asignaciones.delete')}
+          </button>
         ) : null}
       </div>
       <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500">{streamLabel}</p>
@@ -690,6 +735,7 @@ function DetailModal({
   processLabels,
   onRefresh,
   onToggleSubtask,
+  onDelete,
 }: {
   assignment: WorkAssignment;
   onClose: () => void;
@@ -703,8 +749,10 @@ function DetailModal({
   processLabels: Record<string, string>;
   onRefresh: () => void;
   onToggleSubtask: (id: string) => void;
+  onDelete?: () => void;
 }) {
   const { t } = useTranslation();
+  const titleId = useId();
   const [comment, setComment] = useState('');
   const filesRef = useRef<File[]>([]);
   const canAct = canMutateWorkAssignment(currentUserId, assignment.assignee_id, canManage);
@@ -746,9 +794,20 @@ function DetailModal({
       open
       onClose={onClose}
       title={assignment.title}
+      titleId={titleId}
       closeLabel={t('common.buttons.close')}
       size="md"
       className="max-h-[min(92vh,880px)] max-w-2xl overflow-y-auto"
+      header={
+        <div className="flex items-start justify-between gap-3">
+          <p id={titleId} className="text-base font-semibold text-zinc-900">{assignment.title}</p>
+          {onDelete ? (
+            <Button type="button" size="xs" variant="danger" onClick={onDelete}>
+              {t('ops.asignaciones.delete')}
+            </Button>
+          ) : null}
+        </div>
+      }
     >
       <div className="mt-4 space-y-6">
         {canManage ? (
@@ -800,21 +859,6 @@ function DetailModal({
             </Field>
             <Button type="submit" size="sm">
               {t('ops.asignaciones.save')}
-            </Button>
-          </ToastForm>
-          <ToastForm
-            success={t('ops.asignaciones.deleted')}
-            confirmTitle={t('ops.asignaciones.deleteConfirmTitle')}
-            confirmMessage={t('ops.asignaciones.deleteConfirm')}
-            confirmLabel={t('ops.asignaciones.delete')}
-            action={async () => {
-              await deleteWorkAssignment(assignment.id);
-              onClose();
-              onRefresh();
-            }}
-          >
-            <Button type="submit" size="xs" variant="danger">
-              {t('ops.asignaciones.delete')}
             </Button>
           </ToastForm>
           </div>
