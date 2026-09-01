@@ -49,6 +49,7 @@ import OpsMentionComposer, { type MentionStaff } from './OpsMentionComposer';
 import WorkAttachmentField from './WorkAttachmentField';
 import WorkSubtaskEditor from './WorkSubtaskEditor';
 import { isWorkCardInteractiveTarget, useWorkBoardDrag } from './useWorkBoardDrag';
+import { useWorkBoardHoverScroll } from './useWorkBoardHoverScroll';
 
 export type ProcessOption = {
   id: string;
@@ -170,6 +171,7 @@ export default function OpsWorkBoard({
     useWorkBoardDrag({
       onDrop: onDropStatus,
     });
+  useWorkBoardHoverScroll(scrollerRef, view === 'board' && !draggingId);
 
   async function onToggleSub(id: string) {
     let from: 'open' | 'done' | null = null;
