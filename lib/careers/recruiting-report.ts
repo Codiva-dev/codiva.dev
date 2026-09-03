@@ -32,11 +32,14 @@ import {
 } from '@/lib/ops/career-disciplines';
 import { isClosedApplicationStatus, jobApplicationStatusLabel } from '@/lib/ops/careers';
 import {
+  applicationCoversAttempt,
+  attemptsForApplication,
   careerEmailKey,
   classifyRecruitingStage,
   isCandidateReadyForCv,
+  latestAttemptByJobEmail,
+  recruitingAttemptKey,
   recruitingStageLabel,
-  settledOfferEmailsFrom,
   type RecruitingStage,
 } from '@/lib/careers/recruiting-stage';
 
@@ -507,13 +510,11 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     { data: huntByAttempt },
     { data: huntByEmail },
     { data: huntTrail },
-    { data: offersByEmail },
-    { data: offersByCareer },
   ] = await Promise.all([
     admin.from('ops_job_postings').select('title').eq('id', attempt.job_posting_id).maybeSingle(),
     admin
       .from('ops_job_applications')
-      .select('id, status, created_at, assessment_attempt_id')
+      .select('id, status, created_at, assessment_attempt_id, job_posting_id')
       .ilike('email', attempt.email)
       .order('created_at', { ascending: false })
       .limit(8),
@@ -534,24 +535,13 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
       .eq('assessment_attempt_id', attempt.id)
       .order('created_at', { ascending: true })
       .limit(200),
-    admin.from('ops_personnel_offers').select('email, career_email, status').ilike('email', attempt.email).limit(8),
-    admin
-      .from('ops_personnel_offers')
-      .select('email, career_email, status')
-      .ilike('career_email', attempt.email)
-      .limit(8),
   ]);
 
   const application =
     (applicationsByEmail ?? []).find((row) => row.assessment_attempt_id === attempt.id) ||
-    (applicationsByEmail ?? [])[0] ||
+    (applicationsByEmail ?? []).find((row) => row.job_posting_id === attempt.job_posting_id) ||
     null;
-  const settledEmails = settledOfferEmailsFrom([...(offersByEmail ?? []), ...(offersByCareer ?? [])]);
-  const settledOffer = settledEmails.has(emailKey);
-  const leftActiveQueueEmails = new Set<string>([
-    ...(application ? [emailKey] : []),
-    ...(settledOffer ? [emailKey] : []),
-  ]);
+  const leftActiveQueueEmails = new Set<string>(application ? [emailKey] : []);
 
   let interviewLabel: string | null = null;
   let interviews: RecruitingInterviewRound[] = [];
@@ -593,7 +583,6 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     craftHits: score.craftHits,
     applicationStatus: application?.status ?? null,
     leftActiveQueueEmails,
-    settledOffer,
     huntNeeded: huntNeededCount(coverAllCrafts),
   });
 
@@ -694,8 +683,6 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
     { data: huntReports },
     { data: huntEvents },
     { data: linkedAttempts },
-    { data: offersByEmail },
-    { data: offersByCareer },
   ] = await Promise.all([
     postingIds.length
       ? admin.from('ops_job_postings').select('id, title').in('id', postingIds)
@@ -732,16 +719,6 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
             job_posting_id: string;
           }[],
         }),
-    emailVariants.length
-      ? admin.from('ops_personnel_offers').select('email, career_email, status').in('email', emailVariants).limit(200)
-      : Promise.resolve({ data: [] as { email: string | null; career_email: string | null; status: string }[] }),
-    emailVariants.length
-      ? admin
-          .from('ops_personnel_offers')
-          .select('email, career_email, status')
-          .in('career_email', emailVariants)
-          .limit(200)
-      : Promise.resolve({ data: [] as { email: string | null; career_email: string | null; status: string }[] }),
   ]);
 
   const { roundsByApplication, interviewsByApplication } = await loadInterviewPack(admin, applicationIds);
@@ -754,14 +731,10 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
   const attemptById = new Map<string, AttemptRow>(
     [...(attempts ?? []), ...(linkedAttempts ?? [])].map((row) => [row.id, row as AttemptRow])
   );
-  const attemptByEmail = new Map<string, AttemptRow>();
-  for (const row of [...(attempts ?? []), ...(linkedAttempts ?? [])] as AttemptRow[]) {
-    const key = careerEmailKey(row.email);
-    const current = attemptByEmail.get(key);
-    if (!current || new Date(row.started_at) > new Date(current.started_at)) {
-      attemptByEmail.set(key, row);
-    }
-  }
+  const allAttempts = [...(attempts ?? []), ...(linkedAttempts ?? [])] as AttemptRow[];
+  const attemptByJobEmail = latestAttemptByJobEmail(
+    allAttempts.filter((row): row is AttemptRow & { job_posting_id: string } => Boolean(row.job_posting_id))
+  );
 
   const postingTitle = new Map((postings ?? []).map((row) => [row.id, row.title]));
   const eventsByAttempt = new Map<string, HuntTrailEvent[]>();
@@ -771,10 +744,7 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
     eventsByAttempt.set(event.assessment_attempt_id, list);
   }
 
-  const appliedEmails = new Set((applicationsRaw ?? []).map((row) => careerEmailKey(row.email)));
-  const settledEmails = settledOfferEmailsFrom([...(offersByEmail ?? []), ...(offersByCareer ?? [])]);
-  const leftActiveQueueEmails = new Set([...appliedEmails, ...settledEmails]);
-
+  const applications = applicationsRaw ?? [];
   const reports = huntReports ?? [];
 
   const ready: RecruitingPipelineRow[] = [];
@@ -783,8 +753,17 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
   const hired: RecruitingPipelineRow[] = [];
   const discarded: RecruitingPipelineRow[] = [];
 
-  const readyEmails = new Set<string>();
-  for (const row of attemptByEmail.values()) {
+  const readyKeys = new Set<string>();
+  for (const row of attemptByJobEmail.values()) {
+    if (
+      applicationCoversAttempt({
+        email: row.email,
+        jobPostingId: row.job_posting_id,
+        applications,
+      })
+    ) {
+      continue;
+    }
     const discipline = disciplineFromCatalogKey(row.catalog_key);
     const hunt = huntBundle(
       reports,
@@ -800,13 +779,13 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
         passed: row.passed,
         catalogKey: row.catalog_key,
         craftHits: hunt.score.craftHits,
-        leftActiveQueueEmails,
+        leftActiveQueueEmails: [],
         huntNeeded: hunt.huntNeeded,
       })
     ) {
       continue;
     }
-    readyEmails.add(careerEmailKey(row.email));
+    readyKeys.add(recruitingAttemptKey(row.email, row.job_posting_id));
     ready.push({
       attemptId: row.id,
       applicationId: null,
@@ -835,8 +814,19 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
   }
 
   for (const row of attempts ?? []) {
-    const key = careerEmailKey(row.email);
-    if (leftActiveQueueEmails.has(key) || readyEmails.has(key)) continue;
+    if (
+      applicationCoversAttempt({
+        email: row.email,
+        jobPostingId: row.job_posting_id,
+        applications,
+      })
+    ) {
+      continue;
+    }
+    if (readyKeys.has(recruitingAttemptKey(row.email, row.job_posting_id))) continue;
+    if (row.status !== 'started' && attemptByJobEmail.get(recruitingAttemptKey(row.email, row.job_posting_id))?.id !== row.id) {
+      continue;
+    }
     const discipline = disciplineFromCatalogKey(row.catalog_key);
     const hunt = huntBundle(
       reports,
@@ -878,9 +868,13 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       row.discipline && row.discipline in CAREER_DISCIPLINE_LABELS
         ? (row.discipline as CareerDiscipline)
         : null;
+    const forJob = attemptsForApplication(
+      allAttempts.filter((item): item is AttemptRow & { job_posting_id: string } => Boolean(item.job_posting_id)),
+      row
+    );
     const attempt =
+      forJob[0] ||
       (row.assessment_attempt_id ? attemptById.get(row.assessment_attempt_id) : null) ||
-      attemptByEmail.get(careerEmailKey(row.email)) ||
       null;
     const hunt = huntBundle(
       reports,

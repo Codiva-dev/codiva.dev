@@ -93,7 +93,7 @@ export default async function TeamPage({
     supabase
       .from('ops_job_applications')
       .select(
-        'id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline)'
+        'id, job_posting_id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline)'
       )
       .order('created_at', { ascending: false }),
     supabase

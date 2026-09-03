@@ -15,7 +15,6 @@ import {
   isClosedApplicationStatus,
   isDiscardedApplicationStatus,
   isJobApplicationStatus,
-  isSettledPersonnelOfferStatus,
   publicCareerListUrl,
   publicCareerUrl,
   type JobApplicationStatus,
@@ -40,7 +39,14 @@ import { huntSeedById } from '@/lib/careers/hunt/seeds';
 import { huntCoversAllCrafts, huntProgressFromReports } from '@/lib/careers/hunt/progress';
 import { matchedSeedCountsForDiscipline } from '@/lib/careers/hunt/match';
 import { splitHuntReports } from '@/lib/careers/hunt/review';
-import { careerEmailKey as emailKey, isCandidateReadyForCv } from '@/lib/careers/recruiting-stage';
+import {
+  applicationCoversAttempt,
+  attemptsForApplication,
+  careerEmailKey as emailKey,
+  isCandidateReadyForCv,
+  latestAttemptByJobEmail,
+  recruitingAttemptKey,
+} from '@/lib/careers/recruiting-stage';
 import {
   huntConsiderationLabel,
   huntDifficultyLabel,
@@ -71,6 +77,7 @@ export type OpsJobPostingRow = {
 
 export type OpsJobApplicationRow = {
   id: string;
+  job_posting_id?: string | null;
   full_name: string;
   email: string;
   phone: string | null;
@@ -476,6 +483,7 @@ function ApplicationCard({
   row,
   hunt,
   linkedAttempt,
+  extraAttempts = [],
   t,
   formatDate,
   locale,
@@ -497,6 +505,7 @@ function ApplicationCard({
   row: OpsJobApplicationRow;
   hunt: ReturnType<typeof huntForCandidate>;
   linkedAttempt: OpsJobAttemptRow | null;
+  extraAttempts?: OpsJobAttemptRow[];
   t: Translator;
   formatDate: (date: string | null | undefined) => string;
   locale: Locale;
@@ -600,7 +609,26 @@ function ApplicationCard({
             href={`/team/intentos/${linkedAttempt.id}`}
             title={t('ops.careers.tagTestHint')}
           />
+        ) : linkedAttempt ? (
+          <CareersTag
+            label={t('ops.careers.viewTest')}
+            href={`/team/intentos/${linkedAttempt.id}`}
+            title={t('ops.careers.tagTestHint')}
+          />
         ) : null}
+        {extraAttempts.map((attempt) => (
+          <CareersTag
+            key={attempt.id}
+            label={
+              attempt.score_pct != null
+                ? t('ops.careers.extraTestScore', { pct: attempt.score_pct })
+                : t('ops.careers.extraTest')
+            }
+            tone={attempt.passed ? 'success' : attempt.status === 'started' ? 'warning' : 'neutral'}
+            href={`/team/intentos/${attempt.id}`}
+            title={t('ops.careers.tagTestHint')}
+          />
+        ))}
         <CareersTag
           label={t('ops.careers.tagSignal', {
             label: huntConsiderationLabel(hunt.score.consideration, locale),
@@ -701,7 +729,7 @@ export default async function OpsCareersPanel({
   applications,
   attempts = [],
   huntReports = [],
-  offers = [],
+  offers: _offers = [],
   signal = '',
   origin = '',
   stage = '',
@@ -759,14 +787,20 @@ export default async function OpsCareersPanel({
 
   const attemptById = new Map(attempts.map((row) => [row.id, row]));
   const postingById = new Map(postings.map((row) => [row.id, row]));
-  const attemptByEmail = new Map<string, OpsJobAttemptRow>();
-  for (const row of attempts) {
-    const key = emailKey(row.email);
-    const current = attemptByEmail.get(key);
-    if (!current || new Date(row.started_at) > new Date(current.started_at)) {
-      attemptByEmail.set(key, row);
-    }
-  }
+  const attemptByJobEmail = latestAttemptByJobEmail(attempts);
+
+  const attemptsOnApplication = (row: OpsJobApplicationRow) => {
+    const forJob = attemptsForApplication(attempts, row);
+    const linked =
+      (row.assessment_attempt_id && attemptById.get(row.assessment_attempt_id)) ||
+      attemptByJobEmail.get(recruitingAttemptKey(row.email, row.job_posting_id)) ||
+      forJob[0] ||
+      null;
+    return {
+      linked,
+      extra: forJob.filter((attempt) => attempt.id !== linked?.id),
+    };
+  };
   const signalFilter =
     signal === 'strong' || signal === 'solid' || signal === 'minimum' || signal === 'none' ? signal : '';
   const originFilter = origin === 'shared';
@@ -829,21 +863,23 @@ export default async function OpsCareersPanel({
     applications.filter((row) => isDiscardedApplicationStatus(row.status) && matchesApplicationSignal(row))
   );
   const appliedEmails = new Set(applications.map((row) => emailKey(row.email)));
-  const settledOfferEmails = new Set<string>();
-  for (const row of offers) {
-    if (!isSettledPersonnelOfferStatus(row.status)) continue;
-    if (row.career_email) settledOfferEmails.add(emailKey(row.career_email));
-    if (row.email) settledOfferEmails.add(emailKey(row.email));
-  }
-  const leftActiveQueueEmails = new Set([...appliedEmails, ...settledOfferEmails]);
   const claimedFindingEmails = new Set([
     ...appliedEmails,
     ...attempts.map((row) => emailKey(row.email)),
   ]);
   const orphanFindings = huntReports.filter((row) => !claimedFindingEmails.has(emailKey(row.email)));
-  const readyForCv = [...attemptByEmail.values()]
+  const readyForCv = [...attemptByJobEmail.values()]
     .filter((row) => {
       if (originFilter && (originSize.get(String(row.ip_hash || '').trim()) || 0) < 2) return false;
+      if (
+        applicationCoversAttempt({
+          email: row.email,
+          jobPostingId: row.job_posting_id,
+          applications,
+        })
+      ) {
+        return false;
+      }
       const hunt = huntForCandidate(
         huntReports,
         row.email,
@@ -857,7 +893,7 @@ export default async function OpsCareersPanel({
           passed: row.passed,
           catalogKey: row.catalog_key,
           craftHits: hunt.craftHits,
-          leftActiveQueueEmails,
+          leftActiveQueueEmails: [],
           huntRequired: typeof postingHunt === 'boolean' ? postingHunt : undefined,
           huntNeeded: hunt.huntNeeded,
         })
@@ -874,10 +910,21 @@ export default async function OpsCareersPanel({
       if (diff) return diff;
       return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
     });
-  const readyEmails = new Set(readyForCv.map((row) => emailKey(row.email)));
+  const readyKeys = new Set(readyForCv.map((row) => recruitingAttemptKey(row.email, row.job_posting_id)));
   const attemptsActive = attemptsRanked.filter((row) => {
-    const key = emailKey(row.email);
-    return !leftActiveQueueEmails.has(key) && !readyEmails.has(key);
+    const key = recruitingAttemptKey(row.email, row.job_posting_id);
+    if (
+      applicationCoversAttempt({
+        email: row.email,
+        jobPostingId: row.job_posting_id,
+        applications,
+      })
+    ) {
+      return false;
+    }
+    if (readyKeys.has(key)) return false;
+    if (row.status === 'started') return true;
+    return attemptByJobEmail.get(key)?.id === row.id;
   });
   const effectiveStage =
     stageFilter === 'discarded' || appFilter === 'rejected'
@@ -1205,16 +1252,15 @@ export default async function OpsCareersPanel({
               <h3 className="text-sm font-semibold text-zinc-800">{t('ops.careers.discardedTitle')}</h3>
               <p className="text-sm text-zinc-500">{t('ops.careers.discardedHint')}</p>
               <ul className="space-y-3">
-                {discardedApplications.map((row) => (
+                {discardedApplications.map((row) => {
+                  const tests = attemptsOnApplication(row);
+                  return (
                   <ApplicationCard
                     key={row.id}
                     row={row}
                     hunt={huntForCandidate(huntReports, row.email, row.discipline)}
-                    linkedAttempt={
-                      (row.assessment_attempt_id && attemptById.get(row.assessment_attempt_id)) ||
-                      attemptByEmail.get(emailKey(row.email)) ||
-                      null
-                    }
+                    linkedAttempt={tests.linked}
+                    extraAttempts={tests.extra}
                     t={t}
                     formatDate={formatDate}
                     locale={locale}
@@ -1233,7 +1279,8 @@ export default async function OpsCareersPanel({
                     currentUserId={currentUserId}
                     canTeam={canManage}
                   />
-                ))}
+                  );
+                })}
               </ul>
             </div>
           ) : (
@@ -1392,16 +1439,15 @@ export default async function OpsCareersPanel({
                   ) : null
                 ) : (
                   <ul className="space-y-3">
-                    {applicationsRanked.map((row) => (
+                    {applicationsRanked.map((row) => {
+                      const tests = attemptsOnApplication(row);
+                      return (
                       <ApplicationCard
                         key={row.id}
                         row={row}
                         hunt={huntForCandidate(huntReports, row.email, row.discipline)}
-                        linkedAttempt={
-                          (row.assessment_attempt_id && attemptById.get(row.assessment_attempt_id)) ||
-                          attemptByEmail.get(emailKey(row.email)) ||
-                          null
-                        }
+                        linkedAttempt={tests.linked}
+                        extraAttempts={tests.extra}
                         t={t}
                         formatDate={formatDate}
                         locale={locale}
@@ -1420,7 +1466,8 @@ export default async function OpsCareersPanel({
                         currentUserId={currentUserId}
                         canTeam={canManage}
                       />
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -1444,8 +1491,13 @@ export default async function OpsCareersPanel({
                     const peers = attemptsSharingOrigin(attempts, row.ip_hash).filter((peer) => peer.id !== row.id);
                     const fingerprint = originFingerprint(row.ip_hash);
                     const identities = distinctOriginEmails([row, ...peers]);
-                    const findingRows =
-                      attemptByEmail.get(emailKey(row.email))?.id === row.id ? hunt.rows : [];
+                    const priorAttempts = attempts.filter(
+                      (peer) =>
+                        peer.id !== row.id &&
+                        recruitingAttemptKey(peer.email, peer.job_posting_id) ===
+                          recruitingAttemptKey(row.email, row.job_posting_id)
+                    );
+                    const findingRows = hunt.rows;
                     return (
                       <li
                         key={row.id}
@@ -1486,6 +1538,19 @@ export default async function OpsCareersPanel({
                             href={`/team/intentos/${row.id}`}
                             title={t('ops.careers.tagTestHint')}
                           />
+                          {priorAttempts.map((attempt) => (
+                            <CareersTag
+                              key={attempt.id}
+                              label={
+                                attempt.score_pct != null
+                                  ? t('ops.careers.extraTestScore', { pct: attempt.score_pct })
+                                  : t('ops.careers.extraTest')
+                              }
+                              tone={attempt.passed ? 'success' : attempt.status === 'started' ? 'warning' : 'neutral'}
+                              href={`/team/intentos/${attempt.id}`}
+                              title={t('ops.careers.tagTestHint')}
+                            />
+                          ))}
                           <CareersTag
                             label={t('ops.careers.tagSignal', {
                               label: huntConsiderationLabel(hunt.score.consideration, locale),

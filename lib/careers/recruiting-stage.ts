@@ -7,6 +7,51 @@ export function careerEmailKey(value: string): string {
   return value.trim().toLowerCase();
 }
 
+/** One candidate in one vacancy. Hired on another opening must not hide a new test. */
+export function recruitingAttemptKey(email: string, jobPostingId: string | null | undefined): string {
+  const job = String(jobPostingId || '').trim();
+  if (!job) return '';
+  return `${careerEmailKey(email)}::${job}`;
+}
+
+export function applicationCoversAttempt(input: {
+  email: string;
+  jobPostingId: string | null | undefined;
+  applications: { email: string; job_posting_id?: string | null }[];
+}): boolean {
+  const key = recruitingAttemptKey(input.email, input.jobPostingId);
+  if (!key) return false;
+  return input.applications.some((row) => recruitingAttemptKey(row.email, row.job_posting_id) === key);
+}
+
+export function latestAttemptByJobEmail<
+  T extends { email: string; job_posting_id: string; started_at: string },
+>(attempts: T[]): Map<string, T> {
+  const map = new Map<string, T>();
+  for (const row of attempts) {
+    const key = recruitingAttemptKey(row.email, row.job_posting_id);
+    if (!key) continue;
+    const current = map.get(key);
+    if (!current || new Date(row.started_at) > new Date(current.started_at)) {
+      map.set(key, row);
+    }
+  }
+  return map;
+}
+
+export function attemptsForApplication<
+  T extends { id: string; email: string; job_posting_id: string; started_at: string },
+>(
+  attempts: T[],
+  application: { email: string; job_posting_id?: string | null; assessment_attempt_id?: string | null }
+): T[] {
+  const key = recruitingAttemptKey(application.email, application.job_posting_id);
+  if (!key) return [];
+  return attempts
+    .filter((row) => recruitingAttemptKey(row.email, row.job_posting_id) === key)
+    .sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
+}
+
 export function isCandidateReadyForCv(input: {
   email: string;
   passed: boolean | null;

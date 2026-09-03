@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applicationCoversAttempt,
+  attemptsForApplication,
   careerEmailKey,
   classifyRecruitingStage,
   isCandidateReadyForCv,
+  latestAttemptByJobEmail,
+  recruitingAttemptKey,
   recruitingStageLabel,
   settledOfferEmailsFrom,
 } from './recruiting-stage';
@@ -137,6 +141,57 @@ describe('classifyRecruitingStage', () => {
     expect(recruitingStageLabel('test')).toBe('En prueba');
     expect(recruitingStageLabel('discarded')).toBe('Descartados');
     expect(recruitingStageLabel('hired')).toBe('Contratados');
+  });
+});
+
+describe('applicationCoversAttempt', () => {
+  const testerJob = 'job-tester';
+  const pmJob = 'job-pm';
+
+  it('only covers the vacancy they already applied to', () => {
+    const applications = [{ email: 'a@x.com', job_posting_id: testerJob }];
+    expect(
+      applicationCoversAttempt({ email: 'A@x.com', jobPostingId: testerJob, applications })
+    ).toBe(true);
+    expect(
+      applicationCoversAttempt({ email: 'a@x.com', jobPostingId: pmJob, applications })
+    ).toBe(false);
+  });
+
+  it('keeps a new vacancy test visible after a hire on another opening', () => {
+    expect(
+      applicationCoversAttempt({
+        email: 'a@x.com',
+        jobPostingId: testerJob,
+        applications: [{ email: 'a@x.com', job_posting_id: pmJob }],
+      })
+    ).toBe(false);
+  });
+});
+
+describe('latestAttemptByJobEmail', () => {
+  it('keeps the newest attempt per vacancy, not per person', () => {
+    const map = latestAttemptByJobEmail([
+      { id: 'old', email: 'a@x.com', job_posting_id: 'job-a', started_at: '2026-08-01T00:00:00Z' },
+      { id: 'new', email: 'a@x.com', job_posting_id: 'job-a', started_at: '2026-09-03T00:00:00Z' },
+      { id: 'other', email: 'a@x.com', job_posting_id: 'job-b', started_at: '2026-08-15T00:00:00Z' },
+    ]);
+    expect(map.get(recruitingAttemptKey('a@x.com', 'job-a'))?.id).toBe('new');
+    expect(map.get(recruitingAttemptKey('a@x.com', 'job-b'))?.id).toBe('other');
+  });
+});
+
+describe('attemptsForApplication', () => {
+  it('returns every test for that vacancy, newest first', () => {
+    const rows = attemptsForApplication(
+      [
+        { id: 'old', email: 'a@x.com', job_posting_id: 'job-a', started_at: '2026-08-01T00:00:00Z' },
+        { id: 'new', email: 'a@x.com', job_posting_id: 'job-a', started_at: '2026-09-03T00:00:00Z' },
+        { id: 'other', email: 'a@x.com', job_posting_id: 'job-b', started_at: '2026-09-04T00:00:00Z' },
+      ],
+      { email: 'a@x.com', job_posting_id: 'job-a', assessment_attempt_id: 'old' }
+    );
+    expect(rows.map((row) => row.id)).toEqual(['new', 'old']);
   });
 });
 

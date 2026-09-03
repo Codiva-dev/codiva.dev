@@ -945,6 +945,8 @@
       "testsAppliedTitle": "{{count}} already applied",
       "testsAppliedHint": "Kept here if you need to review the test. The hiring decision lives under Applications.",
       "testScore": "Test {{pct}}%",
+      "extraTest": "Another test",
+      "extraTestScore": "Another test {{pct}}%",
       "viewCv": "View CV",
       "viewCvHint": "Opens the CV here. You can download it from the popup.",
       "downloadCv": "Download CV",

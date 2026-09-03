@@ -945,6 +945,8 @@
       "testsAppliedTitle": "{{count}} ya postularon",
       "testsAppliedHint": "Siguen aquí por si hay que revisar la prueba. La decisión está en Postulaciones.",
       "testScore": "Prueba {{pct}}%",
+      "extraTest": "Otra prueba",
+      "extraTestScore": "Otra prueba {{pct}}%",
       "viewCv": "Ver CV",
       "viewCvHint": "Abre el CV aquí mismo. Desde el popup puedes descargarlo.",
       "downloadCv": "Descargar CV",

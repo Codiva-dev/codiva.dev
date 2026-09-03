@@ -50,7 +50,7 @@ export function isClosedApplicationStatus(status: string) {
   return status === 'rejected' || status === 'hired';
 }
 
-/** Offer already in hire flow: hide matching attempts from En prueba / Listos. */
+/** Offer already in hire flow for that vacancy (not a blanket hide by personal email). */
 export function isSettledPersonnelOfferStatus(status: string) {
   return status === 'sent' || status === 'accepted';
 }
