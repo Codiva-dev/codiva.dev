@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
@@ -39,7 +40,6 @@ import {
   patchWorkSubtaskStatus,
   splitMentionTokens,
   stageEventDurationMs,
-  workAssignmentPreview,
   workAssigneeInitials,
   workColorTone,
   workFileHref,
@@ -92,6 +92,7 @@ export default function OpsWorkBoard({
   const [stream, setStream] = useState('');
   const [person, setPerson] = useState('');
   const [view, setView] = useState<'board' | 'list'>('board');
+  const [density, setDensity] = useState<'compact' | 'expanded'>('compact');
   const [createOpen, setCreateOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<WorkAssignment | null>(null);
   const urlId = initialAssignmentId || '';
@@ -254,6 +255,24 @@ export default function OpsWorkBoard({
             {t('ops.asignaciones.viewList')}
           </button>
         </div>
+        {view === 'board' ? (
+          <div className="flex rounded-lg border border-zinc-200 p-0.5">
+            <button
+              type="button"
+              className={`rounded-md px-3 py-1.5 text-xs font-medium ${density === 'compact' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+              onClick={() => setDensity('compact')}
+            >
+              {t('ops.asignaciones.cardsCompact')}
+            </button>
+            <button
+              type="button"
+              className={`rounded-md px-3 py-1.5 text-xs font-medium ${density === 'expanded' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+              onClick={() => setDensity('expanded')}
+            >
+              {t('ops.asignaciones.cardsExpanded')}
+            </button>
+          </div>
+        ) : null}
         {canManage ? (
           <Button size="xs" className="ml-auto" onClick={() => setCreateOpen(true)}>
             {t('ops.asignaciones.create')}
@@ -273,9 +292,9 @@ export default function OpsWorkBoard({
               <section
                 key={status}
                 data-work-drop-status={status}
-                className={`flex w-64 min-w-64 max-w-64 shrink-0 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
-                  active ? 'border-codiva-primary ring-2 ring-codiva-primary/30' : 'border-zinc-200'
-                }`}
+                className={`flex shrink-0 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
+                  density === 'compact' ? 'w-64 min-w-64 max-w-64' : 'w-72 min-w-72 max-w-72'
+                } ${active ? 'border-codiva-primary ring-2 ring-codiva-primary/30' : 'border-zinc-200'}`}
               >
                 <header className="mb-1.5 flex items-center justify-between px-1 py-0.5">
                   <h2 className="text-sm font-semibold text-zinc-800">{statusLabels[status]}</h2>
@@ -286,11 +305,12 @@ export default function OpsWorkBoard({
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                   {cards.map((row) => (
                     <WorkCard
-                      key={row.id}
+                      key={`${row.id}-${density}`}
                       assignment={row}
                       locale={locale}
                       streamLabel={streamLabels[row.stream]}
-                      compact
+                      collapsible
+                      compact={density === 'compact'}
                       canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
                       canManage={canManage}
                       currentUserId={currentUserId}
@@ -388,12 +408,43 @@ export default function OpsWorkBoard({
   );
 }
 
+function CardExpandButton({
+  expanded,
+  expandLabel,
+  collapseLabel,
+  onToggle,
+}: {
+  expanded: boolean;
+  expandLabel: string;
+  collapseLabel: string;
+  onToggle: () => void;
+}) {
+  const label = expanded ? collapseLabel : expandLabel;
+  return (
+    <button
+      type="button"
+      aria-expanded={expanded}
+      aria-label={label}
+      title={label}
+      className="shrink-0 rounded-md p-0.5 text-zinc-500 hover:bg-white/80 hover:text-zinc-800"
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+    >
+      {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+    </button>
+  );
+}
+
 function WorkCard({
   assignment,
   locale,
   streamLabel,
   statusLabel,
   compact = false,
+  collapsible = false,
   canEdit = false,
   canManage = false,
   currentUserId = '',
@@ -413,6 +464,7 @@ function WorkCard({
   streamLabel: string;
   statusLabel?: string;
   compact?: boolean;
+  collapsible?: boolean;
   canEdit?: boolean;
   canManage?: boolean;
   currentUserId?: string;
@@ -430,14 +482,20 @@ function WorkCard({
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(!compact);
   const tone = workColorTone(assignment.stream);
-  const preview = workAssignmentPreview(assignment, 220);
   const counts = workSubtaskCounts(assignment);
-  const subs = assignment.subtasks;
   const dwell = formatDwellDuration(dwellMsSince(assignment.status_entered_at), locale);
   const progress = clampWorkProgress(assignment.progress_pct);
   const images = assignment.files.filter((file) => file.kind === 'image').slice(0, 3);
   const assigneeName = assignment.assignee_name || t('ops.asignaciones.unassigned');
   const initials = workAssigneeInitials(assignment.assignee_name);
+  const expandToggle = collapsible ? (
+    <CardExpandButton
+      expanded={expanded}
+      expandLabel={t('ops.asignaciones.expandCard')}
+      collapseLabel={t('ops.asignaciones.collapseCard')}
+      onToggle={() => setExpanded((prev) => !prev)}
+    />
+  ) : null;
 
   function open(event: React.MouseEvent) {
     if (isWorkCardInteractiveTarget(event.target)) return;
@@ -445,7 +503,7 @@ function WorkCard({
     onOpen();
   }
 
-  if (compact) {
+  if (!expanded) {
     const meta: string[] = [dwell];
     if (counts.total) meta.push(t('ops.asignaciones.subtaskCount', { done: counts.done, total: counts.total }));
     return (
@@ -457,7 +515,12 @@ function WorkCard({
           draggable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-pointer'
         } ${isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''}`}
       >
-        <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">{assignment.title}</h3>
+        <div className="flex items-start gap-1">
+          <h3 className="min-w-0 flex-1 line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">
+            {assignment.title}
+          </h3>
+          {expandToggle}
+        </div>
         {assignment.process_label ? (
           <p className="mt-0.5 truncate text-[11px] text-zinc-500">{assignment.process_label}</p>
         ) : null}
@@ -489,7 +552,7 @@ function WorkCard({
       onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
       onClick={open}
       className={`min-w-0 max-w-full overflow-hidden rounded-xl border p-3 ${tone.card} ${draggable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-pointer'} ${
-        isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : ''
+        isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''
       }`}
     >
       <div className="flex items-start gap-2">
@@ -508,6 +571,7 @@ function WorkCard({
             {statusLabel}
           </span>
         ) : null}
+        {expandToggle}
         {onDelete ? (
           <button
             type="button"
@@ -536,10 +600,8 @@ function WorkCard({
           <p className="mt-1 truncate text-xs text-zinc-600">{assignment.process_label}</p>
         )
       ) : null}
-      {expanded && assignment.description ? (
+      {assignment.description ? (
         <p className="mt-2 whitespace-pre-wrap break-words text-sm text-zinc-700">{assignment.description}</p>
-      ) : !expanded && preview ? (
-        <p className="mt-2 line-clamp-2 break-words text-sm text-zinc-700">{preview}</p>
       ) : null}
       <div className="mt-3 h-1.5 w-full max-w-full overflow-hidden rounded-full bg-white/70">
         <div className={`h-full max-w-full rounded-full ${tone.bar}`} style={{ width: `${progress}%` }} />
@@ -570,24 +632,10 @@ function WorkCard({
         canAct={canEdit}
         canManage={canManage}
         currentUserId={currentUserId}
-        showEditor={expanded}
-        visibleLimit={expanded ? undefined : 2}
+        showEditor
         onToggle={onToggleSubtask}
         onRefresh={onRefresh}
-        onExpand={() => setExpanded(true)}
       />
-      {!expanded && subs.length > 2 ? (
-        <button
-          type="button"
-          className="mt-1 text-xs font-medium text-zinc-600 underline-offset-2 hover:underline"
-          onClick={(event) => {
-            event.stopPropagation();
-            setExpanded(true);
-          }}
-        >
-          +{subs.length - 2}
-        </button>
-      ) : null}
     </article>
   );
 }
