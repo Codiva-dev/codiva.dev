@@ -1,4 +1,8 @@
-import type { CareerDiscipline } from '@/lib/ops/career-disciplines';
+import {
+  CAREER_DISCIPLINE_LABELS,
+  HUNT_COVER_CRAFTS,
+  type CareerDiscipline,
+} from '@/lib/ops/career-disciplines';
 
 export type HuntSurface = 'career' | 'marketing';
 export type HuntDifficulty = 'easy' | 'medium' | 'hard';
@@ -472,6 +476,34 @@ export const HUNT_SEEDS: HuntSeed[] = [
     difficulty: 'hard',
   },
 ];
+
+const HUNT_DIFFICULTY_LABEL: Record<HuntDifficulty, string> = {
+  easy: 'fácil',
+  medium: 'medio',
+  hard: 'difícil',
+};
+
+export function huntSeedCatalogText() {
+  const levels: HuntDifficulty[] = ['easy', 'medium', 'hard'];
+  const lines = [
+    `Hallazgos plantados en la vacante de tester (${HUNT_SEEDS.length}):`,
+    '',
+  ];
+  for (const craft of HUNT_COVER_CRAFTS) {
+    const seeds = HUNT_SEEDS.filter((seed) => seed.craft === craft);
+    lines.push(`${CAREER_DISCIPLINE_LABELS[craft]} (${seeds.length})`);
+    for (const difficulty of levels) {
+      for (const seed of seeds.filter((row) => row.difficulty === difficulty)) {
+        const where = seed.paths.includes('*') ? 'sitio' : seed.paths.join(', ');
+        lines.push(
+          `- [${HUNT_DIFFICULTY_LABEL[difficulty]} · ${seed.surface}] ${seed.title} · ${where}`
+        );
+      }
+    }
+    lines.push('');
+  }
+  return lines.join('\n').trimEnd();
+}
 
 export function huntSeedById(id: string): HuntSeed | null {
   return HUNT_SEEDS.find((s) => s.id === id) ?? null;
