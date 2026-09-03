@@ -10,6 +10,7 @@ import {
   formatDwellDuration,
   mentionedStaffIds,
   mentionPlainText,
+  workAssigneeInitials,
   isOpenWorkStatus,
   isPendingMentionStatus,
   keepPendingMentions,
@@ -140,6 +141,12 @@ describe('work-board pending status', () => {
 });
 
 describe('work-board mentions', () => {
+  it('builds initials from a full name', () => {
+    expect(workAssigneeInitials('Jean Claude Martell')).toBe('JM');
+    expect(workAssigneeInitials('Ada')).toBe('AD');
+    expect(workAssigneeInitials('')).toBe('');
+  });
+
   it('builds and splits mention tokens', () => {
     const token = buildMentionToken({ id: 'b0000001-0001-4000-8000-00000000000b', full_name: 'Ada Lovelace' });
     expect(token).toBe('@[Ada Lovelace](b0000001-0001-4000-8000-00000000000b)');

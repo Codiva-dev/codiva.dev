@@ -34,11 +34,14 @@ import {
   type WorkStream,
 } from '@/lib/ops/work-board';
 
-function revalidateBoard() {
-  revalidatePath('/asignaciones');
+function revalidateWorkLists() {
   revalidatePath('/pendientes');
   revalidatePath('/workload');
-  revalidatePath('/', 'layout');
+}
+
+function revalidateBoard() {
+  revalidateWorkLists();
+  revalidatePath('/asignaciones');
 }
 
 type AssignmentRow = {
@@ -427,7 +430,7 @@ export async function updateWorkAssignmentStatus(
     metadata: { from: current.status, to: nextStatus, source },
     actorId: access.staff.id,
   });
-  revalidateBoard();
+  revalidateWorkLists();
 }
 
 export async function createWorkSubtask(assignmentId: string, title: string) {
@@ -802,7 +805,7 @@ export async function markWorkMentionRead(mentionId: string) {
     .eq('mentioned_staff_id', access.staff.id)
     .is('read_at', null);
   if (error) throw await throwDb(error);
-  revalidateBoard();
+  revalidatePath('/pendientes');
 }
 
 export async function markWorkMentionsReadForAssignment(assignmentId: string) {
@@ -814,7 +817,7 @@ export async function markWorkMentionsReadForAssignment(assignmentId: string) {
     .eq('mentioned_staff_id', access.staff.id)
     .is('read_at', null);
   if (error) throw await throwDb(error);
-  revalidateBoard();
+  revalidatePath('/pendientes');
 }
 
 export async function addWorkAssignmentFiles(assignmentId: string, formData: FormData) {

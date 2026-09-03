@@ -20,6 +20,7 @@ import {
   createWorkAssignment,
   deleteWorkAssignment,
   deleteWorkAssignmentFile,
+  markWorkMentionsReadForAssignment,
   toggleWorkSubtask,
   updateWorkAssignment,
   updateWorkAssignmentStatus,
@@ -39,6 +40,7 @@ import {
   splitMentionTokens,
   stageEventDurationMs,
   workAssignmentPreview,
+  workAssigneeInitials,
   workColorTone,
   workFileHref,
   workSubtaskCounts,
@@ -100,14 +102,19 @@ export default function OpsWorkBoard({
   }, [initialAssignments]);
 
   useEffect(() => {
-    setSelectedId(urlId);
-  }, [urlId]);
+    if (!selectedId) return;
+    void markWorkMentionsReadForAssignment(selectedId).catch((err) => {
+      console.error('mark work mentions read:', err);
+    });
+  }, [selectedId]);
 
   function selectAssignment(id: string) {
     setSelectedId(id);
-    if (id === urlId) return;
     const href = id ? `${pathname}?id=${encodeURIComponent(id)}` : pathname;
-    router.replace(href, { scroll: false });
+    if (typeof window === 'undefined') return;
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (current === href) return;
+    window.history.replaceState(window.history.state, '', href);
   }
 
   const statusLabels = useMemo(
@@ -164,7 +171,6 @@ export default function OpsWorkBoard({
     setAssignments((prev) => patchWorkAssignmentStatus(prev, assignmentId, status));
     try {
       await updateWorkAssignmentStatus(assignmentId, status, 'kanban');
-      router.refresh();
     } catch (err) {
       router.refresh();
       toast.error(toUserErrorMessage(err, t('ops.asignaciones.statusFailed')));
@@ -258,7 +264,7 @@ export default function OpsWorkBoard({
       {view === 'board' ? (
         <div
           ref={scrollerRef}
-          className="flex min-h-[28rem] min-w-0 max-w-full gap-3 overflow-x-auto pb-2"
+          className="flex min-h-[28rem] min-w-0 max-w-full gap-2 overflow-x-auto pb-2"
         >
           {WORK_BOARD_COLUMNS.map((status) => {
             const cards = visible.filter((row) => row.status === status);
@@ -267,17 +273,17 @@ export default function OpsWorkBoard({
               <section
                 key={status}
                 data-work-drop-status={status}
-                className={`flex w-72 min-w-72 max-w-72 shrink-0 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-2 ${
+                className={`flex w-64 min-w-64 max-w-64 shrink-0 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
                   active ? 'border-codiva-primary ring-2 ring-codiva-primary/30' : 'border-zinc-200'
                 }`}
               >
-                <header className="mb-2 flex items-center justify-between px-1 py-1">
+                <header className="mb-1.5 flex items-center justify-between px-1 py-0.5">
                   <h2 className="text-sm font-semibold text-zinc-800">{statusLabels[status]}</h2>
                   {status === 'done' ? null : (
                     <span className="text-xs text-zinc-500">{cards.length}</span>
                   )}
                 </header>
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                   {cards.map((row) => (
                     <WorkCard
                       key={row.id}
@@ -294,7 +300,6 @@ export default function OpsWorkBoard({
                       onOpen={() => selectAssignment(row.id)}
                       onToggleSubtask={onToggleSub}
                       onRefresh={() => router.refresh()}
-                      onDelete={canManage ? () => setPendingDelete(row) : undefined}
                       onPointerDownCard={onCardPointerDown}
                       consumeClickIfDragged={consumeClickIfDragged}
                     />
@@ -423,19 +428,60 @@ function WorkCard({
   onDelete?: () => void;
 }) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(!compact || isMine);
+  const [expanded, setExpanded] = useState(!compact);
   const tone = workColorTone(assignment.stream);
-  const preview = workAssignmentPreview(assignment, compact ? 110 : 220);
+  const preview = workAssignmentPreview(assignment, 220);
   const counts = workSubtaskCounts(assignment);
   const subs = assignment.subtasks;
   const dwell = formatDwellDuration(dwellMsSince(assignment.status_entered_at), locale);
   const progress = clampWorkProgress(assignment.progress_pct);
   const images = assignment.files.filter((file) => file.kind === 'image').slice(0, 3);
+  const assigneeName = assignment.assignee_name || t('ops.asignaciones.unassigned');
+  const initials = workAssigneeInitials(assignment.assignee_name);
 
   function open(event: React.MouseEvent) {
     if (isWorkCardInteractiveTarget(event.target)) return;
     if (consumeClickIfDragged?.()) return;
     onOpen();
+  }
+
+  if (compact) {
+    const meta: string[] = [dwell];
+    if (counts.total) meta.push(t('ops.asignaciones.subtaskCount', { done: counts.done, total: counts.total }));
+    return (
+      <article
+        title={`${streamLabel} · ${assigneeName}`}
+        onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
+        onClick={open}
+        className={`min-w-0 max-w-full overflow-hidden rounded-lg border px-2.5 py-2 ${tone.card} ${
+          draggable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-pointer'
+        } ${isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''}`}
+      >
+        <h3 className="line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">{assignment.title}</h3>
+        {assignment.process_label ? (
+          <p className="mt-0.5 truncate text-[11px] text-zinc-500">{assignment.process_label}</p>
+        ) : null}
+        <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
+          <span
+            title={assigneeName}
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/80 text-[10px] font-semibold ${
+              initials ? 'text-zinc-700' : 'text-zinc-400'
+            }`}
+          >
+            {initials || '–'}
+          </span>
+          <p className="min-w-0 flex-1 truncate text-[11px] text-zinc-600">{meta.join(' · ')}</p>
+        </div>
+        {assignment.subtask_edit_request ? (
+          <p className="mt-1 text-[11px] font-medium text-amber-800">{t('ops.asignaciones.requestPendingBadge')}</p>
+        ) : null}
+        {progress > 0 ? (
+          <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/70">
+            <div className={`h-full rounded-full ${tone.bar}`} style={{ width: `${progress}%` }} />
+          </div>
+        ) : null}
+      </article>
+    );
   }
 
   return (

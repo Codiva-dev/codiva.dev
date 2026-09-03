@@ -399,6 +399,17 @@ export function mentionDisplayName(user: { full_name?: string | null; email?: st
   return String(user?.email || '').trim() || 'Staff';
 }
 
+export function workAssigneeInitials(name: string) {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return '';
+  const first = parts[0][0] || '';
+  const last = (parts.length > 1 ? parts[parts.length - 1][0] : parts[0][1]) || '';
+  return `${first}${last}`.toUpperCase();
+}
+
 export function buildMentionToken(user: { id: string; full_name?: string | null; email?: string | null }) {
   const id = String(user?.id || '').trim();
   if (!isUuid(id)) return '';

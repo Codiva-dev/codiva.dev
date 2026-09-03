@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -28,7 +29,7 @@ function loginUrlWithReturn(loginPath: string, incomingPath: string | null): str
   return `${loginPath}?next=${encodeURIComponent(next)}`;
 }
 
-export async function requireStaff() {
+export const requireStaff = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -50,7 +51,7 @@ export async function requireStaff() {
   }
 
   return { user, staff, supabase };
-}
+});
 
 /** Solo administradores (gestión de equipo). */
 export async function requireAdminStaff() {
