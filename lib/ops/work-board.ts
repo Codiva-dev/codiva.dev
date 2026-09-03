@@ -160,6 +160,29 @@ export function isWorkStatus(value: string): value is WorkStatus {
   return (WORK_STATUSES as readonly string[]).includes(value);
 }
 
+export type OpenWorkStatus = Exclude<WorkStatus, 'done' | 'blocked'>;
+
+export const OPEN_WORK_STATUSES = WORK_STATUSES.filter(
+  (status): status is OpenWorkStatus => status !== 'done' && status !== 'blocked'
+);
+
+export function isOpenWorkStatus(value: string): value is OpenWorkStatus {
+  return (OPEN_WORK_STATUSES as readonly string[]).includes(value);
+}
+
+export function isPendingMentionStatus(value: string | null | undefined) {
+  return Boolean(value) && value !== 'done';
+}
+
+export function keepPendingMentions<T extends { assignment_id: string }>(
+  mentions: T[],
+  statusByAssignmentId: Map<string, string>
+) {
+  return mentions.filter((row) =>
+    isPendingMentionStatus(statusByAssignmentId.get(row.assignment_id))
+  );
+}
+
 export function isWorkProcessKind(value: string): value is WorkProcessKind {
   return (WORK_PROCESS_KINDS as readonly string[]).includes(value);
 }

@@ -10,6 +10,10 @@ import {
   formatDwellDuration,
   mentionedStaffIds,
   mentionPlainText,
+  isOpenWorkStatus,
+  isPendingMentionStatus,
+  keepPendingMentions,
+  OPEN_WORK_STATUSES,
   parentCannotMarkDoneWithOpenSubtasks,
   parseSubtaskLines,
   patchWorkAssignmentStatus,
@@ -96,6 +100,42 @@ describe('work-board dwell', () => {
   it('measures time in the current column', () => {
     const now = Date.parse('2026-08-27T18:00:00.000Z');
     expect(dwellMsSince('2026-08-27T16:00:00.000Z', now)).toBe(2 * 3_600_000);
+  });
+});
+
+describe('work-board pending status', () => {
+  it('keeps only in-flight columns as open assignments', () => {
+    expect(OPEN_WORK_STATUSES).toEqual(['backlog', 'discovery', 'build', 'review']);
+    expect(isOpenWorkStatus('backlog')).toBe(true);
+    expect(isOpenWorkStatus('blocked')).toBe(false);
+    expect(isOpenWorkStatus('done')).toBe(false);
+  });
+
+  it('keeps mentions on blocked work and drops them once the assignment is done', () => {
+    expect(isPendingMentionStatus('blocked')).toBe(true);
+    expect(isPendingMentionStatus('review')).toBe(true);
+    expect(isPendingMentionStatus('done')).toBe(false);
+    expect(isPendingMentionStatus(undefined)).toBe(false);
+  });
+
+  it('hides Jean\'s mention on a done assignment and keeps the blocked DeskSpace ping', () => {
+    const deskspace = '724f0924-db0b-4fbd-85f3-2753d448656c';
+    const doneCriteria = '8b5e56ad-7062-47ef-8528-2edd558c0ccf';
+    const openBacklog = '66ec24d5-6c66-4051-8730-649c18bbd34b';
+    const kept = keepPendingMentions(
+      [
+        { id: 'mention-done', assignment_id: doneCriteria },
+        { id: 'mention-blocked', assignment_id: deskspace },
+        { id: 'mention-open', assignment_id: openBacklog },
+        { id: 'mention-orphan', assignment_id: 'missing' },
+      ],
+      new Map([
+        [deskspace, 'blocked'],
+        [doneCriteria, 'done'],
+        [openBacklog, 'backlog'],
+      ])
+    );
+    expect(kept.map((row) => row.id)).toEqual(['mention-blocked', 'mention-open']);
   });
 });
 
