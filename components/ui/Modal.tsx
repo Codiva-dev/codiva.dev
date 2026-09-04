@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/cn';
-import { useEffect, useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 const sizes = {
@@ -10,6 +10,13 @@ const sizes = {
   frame: 'flex h-[min(92vh,900px)] max-w-6xl flex-col overflow-hidden p-0',
   frameLg: 'flex max-h-[min(92vh,900px)] max-w-5xl flex-col overflow-hidden p-0',
 };
+
+const layers = {
+  base: 'z-[80]',
+  raised: 'z-[90]',
+};
+
+const escapeStack: Array<() => void> = [];
 
 export default function Modal({
   open,
@@ -25,6 +32,7 @@ export default function Modal({
   children,
   onKeyDown,
   className,
+  layer = 'base',
 }: {
   open: boolean;
   onClose: () => void;
@@ -39,33 +47,46 @@ export default function Modal({
   children?: ReactNode;
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
+  layer?: keyof typeof layers;
 }) {
   const autoId = useId();
   const titleId = titleIdProp ?? autoId;
+  const onCloseRef = useRef(onClose);
+  const onKeyDownRef = useRef(onKeyDown);
+  onCloseRef.current = onClose;
+  onKeyDownRef.current = onKeyDown;
 
   useEffect(() => {
     if (!open) return;
+    function close() {
+      onCloseRef.current();
+    }
+    escapeStack.push(close);
     function onKey(event: KeyboardEvent) {
+      if (escapeStack[escapeStack.length - 1] !== close) return;
       if (event.key === 'Escape') {
         event.preventDefault();
-        onClose();
+        event.stopImmediatePropagation();
+        close();
         return;
       }
-      onKeyDown?.(event);
+      onKeyDownRef.current?.(event);
     }
     document.addEventListener('keydown', onKey);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', onKey);
+      const index = escapeStack.lastIndexOf(close);
+      if (index >= 0) escapeStack.splice(index, 1);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose, onKeyDown]);
+  }, [open]);
 
   if (!open || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+    <div className={cn('fixed inset-0 flex items-center justify-center p-4', layers[layer])}>
       <button
         type="button"
         className={cn('absolute inset-0', backdrop === 'dark' ? 'bg-zinc-900/70' : 'bg-zinc-900/40')}
@@ -108,7 +129,7 @@ export function ModalHeader({
 }) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3">
-      <p id={titleId} className="text-sm font-semibold text-zinc-900">
+      <p id={titleId} className="min-w-0 truncate text-sm font-semibold text-zinc-900" title={title}>
         {title}
       </p>
       {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}

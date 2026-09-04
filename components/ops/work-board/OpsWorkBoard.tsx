@@ -54,6 +54,7 @@ import {
 } from '@/lib/ops/work-board';
 import OpsMentionComposer, { type MentionStaff } from './OpsMentionComposer';
 import WorkAttachmentField from './WorkAttachmentField';
+import WorkFileLightbox from './WorkFileLightbox';
 import WorkSubtaskEditor from './WorkSubtaskEditor';
 import { isWorkCardInteractiveTarget, useWorkBoardDrag } from './useWorkBoardDrag';
 import { useWorkBoardHoverScroll } from './useWorkBoardHoverScroll';
@@ -502,6 +503,7 @@ function WorkCard({
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(!compact);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const tone = workColorTone(assignment.stream);
   const counts = workSubtaskCounts(assignment);
   const pendingCount = workCardPendingCount({
@@ -640,26 +642,53 @@ function WorkCard({
         <div className={`h-full max-w-full rounded-full ${tone.bar}`} style={{ width: `${progress}%` }} />
       </div>
       {images.length ? (
-        <div className="mt-2 flex min-w-0 gap-1 overflow-hidden" onClick={(event) => event.stopPropagation()}>
-          {images.map((file) => (
-            <img
-              key={file.id}
-              src={workFileHref(file.id)}
-              alt={file.file_name}
-              className="h-10 w-10 shrink-0 rounded-md object-cover"
-            />
-          ))}
+        <div className="mt-2 flex min-w-0 gap-1 overflow-hidden">
+          {images.map((file) => {
+            const index = assignment.files.findIndex((row) => row.id === file.id);
+            return (
+              <button
+                key={file.id}
+                type="button"
+                className="shrink-0"
+                onClick={() => setPreviewIndex(index < 0 ? 0 : index)}
+                aria-haspopup="dialog"
+                aria-label={file.file_name}
+              >
+                <img
+                  src={workFileHref(file.id)}
+                  alt=""
+                  className="h-10 w-10 rounded-md object-cover"
+                />
+              </button>
+            );
+          })}
           {assignment.files.length > images.length ? (
-            <span className="flex h-10 items-center rounded-md bg-white/80 px-2 text-[11px] font-medium text-zinc-600">
+            <button
+              type="button"
+              className="flex h-10 items-center rounded-md bg-white/80 px-2 text-[11px] font-medium text-zinc-600"
+              onClick={() => setPreviewIndex(images.length)}
+              aria-haspopup="dialog"
+            >
               +{assignment.files.length - images.length}
-            </span>
+            </button>
           ) : null}
         </div>
       ) : assignment.files.length ? (
-        <p className="mt-2 truncate text-xs text-zinc-500">
+        <button
+          type="button"
+          className="mt-2 truncate text-xs text-zinc-500 hover:text-zinc-800"
+          onClick={() => setPreviewIndex(0)}
+          aria-haspopup="dialog"
+        >
           {t('ops.asignaciones.attachmentCount', { count: assignment.files.length })}
-        </p>
+        </button>
       ) : null}
+      <WorkFileLightbox
+        files={assignment.files}
+        openIndex={previewIndex}
+        onClose={() => setPreviewIndex(null)}
+        onChangeIndex={setPreviewIndex}
+      />
       <WorkSubtaskEditor
         assignment={assignment}
         canAct={canEdit}
@@ -683,50 +712,71 @@ function WorkFileList({
   onRefresh: () => void;
 }) {
   const { t } = useTranslation();
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   if (!files.length) return <EmptyState>{t('ops.asignaciones.noAttachments')}</EmptyState>;
   return (
-    <ul className="space-y-2">
-      {files.map((file) => (
-        <li key={file.id} className="flex min-w-0 items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-2">
-          {file.kind === 'image' ? (
-            <a href={workFileHref(file.id)} target="_blank" rel="noreferrer" className="shrink-0">
-              <img src={workFileHref(file.id)} alt="" className="h-14 w-14 rounded-md object-cover" />
-            </a>
-          ) : (
-            <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-white text-[10px] font-semibold uppercase text-zinc-500">
-              {file.file_name.split('.').pop() || 'file'}
-            </span>
-          )}
-          <div className="min-w-0 flex-1">
-            <a
-              href={workFileHref(file.id)}
-              target="_blank"
-              rel="noreferrer"
-              className="block truncate text-sm font-medium text-codiva-primary"
-            >
-              {file.file_name}
-            </a>
-            <p className="text-xs text-zinc-500">{formatBytes(file.byte_size)}</p>
-          </div>
-          {canEdit ? (
-            <button
-              type="button"
-              className="shrink-0 text-xs font-medium text-zinc-500 hover:text-red-700"
-              onClick={async () => {
-                try {
-                  await deleteWorkAssignmentFile(file.id);
-                  onRefresh();
-                } catch (err) {
-                  toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
-                }
-              }}
-            >
-              {t('ops.fileInput.remove')}
-            </button>
-          ) : null}
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="space-y-2">
+        {files.map((file, index) => (
+          <li key={file.id} className="flex min-w-0 items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-2">
+            {file.kind === 'image' ? (
+              <button
+                type="button"
+                className="shrink-0"
+                onClick={() => setPreviewIndex(index)}
+                aria-haspopup="dialog"
+                aria-label={file.file_name}
+              >
+                <img src={workFileHref(file.id)} alt="" className="h-14 w-14 rounded-md object-cover" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-white text-[10px] font-semibold uppercase text-zinc-500"
+                onClick={() => setPreviewIndex(index)}
+                aria-haspopup="dialog"
+                aria-label={file.file_name}
+              >
+                {file.file_name.split('.').pop() || 'file'}
+              </button>
+            )}
+            <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => setPreviewIndex(index)}
+                aria-haspopup="dialog"
+                className="block w-full truncate text-left text-sm font-medium text-codiva-primary hover:underline"
+              >
+                {file.file_name}
+              </button>
+              <p className="text-xs text-zinc-500">{formatBytes(file.byte_size)}</p>
+            </div>
+            {canEdit ? (
+              <button
+                type="button"
+                className="shrink-0 text-xs font-medium text-zinc-500 hover:text-red-700"
+                onClick={async () => {
+                  try {
+                    await deleteWorkAssignmentFile(file.id);
+                    onRefresh();
+                  } catch (err) {
+                    toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
+                  }
+                }}
+              >
+                {t('ops.fileInput.remove')}
+              </button>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <WorkFileLightbox
+        files={files}
+        openIndex={previewIndex}
+        onClose={() => setPreviewIndex(null)}
+        onChangeIndex={setPreviewIndex}
+      />
+    </>
   );
 }
 

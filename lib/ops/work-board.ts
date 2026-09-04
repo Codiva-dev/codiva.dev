@@ -395,8 +395,31 @@ export function workFileProblem(file: { name?: string; type?: string; size?: num
   return null;
 }
 
-export function workFileHref(id: string) {
-  return `/api/ops/assignment-file?id=${encodeURIComponent(id)}`;
+export function workFileHref(id: string, opts?: { download?: boolean }) {
+  const params = new URLSearchParams({ id });
+  if (opts?.download) params.set('download', '1');
+  return `/api/ops/assignment-file?${params}`;
+}
+
+export type WorkFilePreviewMode = 'image' | 'embed' | 'download';
+
+export function workFilePreviewMode(file: Pick<WorkFile, 'kind' | 'file_name' | 'content_type'>): WorkFilePreviewMode {
+  const ext = fileExt(file.file_name);
+  const mime = String(file.content_type || '').trim().toLowerCase();
+  if (file.kind === 'image' || ext === 'svg' || mime === 'image/svg+xml') return 'image';
+  if (ext === 'pdf' || mime === 'application/pdf' || mime === 'application/x-pdf') return 'embed';
+  if (
+    mime.startsWith('text/') ||
+    mime === 'application/json' ||
+    mime === 'application/csv' ||
+    ext === 'txt' ||
+    ext === 'md' ||
+    ext === 'csv' ||
+    ext === 'json'
+  ) {
+    return 'embed';
+  }
+  return 'download';
 }
 
 export function isWorkFormFile(value: FormDataEntryValue): value is File {

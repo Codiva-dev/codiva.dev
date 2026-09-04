@@ -26,7 +26,9 @@ import {
   processHref,
   rollupProgressFromSubtasks,
   splitMentionTokens,
+  workFileHref,
   workFileKind,
+  workFilePreviewMode,
   workFileProblem,
   workSubtaskCounts,
   appendWorkFormFiles,
@@ -68,6 +70,13 @@ describe('work-board progress', () => {
     expect(workFileKind('', 'deck.pptx')).toBe('file');
     expect(workFileKind('application/octet-stream', 'datos.csv')).toBe('file');
     expect(workFileKind('application/x-msdownload', 'x.exe')).toBeNull();
+    expect(workFilePreviewMode({ kind: 'image', file_name: 'shot.png', content_type: 'image/png' })).toBe('image');
+    expect(workFilePreviewMode({ kind: 'file', file_name: 'logo.svg', content_type: 'image/svg+xml' })).toBe('image');
+    expect(workFilePreviewMode({ kind: 'file', file_name: 'brief.pdf', content_type: 'application/pdf' })).toBe('embed');
+    expect(workFilePreviewMode({ kind: 'file', file_name: 'notes.txt', content_type: 'text/plain' })).toBe('embed');
+    expect(workFilePreviewMode({ kind: 'file', file_name: 'deck.pptx', content_type: '' })).toBe('download');
+    expect(workFileHref('abc')).toBe('/api/ops/assignment-file?id=abc');
+    expect(workFileHref('abc', { download: true })).toBe('/api/ops/assignment-file?id=abc&download=1');
     expect(workFileProblem({ name: 'ok.png', type: 'image/png', size: 12 })).toBeNull();
     expect(workFileProblem({ name: 'x.exe', type: 'application/x-msdownload', size: 12 })).toBe('type');
     expect(workFileProblem({ name: 'big.pdf', type: 'application/pdf', size: 11 * 1024 * 1024 })).toBe('tooBig');
