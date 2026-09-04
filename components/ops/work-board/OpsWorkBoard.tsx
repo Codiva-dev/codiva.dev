@@ -981,6 +981,9 @@ function DetailModal({
             <ToastForm
               className="mt-3 space-y-2"
               success={t('ops.asignaciones.attachmentsAdded')}
+              validate={() =>
+                filesRef.current.length ? null : t('ops.asignaciones.fileRequired')
+              }
               action={async (fd) => {
                 appendWorkFormFiles(fd, filesRef.current);
                 await addWorkAssignmentFiles(assignment.id, fd);

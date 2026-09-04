@@ -1,9 +1,16 @@
 'use client';
 
 import { useEffect, useId, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '@/lib/format-bytes';
-import { WORK_FILE_ACCEPT, WORK_FILE_MAX_COUNT } from '@/lib/ops/work-board';
+import {
+  WORK_FILE_ACCEPT,
+  WORK_FILE_MAX_COUNT,
+  WORK_FILE_PROBLEM_I18N,
+  workFileLabel,
+  workFileProblem,
+} from '@/lib/ops/work-board';
 
 export default function WorkAttachmentField({
   hint,
@@ -33,7 +40,30 @@ export default function WorkAttachmentField({
 
   function add(list: FileList | File[] | null) {
     if (!list?.length) return;
-    sync([...files, ...Array.from(list)]);
+    const unnamed = t('ops.asignaciones.unnamedFile');
+    const accepted: File[] = [];
+    const rejectedNames: string[] = [];
+    for (const file of Array.from(list)) {
+      const problem = workFileProblem(file);
+      if (!problem) {
+        accepted.push(file);
+        continue;
+      }
+      const name = workFileLabel(file.name) || unnamed;
+      if (list.length === 1) {
+        toast.error(t(WORK_FILE_PROBLEM_I18N[problem], { name }));
+        return;
+      }
+      rejectedNames.push(name);
+    }
+    if (rejectedNames.length) {
+      toast.error(t('ops.asignaciones.filesRejected', { names: rejectedNames.join(', ') }));
+    }
+    const merged = [...files, ...accepted];
+    if (merged.length > WORK_FILE_MAX_COUNT) {
+      toast.error(t('ops.asignaciones.tooManySelected', { max: WORK_FILE_MAX_COUNT }));
+    }
+    if (merged.length) sync(merged);
   }
 
   return (

@@ -88,7 +88,7 @@ function CodivaToast({
     <div
       {...t.ariaProps}
       className={cn(
-        'codiva-toast flex w-[min(22.5rem,calc(100vw-2rem))] overflow-hidden rounded-xl border bg-white pr-1.5',
+        'codiva-toast flex w-[min(26rem,calc(100vw-2rem))] overflow-hidden rounded-xl border bg-white pr-1.5',
         t.visible ? 'codiva-toast-in' : 'codiva-toast-out',
         tone.card
       )}
@@ -138,7 +138,7 @@ export default function CodivaToaster() {
       toastOptions={{
         duration: 4000,
         removeDelay: 220,
-        error: { duration: 5000 },
+        error: { duration: 8000 },
       }}
     >
       {(item) => <CodivaToast t={item} closeLabel={closeLabel} typeLabels={typeLabels} />}

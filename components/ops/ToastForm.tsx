@@ -17,6 +17,7 @@ type ToastFormProps = Omit<ComponentProps<'form'>, 'action'> & {
   confirmTitle?: string;
   confirmLabel?: string;
   confirmTone?: 'danger' | 'primary';
+  validate?: (formData: FormData) => string | null | undefined;
   children: ReactNode;
 };
 
@@ -32,6 +33,7 @@ export default function ToastForm({
   confirmTitle,
   confirmLabel,
   confirmTone = 'danger',
+  validate,
   children,
   ...formProps
 }: ToastFormProps) {
@@ -69,6 +71,11 @@ export default function ToastForm({
       <form
         {...formProps}
         action={async (formData) => {
+          const invalid = validate?.(formData);
+          if (invalid) {
+            toast.error(invalid);
+            return;
+          }
           if (confirmMessage) {
             setPending(formData);
             return;
@@ -89,7 +96,13 @@ export default function ToastForm({
           onConfirm={() => {
             const data = pending;
             setPending(null);
-            if (data) void run(data);
+            if (!data) return;
+            const invalid = validate?.(data);
+            if (invalid) {
+              toast.error(invalid);
+              return;
+            }
+            void run(data);
           }}
         />
       ) : null}

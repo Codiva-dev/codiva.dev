@@ -240,24 +240,96 @@ export function workSubtaskEditorText(subtasks: Pick<WorkSubtask, 'title' | 'sor
     .join('\n');
 }
 
-export const WORK_FILE_MAX_BYTES = 4 * 1024 * 1024;
+export const WORK_FILE_MAX_BYTES = 10 * 1024 * 1024;
 export const WORK_FILE_MAX_COUNT = 6;
-export const WORK_FILE_ACCEPT =
-  'image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp,application/pdf,.pdf,text/plain,.txt,application/msword,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx,application/vnd.ms-excel,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.xlsx,application/zip,.zip';
 
-const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+const IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/pjpeg',
+  'image/png',
+  'image/x-png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'image/bmp',
+  'image/x-ms-bmp',
+]);
+const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'jfif', 'png', 'gif', 'webp', 'avif', 'bmp']);
+
 const FILE_TYPES = new Set([
   'application/pdf',
+  'application/x-pdf',
   'text/plain',
+  'text/markdown',
+  'text/csv',
+  'text/rtf',
+  'application/csv',
+  'application/json',
+  'application/rtf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/vnd.oasis.opendocument.text',
+  'application/vnd.oasis.opendocument.spreadsheet',
+  'application/vnd.oasis.opendocument.presentation',
   'application/zip',
+  'application/x-zip',
   'application/x-zip-compressed',
+  'application/vnd.rar',
+  'application/x-rar',
+  'application/x-rar-compressed',
+  'application/x-7z-compressed',
+  'image/heic',
+  'image/heif',
+  'image/heic-sequence',
+  'image/heif-sequence',
+  'image/svg+xml',
+  'application/illustrator',
+  'application/postscript',
 ]);
-const IMAGE_EXTS = new Set(['jpg', 'jpeg', 'png', 'gif', 'webp']);
-const FILE_EXTS = new Set(['pdf', 'txt', 'doc', 'docx', 'xls', 'xlsx', 'zip']);
+const FILE_EXTS = new Set([
+  'pdf',
+  'txt',
+  'md',
+  'csv',
+  'rtf',
+  'json',
+  'doc',
+  'docx',
+  'xls',
+  'xlsx',
+  'ppt',
+  'pptx',
+  'odt',
+  'ods',
+  'odp',
+  'zip',
+  'rar',
+  '7z',
+  'heic',
+  'heif',
+  'svg',
+  'fig',
+  'ai',
+]);
+
+export const WORK_FILE_ACCEPT = [
+  ...IMAGE_TYPES,
+  ...FILE_TYPES,
+  ...[...IMAGE_EXTS, ...FILE_EXTS].map((ext) => `.${ext}`),
+].join(',');
+
+export type WorkFileProblem = 'empty' | 'tooBig' | 'type';
+
+export const WORK_FILE_PROBLEM_I18N = {
+  empty: 'ops.asignaciones.fileEmpty',
+  tooBig: 'ops.asignaciones.fileTooBig',
+  type: 'ops.asignaciones.fileTypeRejected',
+} as const;
 
 function fileExt(name: string) {
   const base = name.split(/[/\\]/).pop() || name;
@@ -265,11 +337,23 @@ function fileExt(name: string) {
   return dot >= 0 ? base.slice(dot + 1).toLowerCase() : '';
 }
 
+export function workFileLabel(name: string) {
+  return String(name || '').split(/[/\\]/).pop()?.trim() || '';
+}
+
 export function workFileKind(type: string, name: string): 'image' | 'file' | null {
   const mime = String(type || '').trim().toLowerCase();
   const ext = fileExt(name);
   if (IMAGE_TYPES.has(mime) || IMAGE_EXTS.has(ext)) return 'image';
   if (FILE_TYPES.has(mime) || FILE_EXTS.has(ext)) return 'file';
+  return null;
+}
+
+export function workFileProblem(file: { name?: string; type?: string; size?: number }): WorkFileProblem | null {
+  const size = Number(file.size);
+  if (!(size > 0)) return 'empty';
+  if (size > WORK_FILE_MAX_BYTES) return 'tooBig';
+  if (!workFileKind(file.type || '', file.name || '')) return 'type';
   return null;
 }
 

@@ -24,6 +24,7 @@ import {
   rollupProgressFromSubtasks,
   splitMentionTokens,
   workFileKind,
+  workFileProblem,
   workSubtaskCounts,
   appendWorkFormFiles,
   isWorkFormFile,
@@ -60,7 +61,13 @@ describe('work-board progress', () => {
     expect(workFileKind('image/png', 'shot.png')).toBe('image');
     expect(workFileKind('application/pdf', 'brief.pdf')).toBe('file');
     expect(workFileKind('', 'notes.txt')).toBe('file');
+    expect(workFileKind('image/heic', 'foto.heic')).toBe('file');
+    expect(workFileKind('', 'deck.pptx')).toBe('file');
+    expect(workFileKind('application/octet-stream', 'datos.csv')).toBe('file');
     expect(workFileKind('application/x-msdownload', 'x.exe')).toBeNull();
+    expect(workFileProblem({ name: 'ok.png', type: 'image/png', size: 12 })).toBeNull();
+    expect(workFileProblem({ name: 'x.exe', type: 'application/x-msdownload', size: 12 })).toBe('type');
+    expect(workFileProblem({ name: 'big.pdf', type: 'application/pdf', size: 11 * 1024 * 1024 })).toBe('tooBig');
     expect(clampWorkProgress(140)).toBe(100);
     expect(clampWorkProgress(-4)).toBe(0);
   });

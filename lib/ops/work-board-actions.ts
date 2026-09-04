@@ -25,10 +25,12 @@ import {
   parseSubtaskLines,
   planWorkSubtaskRewrite,
   rollupProgressFromSubtasks,
-  WORK_FILE_MAX_BYTES,
   WORK_FILE_MAX_COUNT,
+  WORK_FILE_PROBLEM_I18N,
   isWorkFormFile,
   workFileKind,
+  workFileLabel,
+  workFileProblem,
   type WorkProcessKind,
   type WorkStatus,
   type WorkStream,
@@ -138,9 +140,21 @@ async function saveWorkFiles({
     throw new Error(t('ops.asignaciones.tooManyFiles'));
   }
   for (const file of files) {
-    if (file.size > WORK_FILE_MAX_BYTES) throw new Error(t('ops.asignaciones.fileTooBig'));
+    const problem = workFileProblem(file);
+    if (problem) {
+      console.warn('[work-file] rejected', problem, { name: file.name, type: file.type, size: file.size });
+      const name = workFileLabel(file.name) || t('ops.asignaciones.unnamedFile');
+      throw new Error(t(WORK_FILE_PROBLEM_I18N[problem], { name }));
+    }
     const kind = workFileKind(file.type, file.name);
-    if (!kind) throw new Error(t('ops.asignaciones.fileTypeRejected'));
+    if (!kind) {
+      console.warn('[work-file] rejected', 'type', { name: file.name, type: file.type, size: file.size });
+      throw new Error(
+        t(WORK_FILE_PROBLEM_I18N.type, {
+          name: workFileLabel(file.name) || t('ops.asignaciones.unnamedFile'),
+        })
+      );
+    }
     const uploaded = await uploadOpsFile(file, `assignments/${assignmentId}`);
     const scan = await scanUploadedBytes(uploaded.buffer, uploaded.sha256, file.name);
     if (scan.status === 'infected') {
