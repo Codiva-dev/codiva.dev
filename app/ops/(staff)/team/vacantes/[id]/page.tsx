@@ -3,7 +3,7 @@ import CopyableUrl from '@/components/ops/CopyableUrl';
 import ToastForm from '@/components/ops/ToastForm';
 import JobPostingProcessFields from '@/components/ops/JobPostingProcessFields';
 import { requireAdminStaff } from '@/lib/ops/auth';
-import { updateJobPosting } from '@/lib/ops/career-actions';
+import { updateJobPosting, deleteJobPosting } from '@/lib/ops/career-actions';
 import {
   JOB_EMPLOYMENT_TYPES,
   careerOpsLabels,
@@ -11,7 +11,7 @@ import {
 } from '@/lib/ops/careers';
 import { careerBaseUrl, usageUrlLabel } from '@/lib/ops/host';
 import { getT } from '@/i18n/locale';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 
 export default async function VacanteEditPage({
@@ -24,7 +24,7 @@ export default async function VacanteEditPage({
   const { data: posting } = await supabase
     .from('ops_job_postings')
     .select(
-      'id, slug, title, title_en, description, description_en, requirements, requirements_en, location, location_en, employment_type, status, sort_order, assessment_key, asks_discipline, requires_hunt, careers_pipeline, hire_ops_role'
+      'id, slug, title, title_en, description, description_en, requirements, requirements_en, location, location_en, employment_type, status, sort_order, assessment_key, asks_discipline, requires_hunt, careers_pipeline, hire_ops_role, interview_plan, hire_monthly_compensation, hire_currency, hire_work_modality'
     )
     .eq('id', id)
     .maybeSingle();
@@ -186,9 +186,29 @@ export default async function VacanteEditPage({
           requiresHunt={Boolean(posting.requires_hunt)}
           careersPipeline={Boolean(posting.careers_pipeline)}
           hireOpsRole={posting.hire_ops_role}
+          interviewPlan={posting.interview_plan}
+          hireMonthlyCompensation={posting.hire_monthly_compensation}
+          hireCurrency={posting.hire_currency}
+          hireWorkModality={posting.hire_work_modality}
         />
         <button type="submit" className="rounded-lg bg-codiva-primary px-4 py-2 text-sm text-white">
           {t('ops.careers.save')}
+        </button>
+      </ToastForm>
+      <ToastForm
+        success={t('ops.careers.deleted')}
+        confirmTitle={t('ops.careers.deleteConfirmTitle')}
+        confirmMessage={t('ops.careers.deleteConfirm')}
+        confirmLabel={t('ops.careers.delete')}
+        action={async () => {
+          'use server';
+          await deleteJobPosting(id);
+          redirect('/team?tab=bolsa');
+        }}
+        className="mt-4"
+      >
+        <button type="submit" className="text-sm text-red-700 hover:underline">
+          {t('ops.careers.delete')}
         </button>
       </ToastForm>
     </div>

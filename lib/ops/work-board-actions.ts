@@ -820,6 +820,7 @@ export async function markWorkMentionRead(mentionId: string) {
     .is('read_at', null);
   if (error) throw await throwDb(error);
   revalidatePath('/pendientes');
+  revalidatePath('/asignaciones');
 }
 
 export async function markWorkMentionsReadForAssignment(assignmentId: string) {
@@ -832,6 +833,7 @@ export async function markWorkMentionsReadForAssignment(assignmentId: string) {
     .is('read_at', null);
   if (error) throw await throwDb(error);
   revalidatePath('/pendientes');
+  revalidatePath('/asignaciones');
 }
 
 export async function addWorkAssignmentFiles(assignmentId: string, formData: FormData) {

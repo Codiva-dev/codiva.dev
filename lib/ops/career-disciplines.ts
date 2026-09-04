@@ -13,12 +13,60 @@ export const CAREER_DISCIPLINES = [
 
 export type CareerDiscipline = (typeof CAREER_DISCIPLINES)[number];
 
-/** Oficios que hay que cubrir en la cacería integral. «Otro» no cuenta. */
-export const HUNT_COVER_CRAFTS = CAREER_DISCIPLINES.filter(
-  (craft): craft is Exclude<CareerDiscipline, 'other'> => craft !== 'other'
-);
+/** Tipos de hallazgo plantados en la cacería. Los oficios se agrupan en estos tres. */
+export const HUNT_FINDING_TYPES = ['functional', 'api', 'security'] as const;
+export type HuntFindingType = (typeof HUNT_FINDING_TYPES)[number];
 
-export type HuntCoverCraft = (typeof HUNT_COVER_CRAFTS)[number];
+export const DISCIPLINE_FINDING_TYPE: Record<Exclude<CareerDiscipline, 'other'>, HuntFindingType> = {
+  frontend: 'functional',
+  'ux-ui': 'functional',
+  qa: 'functional',
+  backend: 'api',
+  fullstack: 'api',
+  security: 'security',
+};
+
+export const HUNT_FINDING_TYPE_LABELS: Record<HuntFindingType, string> = {
+  functional: 'Prueba funcional',
+  api: 'Prueba de API',
+  security: 'Prueba de seguridad',
+};
+
+/** Tipos que hay que cubrir en la cacería integral. */
+export const HUNT_COVER_CRAFTS = HUNT_FINDING_TYPES;
+export type HuntCoverCraft = HuntFindingType;
+
+export function isHuntFindingType(value: string): value is HuntFindingType {
+  return (HUNT_FINDING_TYPES as readonly string[]).includes(value);
+}
+
+export function huntFindingTypeForDiscipline(
+  discipline: string | null | undefined
+): HuntFindingType | null {
+  if (!discipline || !isCareerDiscipline(discipline) || discipline === 'other') return null;
+  return DISCIPLINE_FINDING_TYPE[discipline];
+}
+
+export function huntFindingTypeLabel(
+  type: string | null | undefined,
+  locale: Locale = DEFAULT_LOCALE
+): string | null {
+  if (!type || !isHuntFindingType(type)) return null;
+  return tSync(locale, `career.hunt_type.${type}`);
+}
+
+export function huntFindingTypeLabels(locale: Locale = DEFAULT_LOCALE): Record<HuntFindingType, string> {
+  return Object.fromEntries(
+    HUNT_FINDING_TYPES.map((key) => [key, tSync(locale, `career.hunt_type.${key}`)])
+  ) as Record<HuntFindingType, string>;
+}
+
+export function huntFindingHintKey(discipline?: string | null, coverAll = false): string {
+  const type = huntFindingTypeForDiscipline(discipline);
+  if (type) return `career.hunt_finding_hint_${type}`;
+  if (coverAll) return 'career.hunt_craft_hint_all';
+  return 'career.hunt_craft_hint_other';
+}
 
 export const CAREER_DISCIPLINE_LABELS: Record<CareerDiscipline, string> = {
   frontend: 'Tester frontend',
@@ -91,6 +139,11 @@ export type JobPostingProcessFields = {
   requires_hunt?: boolean | null;
   careers_pipeline?: boolean | null;
   hire_ops_role?: string | null;
+  hire_monthly_compensation?: number | string | null;
+  hire_currency?: string | null;
+  hire_work_modality?: string | null;
+  interview_plan?: string[] | null;
+  requirements?: string | null;
 };
 
 function postingSlugOf(
@@ -137,7 +190,7 @@ export function postingHireOpsRole(
   if (posting && typeof posting === 'object' && posting.hire_ops_role && isJobHireOpsRole(posting.hire_ops_role)) {
     return posting.hire_ops_role;
   }
-  return postingSlugOf(posting) === 'project-manager' ? 'pm' : 'dev';
+  return 'dev';
 }
 
 export function isTesterPipelineItem(input: {

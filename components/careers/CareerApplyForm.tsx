@@ -11,6 +11,7 @@ import {
   CAREER_DISCIPLINES,
   CAREER_DISCIPLINE_CATALOG,
   CAREER_DISCIPLINE_LABELS,
+  huntFindingHintKey,
   type CareerDiscipline,
 } from '@/lib/ops/career-disciplines';
 
@@ -260,11 +261,7 @@ export default function CareerApplyForm({
 
   if (needsAssessment && huntPending && !assessmentReady) {
     const coverAllHunt = !asksDiscipline;
-    const craftHintKey = discipline
-      ? `career.hunt_craft_hint_${String(discipline).replaceAll('-', '_')}`
-      : coverAllHunt
-        ? 'career.hunt_craft_hint_all'
-        : 'career.hunt_craft_hint_other';
+    const craftHintKey = huntFindingHintKey(discipline, coverAllHunt);
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm sm:p-6">

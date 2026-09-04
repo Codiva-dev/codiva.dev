@@ -10,27 +10,29 @@ import { can } from '@/lib/ops/permissions';
 import { throwDb } from '@/lib/ops/throw-db';
 import { isTesterPipelineItem, applicationRoleLabel } from '@/lib/ops/career-disciplines';
 import {
+  CAREER_CV_BUCKET,
+  CAREER_DISCIPLINE_LABELS,
   isCareerDiscipline,
   isJobApplicationStatus,
   isJobEmploymentType,
   isJobHireOpsRole,
+  isJobHireWorkModality,
   isJobInterviewKind,
   isJobInterviewOutcome,
   isJobInterviewRoundStatus,
   isJobPostingStatus,
   normalizeJobSlug,
+  parseHireCompensation,
+  parseHireCurrency,
+  parseInterviewPlan,
   postingHireOpsRole,
   uniqueJobSlugCandidate,
-  CAREER_DISCIPLINE_LABELS,
-  DEFAULT_INTERVIEW_ROUND_KINDS,
 } from '@/lib/ops/careers';
 import { isAssessmentCatalogKey } from '@/lib/careers/assessments/catalog';
 import { notifyCandidateApplicationStatus } from '@/lib/careers/notify-application-status';
 import { syncRoundAssignee } from '@/lib/ops/interview-actions';
-import {
-  DEFAULT_RESPONSIBILITIES,
-  responsibilitiesForCareerDiscipline,
-} from '@/lib/ops/offer-letter';
+import { INTERVIEW_REPORT_BUCKET } from '@/lib/ops/interview-partner';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 function revalidateCareerPaths(slug?: string) {
   revalidatePath('/team');
@@ -83,7 +85,7 @@ async function requireApplicationForReview(
   return application;
 }
 
-async function seedDefaultInterviewRounds(
+async function seedInterviewRoundsFromPosting(
   supabase: Awaited<ReturnType<typeof requireCareersReview>>['supabase'],
   applicationId: string,
   actorId: string
@@ -95,9 +97,19 @@ async function seedDefaultInterviewRounds(
 
   if ((count ?? 0) > 0) return false;
 
+  const { data: application } = await supabase
+    .from('ops_job_applications')
+    .select('ops_job_postings(interview_plan)')
+    .eq('id', applicationId)
+    .maybeSingle();
+  const nested = application?.ops_job_postings;
+  const posting = Array.isArray(nested) ? nested[0] : nested;
+  const plan = parseInterviewPlan(posting?.interview_plan);
+  if (!plan.length) return false;
+
   const t = await getT();
   const { error } = await supabase.from('ops_job_interview_rounds').insert(
-    DEFAULT_INTERVIEW_ROUND_KINDS.map((kind, index) => ({
+    plan.map((kind, index) => ({
       application_id: applicationId,
       sort_order: index,
       kind,
@@ -108,6 +120,29 @@ async function seedDefaultInterviewRounds(
   );
   if (error) throw await throwDb(error);
   return true;
+}
+
+async function purgeApplicationFiles(applicationIds: string[]) {
+  const ids = applicationIds.filter(isUuid);
+  if (!ids.length) return;
+  const admin = createAdminClient();
+  const { data: apps } = await admin
+    .from('ops_job_applications')
+    .select('cv_storage_path')
+    .in('id', ids);
+  const { data: rounds } = await admin
+    .from('ops_job_interview_rounds')
+    .select('id')
+    .in('application_id', ids);
+  const roundIds = (rounds ?? []).map((row) => row.id);
+  const { data: reports } = roundIds.length
+    ? await admin.from('ops_interview_reports').select('storage_path').in('round_id', roundIds)
+    : { data: [] as { storage_path: string }[] };
+
+  const cvPaths = (apps ?? []).map((row) => row.cv_storage_path).filter(Boolean);
+  const reportPaths = (reports ?? []).map((row) => row.storage_path).filter(Boolean);
+  if (cvPaths.length) await admin.storage.from(CAREER_CV_BUCKET).remove(cvPaths);
+  if (reportPaths.length) await admin.storage.from(INTERVIEW_REPORT_BUCKET).remove(reportPaths);
 }
 
 async function maybePromoteToInterview(
@@ -164,6 +199,11 @@ function parsePostingFields(formData: FormData) {
   const asksDiscipline = formChecked(formData, 'asksDiscipline');
   const requiresHunt = formChecked(formData, 'requiresHunt');
   const careersPipeline = formChecked(formData, 'careersPipeline');
+  const interviewPlan = parseInterviewPlan(formData.getAll('interviewPlan'));
+  const hireCompensation = parseHireCompensation(formData.get('hireMonthlyCompensation'));
+  const hireCurrency = parseHireCurrency(formData.get('hireCurrency'));
+  const hireModalityRaw = String(formData.get('hireWorkModality') || 'remote').trim();
+  const hireWorkModality = isJobHireWorkModality(hireModalityRaw) ? hireModalityRaw : 'remote';
 
   if (title.length < 2) throw new Error('Título requerido');
   if (!isJobPostingStatus(statusRaw)) throw new Error('Estado inválido');
@@ -189,6 +229,10 @@ function parsePostingFields(formData: FormData) {
     requiresHunt,
     careersPipeline,
     hireOpsRole,
+    interviewPlan,
+    hireCompensation,
+    hireCurrency,
+    hireWorkModality,
   };
 }
 
@@ -223,6 +267,10 @@ export async function createJobPosting(formData: FormData) {
       requires_hunt: fields.requiresHunt,
       careers_pipeline: fields.careersPipeline,
       hire_ops_role: fields.hireOpsRole,
+      interview_plan: fields.interviewPlan,
+      hire_monthly_compensation: fields.hireCompensation,
+      hire_currency: fields.hireCurrency,
+      hire_work_modality: fields.hireWorkModality,
       published_at: publishedAt,
       created_by: user.id,
     })
@@ -280,6 +328,10 @@ export async function updateJobPosting(postingId: string, formData: FormData) {
       requires_hunt: fields.requiresHunt,
       careers_pipeline: fields.careersPipeline,
       hire_ops_role: fields.hireOpsRole,
+      interview_plan: fields.interviewPlan,
+      hire_monthly_compensation: fields.hireCompensation,
+      hire_currency: fields.hireCurrency,
+      hire_work_modality: fields.hireWorkModality,
       published_at: publishedAt,
     })
     .eq('id', postingId);
@@ -299,8 +351,9 @@ export async function updateJobPosting(postingId: string, formData: FormData) {
   revalidatePath(`/team/vacantes/${postingId}`);
 }
 
-export async function deleteDraftJobPosting(postingId: string) {
+export async function deleteJobPosting(postingId: string) {
   const { user, supabase } = await requireAdminStaff();
+  const t = await getT();
 
   const { data: current, error: currentError } = await supabase
     .from('ops_job_postings')
@@ -308,15 +361,10 @@ export async function deleteDraftJobPosting(postingId: string) {
     .eq('id', postingId)
     .single();
 
-  if (currentError || !current) throw new Error('Vacante no encontrada');
-  if (current.status !== 'draft') throw new Error('Solo se pueden eliminar vacantes en borrador');
+  if (currentError || !current) throw new Error(t('ops.careers.notFound'));
 
-  const { count } = await supabase
-    .from('ops_job_applications')
-    .select('id', { count: 'exact', head: true })
-    .eq('job_posting_id', postingId);
-
-  if ((count ?? 0) > 0) throw new Error('No se puede eliminar: ya hay postulaciones');
+  const { data: apps } = await supabase.from('ops_job_applications').select('id').eq('job_posting_id', postingId);
+  await purgeApplicationFiles((apps ?? []).map((row) => row.id));
 
   const { error } = await supabase.from('ops_job_postings').delete().eq('id', postingId);
   if (error) throw await throwDb(error);
@@ -330,6 +378,35 @@ export async function deleteDraftJobPosting(postingId: string) {
   });
 
   revalidateCareerPaths(current.slug);
+}
+
+export async function deleteJobApplication(applicationId: string) {
+  const { user, supabase, staff } = await requireAdminStaff();
+  const t = await getT();
+  await requireApplicationForReview(supabase, staff, applicationId);
+
+  const { data: current, error: currentError } = await supabase
+    .from('ops_job_applications')
+    .select('id, full_name')
+    .eq('id', applicationId)
+    .maybeSingle();
+  if (currentError || !current) throw new Error(t('ops.careers.applicationNotFound'));
+
+  await purgeApplicationFiles([applicationId]);
+  const { error } = await supabase.from('ops_job_applications').delete().eq('id', applicationId);
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'job_application',
+    entityId: applicationId,
+    action: 'deleted',
+    metadata: { name: current.full_name },
+    actorId: user.id,
+  });
+
+  revalidatePath('/team');
+  revalidatePath('/inbox');
+  revalidatePath('/dashboard');
 }
 
 export async function updateJobApplicationStatus(applicationId: string, formData: FormData) {
@@ -388,7 +465,7 @@ export async function updateJobApplicationStatus(applicationId: string, formData
   });
 
   if (status === 'interview' && application.status !== 'interview') {
-    await seedDefaultInterviewRounds(supabase, applicationId, user.id);
+    await seedInterviewRoundsFromPosting(supabase, applicationId, user.id);
   }
 
   revalidatePath('/team');
@@ -541,12 +618,127 @@ export async function addJobInterviewComment(roundId: string, formData: FormData
   revalidatePath('/team');
 }
 
+export async function deleteJobInterviewRound(roundId: string) {
+  const { user, supabase, staff } = await requireCareersReview();
+  const t = await getT();
+  if (!isUuid(roundId)) throw new Error(t('ops.careers.interviewRoundInvalid'));
+
+  const { data: round } = await supabase
+    .from('ops_job_interview_rounds')
+    .select('id, application_id')
+    .eq('id', roundId)
+    .maybeSingle();
+  if (!round) throw new Error(t('ops.careers.interviewRoundNotFound'));
+  await requireApplicationForReview(supabase, staff, round.application_id);
+
+  const { data: reports } = await supabase
+    .from('ops_interview_reports')
+    .select('storage_path')
+    .eq('round_id', roundId);
+  const reportPaths = (reports ?? []).map((row) => row.storage_path).filter(Boolean);
+  if (reportPaths.length) {
+    const admin = createAdminClient();
+    await admin.storage.from(INTERVIEW_REPORT_BUCKET).remove(reportPaths);
+  }
+
+  const { error } = await supabase.from('ops_job_interview_rounds').delete().eq('id', roundId);
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'job_application',
+    entityId: round.application_id,
+    action: 'interview_round_deleted',
+    metadata: { roundId },
+    actorId: user.id,
+  });
+
+  revalidatePath('/team');
+}
+
+export async function updateJobInterviewComment(commentId: string, formData: FormData) {
+  const { user, supabase, staff } = await requireCareersReview();
+  const t = await getT();
+  if (!isUuid(commentId)) throw new Error(t('ops.careers.interviewCommentInvalid'));
+  const body = String(formData.get('body') || '').trim().slice(0, 4000);
+  if (body.length < 1) throw new Error(t('ops.careers.interviewCommentRequired'));
+
+  const { data: comment } = await supabase
+    .from('ops_job_interview_comments')
+    .select('id, round_id, author_id')
+    .eq('id', commentId)
+    .maybeSingle();
+  if (!comment) throw new Error(t('ops.careers.interviewCommentNotFound'));
+
+  const { data: round } = await supabase
+    .from('ops_job_interview_rounds')
+    .select('id, application_id')
+    .eq('id', comment.round_id)
+    .maybeSingle();
+  if (!round) throw new Error(t('ops.careers.interviewRoundNotFound'));
+  await requireApplicationForReview(supabase, staff, round.application_id);
+  if (!can(staff, 'team') && comment.author_id !== user.id) {
+    throw new Error(t('ops.careers.interviewCommentForbidden'));
+  }
+
+  const { error } = await supabase.from('ops_job_interview_comments').update({ body }).eq('id', commentId);
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'job_application',
+    entityId: round.application_id,
+    action: 'interview_comment_updated',
+    metadata: { commentId },
+    actorId: user.id,
+  });
+
+  revalidatePath('/team');
+}
+
+export async function deleteJobInterviewComment(commentId: string) {
+  const { user, supabase, staff } = await requireCareersReview();
+  const t = await getT();
+  if (!isUuid(commentId)) throw new Error(t('ops.careers.interviewCommentInvalid'));
+
+  const { data: comment } = await supabase
+    .from('ops_job_interview_comments')
+    .select('id, round_id, author_id')
+    .eq('id', commentId)
+    .maybeSingle();
+  if (!comment) throw new Error(t('ops.careers.interviewCommentNotFound'));
+
+  const { data: round } = await supabase
+    .from('ops_job_interview_rounds')
+    .select('id, application_id')
+    .eq('id', comment.round_id)
+    .maybeSingle();
+  if (!round) throw new Error(t('ops.careers.interviewRoundNotFound'));
+  await requireApplicationForReview(supabase, staff, round.application_id);
+  if (!can(staff, 'team') && comment.author_id !== user.id) {
+    throw new Error(t('ops.careers.interviewCommentForbidden'));
+  }
+
+  const { error } = await supabase.from('ops_job_interview_comments').delete().eq('id', commentId);
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'job_application',
+    entityId: round.application_id,
+    action: 'interview_comment_deleted',
+    metadata: { commentId },
+    actorId: user.id,
+  });
+
+  revalidatePath('/team');
+}
+
 export async function createPersonnelOfferFromApplication(applicationId: string) {
   const { user, supabase } = await requireAdminStaff();
 
   const { data: application, error } = await supabase
     .from('ops_job_applications')
-    .select('id, full_name, email, cover_letter, discipline, personnel_offer_id, ops_job_postings(title, slug, hire_ops_role)')
+    .select(
+      'id, full_name, email, cover_letter, discipline, personnel_offer_id, ops_job_postings(title, slug, hire_ops_role, hire_monthly_compensation, hire_currency, hire_work_modality, requirements)'
+    )
     .eq('id', applicationId)
     .single();
 
@@ -563,8 +755,7 @@ export async function createPersonnelOfferFromApplication(applicationId: string)
       ? application.discipline
       : null;
   const disciplineLabel = discipline ? CAREER_DISCIPLINE_LABELS[discipline] : null;
-  const positionTitle =
-    discipline && discipline !== 'other' ? disciplineLabel || posting?.title || 'Colaborador' : posting?.title || 'Colaborador';
+  const positionTitle = String(posting?.title || application.full_name).trim() || application.full_name;
   const careerEmail = application.email.toLowerCase();
   const notes = [
     `Origen: bolsa de trabajo (${posting?.slug || 'vacante'}).`,
@@ -573,6 +764,21 @@ export async function createPersonnelOfferFromApplication(applicationId: string)
   ]
     .filter(Boolean)
     .join('\n\n');
+  const hireCompensation = parseHireCompensation(
+    posting && typeof posting === 'object' ? posting.hire_monthly_compensation : null
+  );
+  if (hireCompensation == null) {
+    const t = await getT();
+    throw new Error(t('ops.careers.hireCompensationRequired'));
+  }
+  const hireCurrency = parseHireCurrency(
+    posting && typeof posting === 'object' ? posting.hire_currency : null
+  );
+  const hireModalityRaw =
+    posting && typeof posting === 'object' ? String(posting.hire_work_modality || '').trim() : '';
+  const hireWorkModality = isJobHireWorkModality(hireModalityRaw) ? hireModalityRaw : 'remote';
+  const responsibilities =
+    posting && typeof posting === 'object' ? String(posting.requirements || '').trim() : '';
 
   const { data: existing } = await supabase
     .from('ops_personnel_offers')
@@ -610,13 +816,12 @@ export async function createPersonnelOfferFromApplication(applicationId: string)
       career_email: careerEmail,
       position_title: positionTitle,
       ops_role: postingHireOpsRole(posting),
-      monthly_compensation: 1200,
-      currency: 'USD',
-      work_modality: 'remote',
+      monthly_compensation: hireCompensation,
+      currency: hireCurrency,
+      work_modality: hireWorkModality,
       status: 'draft',
       issued_at: new Date().toISOString().slice(0, 10),
-      responsibilities:
-        responsibilitiesForCareerDiscipline(discipline) || DEFAULT_RESPONSIBILITIES,
+      responsibilities,
       notes_internal: notes,
       created_by: user.id,
     })

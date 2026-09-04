@@ -4,7 +4,7 @@ import HuntReportForm from '@/components/careers/HuntReportForm';
 import { careerAppHref, careerBaseUrl } from '@/lib/ops/host';
 import { getT } from '@/i18n/locale';
 import { headers } from 'next/headers';
-import { isCareerDiscipline } from '@/lib/ops/career-disciplines';
+import { huntFindingHintKey, isCareerDiscipline } from '@/lib/ops/career-disciplines';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,9 +26,7 @@ export default async function HuntPage({ searchParams }: PageProps) {
   const host = (await headers()).get('host');
   const { discipline: disciplineRaw } = await searchParams;
   const discipline = isCareerDiscipline(disciplineRaw ?? '') ? disciplineRaw : undefined;
-  const craftHintKey = discipline
-    ? `career.hunt_craft_hint_${discipline.replaceAll('-', '_')}`
-    : null;
+  const craftHintKey = discipline ? huntFindingHintKey(discipline) : null;
 
   return (
     <main id="contendido" className="mx-auto w-full min-w-0 max-w-3xl px-4 pb-24 pt-28 sm:px-6 md:px-12">

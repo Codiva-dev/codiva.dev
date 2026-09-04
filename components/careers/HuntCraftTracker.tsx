@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslation } from 'react-i18next';
-import { CAREER_DISCIPLINE_LABELS, isCareerDiscipline } from '@/lib/ops/career-disciplines';
+import { HUNT_FINDING_TYPE_LABELS, isHuntFindingType, type HuntFindingType } from '@/lib/ops/career-disciplines';
 
 export type HuntCraftPublic = { craft: string; found: boolean };
 
@@ -22,7 +22,9 @@ export default function HuntCraftTracker({
 }: Props) {
   const { t } = useTranslation();
   const complete = needed > 0 && matched >= needed;
-  const list = crafts.filter((slot) => isCareerDiscipline(slot.craft) && slot.craft !== 'other');
+  const list = crafts.filter((slot): slot is { craft: HuntFindingType; found: boolean } =>
+    isHuntFindingType(slot.craft)
+  );
 
   return (
     <section
@@ -31,11 +33,11 @@ export default function HuntCraftTracker({
           ? 'w-[min(18rem,calc(100vw-2rem))] rounded-2xl border border-zinc-200 bg-white/95 p-3 shadow-lg backdrop-blur'
           : 'rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5'
       }
-      aria-label={t('career.hunt_tracker_title', { defaultValue: 'Hallazgos por oficio' })}
+      aria-label={t('career.hunt_tracker_title', { defaultValue: 'Hallazgos por tipo de prueba' })}
     >
       <div className="flex items-baseline justify-between gap-3">
         <h2 className={`font-semibold text-zinc-900 ${variant === 'dock' ? 'text-sm' : 'text-base'}`}>
-          {t('career.hunt_tracker_title', { defaultValue: 'Hallazgos por oficio' })}
+          {t('career.hunt_tracker_title', { defaultValue: 'Hallazgos por tipo de prueba' })}
         </h2>
         <p className="text-xs font-semibold tabular-nums text-codiva-primary">
           {t('career.hunt_tracker_progress', { found: matched, needed, defaultValue: '{{found}} de {{needed}}' })}
@@ -43,8 +45,8 @@ export default function HuntCraftTracker({
       </div>
       <ul className={`mt-3 grid gap-1.5 ${variant === 'dock' ? 'grid-cols-1' : 'sm:grid-cols-2'}`}>
         {list.map((slot) => {
-          const label = t(`career.tester.${slot.craft}`, {
-            defaultValue: CAREER_DISCIPLINE_LABELS[slot.craft as keyof typeof CAREER_DISCIPLINE_LABELS],
+          const label = t(`career.hunt_type.${slot.craft}`, {
+            defaultValue: HUNT_FINDING_TYPE_LABELS[slot.craft],
           });
           return (
             <li
@@ -73,12 +75,12 @@ export default function HuntCraftTracker({
       </ul>
       {complete ? (
         <p className="mt-3 text-sm text-codiva-primary">
-          {t('career.hunt_tracker_done', { defaultValue: 'Cubriste todos los oficios. Ya puedes enviar el CV.' })}
+          {t('career.hunt_tracker_done', { defaultValue: 'Cubriste los tres tipos de prueba. Ya puedes enviar el CV.' })}
         </p>
       ) : (
         <p className={`mt-3 text-zinc-600 ${variant === 'dock' ? 'text-xs' : 'text-sm'}`}>
           {t('career.hunt_tracker_hint', {
-            defaultValue: 'Un hallazgo plantado o real por oficio. No hace falta «otro oficio».',
+            defaultValue: 'Un hallazgo plantado o real por tipo: funcional, de API y de seguridad.',
           })}
         </p>
       )}

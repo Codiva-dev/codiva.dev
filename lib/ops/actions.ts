@@ -1181,6 +1181,52 @@ export async function updateStaffProfile(staffId: string, formData: FormData) {
   revalidatePath('/settings');
 }
 
+export async function deleteStaffMember(staffId: string) {
+  const { user } = await requireAdminStaff();
+  const t = await getT();
+  const admin = createAdminClient();
+
+  if (staffId === user.id) {
+    throw new Error(t('ops.team.cannotDeleteSelf'));
+  }
+
+  const { data: current } = await admin
+    .from('staff_profiles')
+    .select('id, full_name, role, active, capabilities')
+    .eq('id', staffId)
+    .maybeSingle();
+  if (!current) throw new Error(t('ops.team.memberNotFound'));
+
+  const { data: others } = await admin
+    .from('staff_profiles')
+    .select('id, role, active, capabilities')
+    .eq('active', true)
+    .neq('id', staffId);
+  const otherHasTeam = (others ?? []).some((row) => {
+    if (Array.isArray(row.capabilities) && row.capabilities.includes('team')) return true;
+    return !row.capabilities?.length && row.role === 'admin';
+  });
+  if (!otherHasTeam) {
+    throw new Error(t('ops.team.lastTeamManager'));
+  }
+
+  await admin.from('project_staff').delete().eq('staff_id', staffId);
+  const { error } = await admin.from('staff_profiles').delete().eq('id', staffId);
+  if (error) throw await throwDb(error);
+  await admin.auth.admin.deleteUser(staffId).catch(() => undefined);
+
+  await logActivity({
+    entityType: 'staff_profile',
+    entityId: staffId,
+    action: 'deleted',
+    metadata: { name: current.full_name },
+    actorId: user.id,
+  });
+
+  revalidatePath('/team');
+  revalidatePath('/settings');
+}
+
 export async function uploadDocument(projectId: string, formData: FormData) {
   const access = await assertCapability('documents');
   await assertProjectAccessOrThrow(access, projectId);
@@ -2429,6 +2475,31 @@ export async function updatePersonnelOfferStatus(offerId: string, formData: Form
 
   revalidatePath('/team');
   revalidatePath(`/team/ofertas/${offerId}`);
+}
+
+export async function deletePersonnelOffer(offerId: string) {
+  const { user, supabase } = await requireAdminStaff();
+  const t = await getT();
+
+  const { data: current } = await supabase
+    .from('ops_personnel_offers')
+    .select('id, full_name, staff_id')
+    .eq('id', offerId)
+    .maybeSingle();
+  if (!current) throw new Error(t('ops.offer.notFound'));
+
+  const { error } = await supabase.from('ops_personnel_offers').delete().eq('id', offerId);
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'personnel_offer',
+    entityId: offerId,
+    action: 'deleted',
+    metadata: { name: current.full_name },
+    actorId: user.id,
+  });
+
+  revalidatePath('/team');
 }
 
 export async function assignProjectStaff(projectId: string, formData: FormData) {

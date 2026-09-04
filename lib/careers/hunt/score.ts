@@ -59,7 +59,7 @@ export function scoreHuntReports(
       continue;
     }
     if (coverAllCrafts) {
-      if (seed.craft === 'other' || !HUNT_COVER_CRAFTS.includes(seed.craft as (typeof HUNT_COVER_CRAFTS)[number])) {
+      if (!HUNT_COVER_CRAFTS.includes(seed.craft)) {
         continue;
       }
       const firstForCraft = !coveredCrafts.has(seed.craft);
@@ -80,7 +80,7 @@ export function scoreHuntReports(
   let consideration: HuntConsideration = 'none';
   if (coverAllCrafts) {
     if (craftHits >= HUNT_COVER_CRAFTS.length) consideration = 'strong';
-    else if (craftHits >= 3 || hardest === 'hard' || points >= 6) consideration = 'solid';
+    else if (craftHits >= 2 || hardest === 'hard' || points >= 6) consideration = 'solid';
     else if (craftHits >= 1) consideration = 'minimum';
   } else if (craftHits >= 1) {
     if (hardest === 'hard' || points >= 6) {

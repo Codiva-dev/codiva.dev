@@ -232,7 +232,7 @@ export function renderOfferLetterHtml(data: OfferLetterData): string {
   const startLabel = data.startDate ? formatLongDate(data.startDate) : 'Por acordar';
   const validLabel = data.validUntil ? formatLongDate(data.validUntil) : null;
   const compensation = formatCurrency(data.monthlyCompensation, currency);
-  const responsibilities = (data.responsibilities || DEFAULT_RESPONSIBILITIES).trim();
+  const responsibilities = String(data.responsibilities || '').trim();
   const terms = (data.terms || DEFAULT_TERMS).trim();
   const signerName = data.signerName || 'Jean Claude Martell';
   const signerTitle = data.signerTitle || 'Codiva.dev';

@@ -82,10 +82,10 @@
       "footer": "Si ya no participas en este proyecto, ignora este mensaje o avisa a Codiva.dev."
     },
     "careerHunt": {
-      "preview": "Siguiente paso: un hallazgo de cada oficio",
-      "title": "Siguiente: un hallazgo de cada oficio",
+      "preview": "Siguiente paso: un hallazgo de cada tipo de prueba",
+      "title": "Siguiente: un hallazgo de cada tipo de prueba",
       "body1": "Aprobaste la prueba de criterio de {{craft}}. Falta la segunda parte: encontrar y reportar un hallazgo de tu oficio en el sitio de Codiva.dev.",
-      "body1All": "Aprobaste la prueba de criterio. Falta la segunda parte: reportar un hallazgo de cada oficio (frontend, backend, full stack, UX/UI, QA y seguridad). «Otro oficio» no cuenta.",
+      "body1All": "Aprobaste la prueba de criterio. Falta la segunda parte: reportar un hallazgo de cada tipo de prueba (funcional, de API y de seguridad).",
       "body2": "Usa el mismo correo. Recorre el sitio, describe URL, pasos y esperado vs. obtenido. No hace falta inspeccionar código.",
       "body3": "También puedes reportar aquí:",
       "cta": "Continuar la prueba"
@@ -94,7 +94,7 @@
       "preview": "Ya puedes postular a Codiva.dev",
       "title": "Ya puedes postular",
       "body1": "Recibimos un hallazgo de tu oficio. La prueba está completa.",
-      "body1All": "Cubriste un hallazgo de cada oficio. La prueba está completa.",
+      "body1All": "Cubriste un hallazgo de cada tipo de prueba. La prueba está completa.",
       "body2": "Sigue con el mismo correo y envía tu CV.",
       "cta": "Ir a postular"
     },
@@ -102,7 +102,7 @@
       "preview": "Cuando quieras, sigue con el hallazgo",
       "title": "Cuando quieras, sigue con el hallazgo",
       "body1": "La prueba de criterio ya está. El siguiente paso es reportar un hallazgo de tu oficio en el sitio.",
-      "body1All": "La prueba de criterio ya está. El siguiente paso es reportar un hallazgo de cada oficio en el sitio. El tablero marca lo que falta.",
+      "body1All": "La prueba de criterio ya está. El siguiente paso es reportar un hallazgo de cada tipo de prueba en el sitio. El tablero marca lo que falta.",
       "body2": "Usa el mismo correo. También puedes reportar aquí:",
       "cta": "Continuar la prueba"
     },
@@ -111,7 +111,7 @@
       "preview": "La prueba ya está. Solo falta enviar el CV.",
       "title": "Falta tu CV",
       "body1": "Hace un par de días recibimos un hallazgo de tu oficio. La prueba ya está completa.",
-      "body1All": "Hace un par de días cubriste un hallazgo de cada oficio. La prueba ya está completa.",
+      "body1All": "Hace un par de días cubriste un hallazgo de cada tipo de prueba. La prueba ya está completa.",
       "body2": "Solo falta el CV para que la postulación llegue. Usa el mismo correo.",
       "cta": "Enviar CV"
     },

@@ -33,6 +33,7 @@ import {
   WORK_STREAMS,
   canMutateWorkAssignment,
   clampWorkProgress,
+  clearWorkAssignmentUnreadMentions,
   dwellMsSince,
   formatDwellDuration,
   isWorkStatus,
@@ -41,6 +42,7 @@ import {
   splitMentionTokens,
   stageEventDurationMs,
   workAssigneeInitials,
+  workCardPendingCount,
   workColorTone,
   workFileHref,
   workSubtaskCounts,
@@ -99,8 +101,12 @@ export default function OpsWorkBoard({
   const [selectedId, setSelectedId] = useState(urlId);
 
   useEffect(() => {
-    setAssignments(initialAssignments);
-  }, [initialAssignments]);
+    setAssignments(
+      selectedId
+        ? clearWorkAssignmentUnreadMentions(initialAssignments, selectedId)
+        : initialAssignments
+    );
+  }, [initialAssignments, selectedId]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -408,6 +414,21 @@ export default function OpsWorkBoard({
   );
 }
 
+function PendingNotificationBadge({ count }: { count: number }) {
+  const { t } = useTranslation();
+  if (count <= 0) return null;
+  const label = t('ops.asignaciones.pendingNotifications', { count });
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className="inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-codiva-primary px-1.5 text-[10px] font-semibold tabular-nums text-white"
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
 function CardExpandButton({
   expanded,
   expandLabel,
@@ -483,6 +504,12 @@ function WorkCard({
   const [expanded, setExpanded] = useState(!compact);
   const tone = workColorTone(assignment.stream);
   const counts = workSubtaskCounts(assignment);
+  const pendingCount = workCardPendingCount({
+    unreadMentionCount: assignment.unread_mention_count,
+    status: assignment.status,
+    hasOpenEditRequest: Boolean(assignment.subtask_edit_request),
+    canManage,
+  });
   const dwell = formatDwellDuration(dwellMsSince(assignment.status_entered_at), locale);
   const progress = clampWorkProgress(assignment.progress_pct);
   const images = assignment.files.filter((file) => file.kind === 'image').slice(0, 3);
@@ -519,6 +546,7 @@ function WorkCard({
           <h3 className="min-w-0 flex-1 line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">
             {assignment.title}
           </h3>
+          <PendingNotificationBadge count={pendingCount} />
           {expandToggle}
         </div>
         {assignment.process_label ? (
@@ -557,7 +585,12 @@ function WorkCard({
     >
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <h3 className="break-words text-sm font-semibold text-zinc-900">{assignment.title}</h3>
+          <div className="flex items-start gap-2">
+            <h3 className="min-w-0 flex-1 break-words text-sm font-semibold text-zinc-900">
+              {assignment.title}
+            </h3>
+            <PendingNotificationBadge count={pendingCount} />
+          </div>
           <p className="mt-0.5 text-xs text-zinc-600">
             {assignment.assignee_name || t('ops.asignaciones.unassigned')}
             {counts.total

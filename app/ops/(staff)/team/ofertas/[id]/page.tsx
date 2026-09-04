@@ -3,7 +3,7 @@ import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import ToastForm from '@/components/ops/ToastForm';
 import OpsOfferCareerFile from '@/components/ops/OpsOfferCareerFile';
 import { requireAdminStaff } from '@/lib/ops/auth';
-import { convertPersonnelOfferToStaff, updatePersonnelOffer, updatePersonnelOfferStatus, uploadStaffContract } from '@/lib/ops/actions';
+import { convertPersonnelOfferToStaff, deletePersonnelOffer, updatePersonnelOffer, updatePersonnelOfferStatus, uploadStaffContract } from '@/lib/ops/actions';
 import { loadOfferCareerFile, offerCareerEmails } from '@/lib/ops/offer-career-file';
 import {
   offerLabelsFor,
@@ -13,7 +13,7 @@ import {
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import BrandedFileInput from '@/components/ops/BrandedFileInput';
 
 export default async function TeamOfferDetailPage({
@@ -328,6 +328,21 @@ export default async function TeamOfferDetailPage({
                 ))}
               </ul>
             ) : null}
+          </ToastForm>
+          <ToastForm
+            success={t('ops.offer.deleted')}
+            confirmTitle={t('ops.offer.deleteConfirmTitle')}
+            confirmMessage={t('ops.offer.deleteConfirm')}
+            confirmLabel={t('ops.offer.delete')}
+            action={async () => {
+              'use server';
+              await deletePersonnelOffer(id);
+              redirect('/team?tab=ofertas');
+            }}
+          >
+            <button type="submit" className="text-sm text-red-700 hover:underline">
+              {t('ops.offer.delete')}
+            </button>
           </ToastForm>
         </div>
 

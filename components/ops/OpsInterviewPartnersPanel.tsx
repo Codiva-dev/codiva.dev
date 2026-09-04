@@ -1,6 +1,7 @@
 import ToastForm from '@/components/ops/ToastForm';
 import {
   assignInterviewScope,
+  deleteInterviewPartnerMember,
   inviteInterviewPartner,
   removeInterviewAssignment,
   setInterviewPartnerMemberActive,
@@ -154,6 +155,20 @@ export default function OpsInterviewPartnersPanel({
                     <input type="hidden" name="active" value={member.active ? '0' : '1'} />
                     <button type="submit" className="text-sm text-codiva-primary hover:underline">
                       {member.active ? t('ops.team.revoke') : t('ops.team.activate')}
+                    </button>
+                  </ToastForm>
+                  <ToastForm
+                    success={t('ops.team.interviewerDeleted')}
+                    confirmMessage={t('ops.team.deleteInterviewerConfirm')}
+                    confirmLabel={t('ops.team.deleteInterviewer')}
+                    action={async () => {
+                      'use server';
+                      await deleteInterviewPartnerMember(member.id);
+                    }}
+                    className="mt-2"
+                  >
+                    <button type="submit" className="text-sm text-red-700 hover:underline">
+                      {t('ops.team.deleteInterviewer')}
                     </button>
                   </ToastForm>
                   {member.active ? (

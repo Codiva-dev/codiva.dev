@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import HuntReportForm from '@/components/careers/HuntReportForm';
 import { readAttemptToken, writeAttemptToken, announceHuntSession } from '@/components/careers/hunt-context';
 import type { PublicAssessmentQuestion } from '@/lib/careers/assessments/types';
+import { huntFindingHintKey } from '@/lib/ops/career-disciplines';
 
 export { readAttemptToken, writeAttemptToken } from '@/components/careers/hunt-context';
 
@@ -280,11 +281,7 @@ export default function CareerAssessment({
   if (result) {
     const showHunt = result.passed && huntRequired && !huntReady;
     const coverAll = Boolean(session?.hunt_cover_all);
-    const craftHintKey = discipline
-      ? `career.hunt_craft_hint_${discipline.replaceAll('-', '_')}`
-      : coverAll
-        ? 'career.hunt_craft_hint_all'
-        : 'career.hunt_craft_hint_other';
+    const craftHintKey = huntFindingHintKey(discipline, coverAll);
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-codiva-primary/15 bg-white px-5 py-8 shadow-sm sm:px-8">

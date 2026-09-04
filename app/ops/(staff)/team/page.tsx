@@ -11,12 +11,13 @@ import { requireStaff } from '@/lib/ops/auth';
 import {
   assignProjectStaff,
   createPersonnelOffer,
+  deletePersonnelOffer,
+  deleteStaffMember,
   inviteStaff,
   removeProjectStaff,
   updateStaffProfile,
 } from '@/lib/ops/actions';
 import {
-  DEFAULT_RESPONSIBILITIES,
   offerLabelsFor,
 } from '@/lib/ops/offer-letter';
 import { labelsFor } from '@/lib/ops/labels';
@@ -393,6 +394,23 @@ export default async function TeamPage({
                       {t('ops.team.save')}
                     </button>
                   </ToastForm>
+                  {row.id !== user.id ? (
+                    <ToastForm
+                      success={t('ops.team.memberDeleted')}
+                      confirmTitle={t('ops.team.deleteMemberConfirmTitle')}
+                      confirmMessage={t('ops.team.deleteMemberConfirm')}
+                      confirmLabel={t('ops.team.deleteMember')}
+                      action={async () => {
+                        'use server';
+                        await deleteStaffMember(row.id);
+                      }}
+                      className="mt-3"
+                    >
+                      <button type="submit" className="text-sm text-red-700 hover:underline">
+                        {t('ops.team.deleteMember')}
+                      </button>
+                    </ToastForm>
+                  ) : null}
                   <details className="group mt-4 border-t border-zinc-100 pt-4">
                     <summary className="flex cursor-pointer items-center justify-between gap-2 text-sm font-medium text-zinc-800">
                       <span>{t('ops.team.projectsTitle')}</span>
@@ -553,11 +571,11 @@ export default async function TeamPage({
               <input
                 name="positionTitle"
                 required
-                defaultValue={ROLE_LABELS.pm}
                 placeholder={t('ops.team.position')}
                 className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
               />
-              <select name="opsRole" defaultValue="pm" className="rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+              <select name="opsRole" required defaultValue="" className="rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+                <option value="">{t('ops.team.position')}</option>
                 <option value="pm">{ROLE_LABELS.pm}</option>
                 <option value="dev">{ROLE_LABELS.dev}</option>
                 <option value="admin">{ROLE_LABELS.admin}</option>
@@ -568,7 +586,6 @@ export default async function TeamPage({
                 required
                 min={1}
                 step="0.01"
-                defaultValue={1200}
                 placeholder={t('ops.team.compensation')}
                 className="rounded-lg border border-zinc-300 px-3 py-2 text-sm"
               />
@@ -620,7 +637,7 @@ export default async function TeamPage({
                 <textarea
                   name="responsibilities"
                   rows={5}
-                  defaultValue={DEFAULT_RESPONSIBILITIES}
+                  placeholder={t('ops.team.responsibilities')}
                   className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                 />
               </label>
@@ -656,10 +673,10 @@ export default async function TeamPage({
             ) : (
               <ul className="space-y-3">
                 {(offers ?? []).map((row) => (
-                  <li key={row.id}>
+                  <li key={row.id} className="rounded-xl border border-zinc-200 bg-white p-4">
                     <Link
                       href={`/team/ofertas/${row.id}`}
-                      className="block rounded-xl border border-zinc-200 bg-white p-4 transition hover:border-codiva-primary/40"
+                      className="block transition hover:text-codiva-primary"
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div>
@@ -682,6 +699,21 @@ export default async function TeamPage({
                         </span>
                       </div>
                     </Link>
+                    <ToastForm
+                      success={t('ops.offer.deleted')}
+                      confirmTitle={t('ops.offer.deleteConfirmTitle')}
+                      confirmMessage={t('ops.offer.deleteConfirm')}
+                      confirmLabel={t('ops.offer.delete')}
+                      action={async () => {
+                        'use server';
+                        await deletePersonnelOffer(row.id);
+                      }}
+                      className="mt-3"
+                    >
+                      <button type="submit" className="text-sm text-red-700 hover:underline">
+                        {t('ops.offer.delete')}
+                      </button>
+                    </ToastForm>
                   </li>
                 ))}
               </ul>

@@ -55,7 +55,7 @@ export async function notifyCandidateHuntPartTwo(input: {
   const craft = careerDisciplineLabel(ctx.discipline) || 'Tester';
   await sendClientEmail({
     to: input.email,
-    subject: ctx.coverAll ? 'Siguiente: un hallazgo de cada oficio' : 'Siguiente: un hallazgo de tu oficio',
+    subject: ctx.coverAll ? 'Siguiente: un hallazgo de cada tipo de prueba' : 'Siguiente: un hallazgo de tu oficio',
     html: templateCareerHuntPartTwo({
       name: input.name,
       craft,

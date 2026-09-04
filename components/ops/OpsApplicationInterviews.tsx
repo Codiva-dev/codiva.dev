@@ -2,6 +2,9 @@ import ToastForm from '@/components/ops/ToastForm';
 import {
   addJobInterviewComment,
   addJobInterviewRound,
+  deleteJobInterviewComment,
+  deleteJobInterviewRound,
+  updateJobInterviewComment,
   updateJobInterviewRound,
 } from '@/lib/ops/career-actions';
 import { encodeInterviewAssignee } from '@/lib/ops/interview-partner';
@@ -190,17 +193,64 @@ export default function OpsApplicationInterviews({
                   </p>
                   {roundComments.length ? (
                     <ul className="mt-2 space-y-2">
-                      {roundComments.map((comment) => (
+                      {roundComments.map((comment) => {
+                        const canEditComment = canTeam || comment.author_id === currentUserId;
+                        return (
                         <li key={comment.id} className="rounded-md bg-zinc-50 px-2.5 py-2 text-sm text-zinc-700">
-                          <p className="whitespace-pre-line">{comment.body}</p>
+                          {canEditComment ? (
+                            <ToastForm
+                              success={t('ops.careers.commentUpdated')}
+                              action={async (fd) => {
+                                'use server';
+                                await updateJobInterviewComment(comment.id, fd);
+                              }}
+                              className="space-y-2"
+                            >
+                              <textarea
+                                name="body"
+                                required
+                                rows={3}
+                                maxLength={4000}
+                                defaultValue={comment.body}
+                                className="w-full rounded-lg border border-zinc-300 px-2 py-1.5 text-sm"
+                              />
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="submit"
+                                  className="rounded-lg border border-zinc-300 px-2.5 py-1 text-xs hover:bg-white"
+                                >
+                                  {t('ops.team.save')}
+                                </button>
+                              </div>
+                            </ToastForm>
+                          ) : (
+                            <p className="whitespace-pre-line">{comment.body}</p>
+                          )}
                           <p className="mt-1 text-xs text-zinc-400">
                             {commentAuthorName(staff, partners, comment.author_id) ||
                               t('ops.careers.interviewUnknownAuthor')}
                             {' · '}
                             {formatDate(comment.created_at)}
                           </p>
+                          {canEditComment ? (
+                            <ToastForm
+                              success={t('ops.careers.commentDeleted')}
+                              confirmMessage={t('ops.careers.deleteCommentConfirm')}
+                              confirmLabel={t('ops.careers.deleteComment')}
+                              action={async () => {
+                                'use server';
+                                await deleteJobInterviewComment(comment.id);
+                              }}
+                              className="mt-1"
+                            >
+                              <button type="submit" className="text-xs text-red-700 hover:underline">
+                                {t('ops.careers.deleteComment')}
+                              </button>
+                            </ToastForm>
+                          ) : null}
                         </li>
-                      ))}
+                        );
+                      })}
                     </ul>
                   ) : null}
                   {roundReports.length ? (
@@ -292,6 +342,20 @@ export default function OpsApplicationInterviews({
                       className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 sm:col-span-2"
                     >
                       {t('ops.team.save')}
+                    </button>
+                  </ToastForm>
+                  <ToastForm
+                    success={t('ops.careers.roundDeleted')}
+                    confirmMessage={t('ops.careers.deleteRoundConfirm')}
+                    confirmLabel={t('ops.careers.deleteRound')}
+                    action={async () => {
+                      'use server';
+                      await deleteJobInterviewRound(round.id);
+                    }}
+                    className="mt-2"
+                  >
+                    <button type="submit" className="text-xs text-red-700 hover:underline">
+                      {t('ops.careers.deleteRound')}
                     </button>
                   </ToastForm>
                   {canComment ? (

@@ -10,6 +10,7 @@ import {
   isWorkStatus,
   isWorkStream,
   processHref,
+  unreadMentionCountByAssignmentId,
   type WorkAssignment,
   type WorkComment,
   type WorkFile,
@@ -59,6 +60,7 @@ export default async function AsignacionesPage({
     { data: internalRows },
     { data: fileRows },
     { data: editRequestRows },
+    { data: mentionRows },
   ] = await Promise.all([
     supabase
       .from('work_assignments')
@@ -92,6 +94,11 @@ export default async function AsignacionesPage({
       .from('work_assignment_edit_requests')
       .select('id, assignment_id, requested_by, payload, created_at')
       .eq('status', 'open'),
+    supabase
+      .from('work_assignment_mentions')
+      .select('assignment_id')
+      .eq('mentioned_staff_id', staff.id)
+      .is('read_at', null),
   ]);
 
   if (assignmentsRes.error) throw await throwDb(assignmentsRes.error);
@@ -182,6 +189,7 @@ export default async function AsignacionesPage({
     filesByAssignment.set(row.assignment_id, list);
   }
 
+  const mentionCounts = unreadMentionCountByAssignmentId(mentionRows ?? []);
   const requestsByAssignment = new Map<string, WorkSubtaskEditRequest>();
   for (const row of editRequestRows ?? []) {
     if (requestsByAssignment.has(row.assignment_id)) continue;
@@ -220,6 +228,7 @@ export default async function AsignacionesPage({
       comments: commentsByAssignment.get(row.id) ?? [],
       files: filesByAssignment.get(row.id) ?? [],
       subtask_edit_request: requestsByAssignment.get(row.id) ?? null,
+      unread_mention_count: mentionCounts.get(row.id) ?? 0,
     };
   });
 

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DISCIPLINE_FINDING_TYPE,
+  HUNT_COVER_CRAFTS,
+  huntFindingHintKey,
+  huntFindingTypeForDiscipline,
   isCareersPipelinePosting,
   isTesterJobSlug,
   isTesterPipelineItem,
@@ -47,9 +51,29 @@ describe('isTesterPipelineItem', () => {
 });
 
 describe('postingHireOpsRole', () => {
-  it('uses the stored role and falls back from the slug', () => {
+  it('uses the stored role and defaults to dev without slug magic', () => {
     expect(postingHireOpsRole({ hire_ops_role: 'pm' })).toBe('pm');
-    expect(postingHireOpsRole('project-manager')).toBe('pm');
+    expect(postingHireOpsRole('project-manager')).toBe('dev');
     expect(postingHireOpsRole('tester')).toBe('dev');
+  });
+});
+
+describe('hunt finding types', () => {
+  it('maps current tester crafts to the three test types', () => {
+    expect(DISCIPLINE_FINDING_TYPE).toEqual({
+      frontend: 'functional',
+      'ux-ui': 'functional',
+      qa: 'functional',
+      backend: 'api',
+      fullstack: 'api',
+      security: 'security',
+    });
+    expect(HUNT_COVER_CRAFTS).toEqual(['functional', 'api', 'security']);
+    expect(huntFindingTypeForDiscipline('other')).toBeNull();
+    expect(huntFindingTypeForDiscipline('frontend')).toBe('functional');
+    expect(huntFindingHintKey('qa')).toBe('career.hunt_finding_hint_functional');
+    expect(huntFindingHintKey('backend')).toBe('career.hunt_finding_hint_api');
+    expect(huntFindingHintKey('security')).toBe('career.hunt_finding_hint_security');
+    expect(huntFindingHintKey(null, true)).toBe('career.hunt_craft_hint_all');
   });
 });

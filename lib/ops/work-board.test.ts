@@ -14,6 +14,9 @@ import {
   isOpenWorkStatus,
   isPendingMentionStatus,
   keepPendingMentions,
+  unreadMentionCountByAssignmentId,
+  workCardPendingCount,
+  clearWorkAssignmentUnreadMentions,
   OPEN_WORK_STATUSES,
   parentCannotMarkDoneWithOpenSubtasks,
   parseSubtaskLines,
@@ -145,6 +148,77 @@ describe('work-board pending status', () => {
     );
     expect(kept.map((row) => row.id)).toEqual(['mention-blocked', 'mention-open']);
   });
+
+  it('counts unread mentions per assignment card', () => {
+    expect(
+      unreadMentionCountByAssignmentId([
+        { assignment_id: 'a' },
+        { assignment_id: 'a' },
+        { assignment_id: 'b' },
+        { assignment_id: '' },
+      ]).get('a')
+    ).toBe(2);
+  });
+
+  it('shows Pendientes items on the card: unread mentions and admin edit requests', () => {
+    expect(
+      workCardPendingCount({
+        unreadMentionCount: 2,
+        status: 'blocked',
+        hasOpenEditRequest: true,
+        canManage: true,
+      })
+    ).toBe(3);
+    expect(
+      workCardPendingCount({
+        unreadMentionCount: 2,
+        status: 'done',
+        hasOpenEditRequest: true,
+        canManage: true,
+      })
+    ).toBe(1);
+    expect(
+      workCardPendingCount({
+        unreadMentionCount: 2,
+        status: 'build',
+        hasOpenEditRequest: true,
+        canManage: false,
+      })
+    ).toBe(2);
+  });
+
+  it('clears unread mentions after opening the card', () => {
+    const next = clearWorkAssignmentUnreadMentions(
+      [
+        {
+          id: 'a',
+          title: 't',
+          description: '',
+          stream: 'delivery',
+          status: 'backlog',
+          assignee_id: null,
+          assignee_name: '',
+          due_at: null,
+          progress_pct: 0,
+          process_kind: 'none',
+          process_id: null,
+          process_label: '',
+          process_href: null,
+          status_entered_at: '2026-01-01T00:00:00.000Z',
+          created_at: '2026-01-01T00:00:00.000Z',
+          created_by: null,
+          subtasks: [],
+          stage_events: [],
+          comments: [],
+          files: [],
+          subtask_edit_request: null,
+          unread_mention_count: 3,
+        },
+      ],
+      'a'
+    );
+    expect(next[0].unread_mention_count).toBe(0);
+  });
 });
 
 describe('work-board mentions', () => {
@@ -220,6 +294,7 @@ describe('work-board process links', () => {
           comments: [],
           files: [],
           subtask_edit_request: null,
+          unread_mention_count: 0,
         },
       ],
       'a',
@@ -258,6 +333,7 @@ describe('work-board process links', () => {
           comments: [],
           files: [],
           subtask_edit_request: null,
+          unread_mention_count: 0,
         },
       ],
       's1',

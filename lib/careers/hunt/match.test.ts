@@ -54,7 +54,7 @@ describe('matchHuntReport', () => {
       discipline: 'frontend',
     });
     expect(match?.seedId).toBe('career-icon-unnamed');
-    expect(match?.countsForCraft).toBe(false);
+    expect(match?.countsForCraft).toBe(true);
   });
 
   it('matches the unnamed help control from an a11y description', () => {
@@ -130,5 +130,41 @@ describe('matchHuntReport', () => {
       discipline: 'backend',
     });
     expect(match?.seedId).toBe('health-db-conected');
+  });
+
+  it('counts a former QA seed for a frontend tester (functional type)', () => {
+    const match = matchHuntReport({
+      pageUrl: 'https://career.codiva.dev/',
+      title: 'Copyright 2024 en el pie',
+      description: 'El footer de la bolsa muestra derechos reservados con año fijo 2024.',
+      discipline: 'frontend',
+    });
+    expect(match?.seedId).toBe('career-copyright-year');
+    expect(match?.craft).toBe('functional');
+    expect(match?.countsForCraft).toBe(true);
+  });
+
+  it('counts a former backend seed for a full-stack tester (API type)', () => {
+    const match = matchHuntReport({
+      pageUrl: 'https://career.codiva.dev/api/careers/feed',
+      title: 'El GET del feed responde 201 Created',
+      description: 'Pedí el feed JSON y el status HTTP 201 Created en un GET.',
+      discipline: 'fullstack',
+    });
+    expect(match?.seedId).toBe('feed-get-201');
+    expect(match?.craft).toBe('api');
+    expect(match?.countsForCraft).toBe(true);
+  });
+
+  it('does not count a functional seed for a full-stack tester', () => {
+    const match = matchHuntReport({
+      pageUrl: 'https://codiva.dev/',
+      title: 'El logo no se activa con teclado',
+      description: 'El wordmark del navbar es un div clicable, no un enlace. Enter no hace nada.',
+      discipline: 'fullstack',
+    });
+    expect(match?.seedId).toBe('nav-logo-not-keyboard');
+    expect(match?.craft).toBe('functional');
+    expect(match?.countsForCraft).toBe(false);
   });
 });

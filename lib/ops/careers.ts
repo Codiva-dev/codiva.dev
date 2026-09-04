@@ -21,7 +21,8 @@ export type JobApplicationStatus = (typeof JOB_APPLICATION_STATUSES)[number];
 export const JOB_INTERVIEW_KINDS = ['screening', 'technical', 'culture', 'final', 'other'] as const;
 export type JobInterviewKind = (typeof JOB_INTERVIEW_KINDS)[number];
 
-export const DEFAULT_INTERVIEW_ROUND_KINDS = ['screening', 'technical', 'culture'] as const;
+export const JOB_HIRE_WORK_MODALITIES = ['remote', 'hybrid', 'onsite'] as const;
+export type JobHireWorkModality = (typeof JOB_HIRE_WORK_MODALITIES)[number];
 
 export const JOB_INTERVIEW_ROUND_STATUSES = ['planned', 'done', 'skipped'] as const;
 export type JobInterviewRoundStatus = (typeof JOB_INTERVIEW_ROUND_STATUSES)[number];
@@ -31,6 +32,36 @@ export type JobInterviewOutcome = (typeof JOB_INTERVIEW_OUTCOMES)[number];
 
 export function isJobInterviewKind(value: string): value is JobInterviewKind {
   return (JOB_INTERVIEW_KINDS as readonly string[]).includes(value);
+}
+
+export function isJobHireWorkModality(value: string): value is JobHireWorkModality {
+  return (JOB_HIRE_WORK_MODALITIES as readonly string[]).includes(value);
+}
+
+export function parseInterviewPlan(values: unknown): JobInterviewKind[] {
+  const raw = Array.isArray(values) ? values : values == null || values === '' ? [] : [values];
+  const out: JobInterviewKind[] = [];
+  const seen = new Set<string>();
+  for (const value of raw) {
+    const kind = String(value || '').trim();
+    if (!isJobInterviewKind(kind) || seen.has(kind)) continue;
+    seen.add(kind);
+    out.push(kind);
+  }
+  return out;
+}
+
+export function parseHireCompensation(value: unknown): number | null {
+  const raw = String(value ?? '').trim();
+  if (!raw) return null;
+  const amount = Number(raw);
+  if (!Number.isFinite(amount) || amount <= 0) return null;
+  return Math.round(amount * 100) / 100;
+}
+
+export function parseHireCurrency(value: unknown): string {
+  const raw = String(value ?? '').trim().toUpperCase();
+  return raw.length >= 3 && raw.length <= 8 ? raw : 'USD';
 }
 
 export function isJobInterviewRoundStatus(value: string): value is JobInterviewRoundStatus {
@@ -237,6 +268,7 @@ export {
   TESTER_JOB_SLUG,
   TESTER_JOB_SLUGS,
   isCareerDiscipline,
+  isHuntFindingType,
   isJobHireOpsRole,
   isCareersPipelinePosting,
   isTesterCatalogKey,
@@ -247,8 +279,13 @@ export {
   disciplineFromCatalogKey,
   careerDisciplineLabel,
   careerDisciplineLabels,
+  huntFindingHintKey,
+  huntFindingTypeForDiscipline,
+  huntFindingTypeLabel,
+  huntFindingTypeLabels,
   applicationRoleLabel,
   type CareerDiscipline,
+  type HuntFindingType,
   type JobHireOpsRole,
   type JobPostingProcessFields,
 } from '@/lib/ops/career-disciplines';

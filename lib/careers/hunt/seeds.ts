@@ -1,7 +1,7 @@
 import {
-  CAREER_DISCIPLINE_LABELS,
   HUNT_COVER_CRAFTS,
-  type CareerDiscipline,
+  HUNT_FINDING_TYPE_LABELS,
+  type HuntFindingType,
 } from '@/lib/ops/career-disciplines';
 
 export type HuntSurface = 'career' | 'marketing';
@@ -19,8 +19,8 @@ export type HuntSeed = {
   keywords: string[];
   /** Cuántas anclas distintas tienen que aparecer. Por defecto 1. */
   minAnchors?: number;
-  /** Oficio dueño del hallazgo. Full stack cuenta front o back. */
-  craft: CareerDiscipline;
+  /** Tipo de hallazgo: funcional, de API o de seguridad. */
+  craft: HuntFindingType;
   difficulty: HuntDifficulty;
 };
 
@@ -38,7 +38,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['2024'],
     keywords: ['copyright', 'año', 'ano', 'year', 'pie', 'footer', 'reservados', 'derechos'],
-    craft: 'qa',
+    craft: 'functional',
     difficulty: 'easy',
   },
   {
@@ -56,7 +56,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
       'idioma del documento',
     ],
     keywords: ['idioma', 'ingles', 'english', 'i18n', 'html', 'lang', 'documento'],
-    craft: 'ux-ui',
+    craft: 'functional',
     difficulty: 'easy',
   },
   {
@@ -66,7 +66,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/', '/mapa'],
     anchors: ['mapa del sitio', 'mapa de sitio', '/mapa', 'sitemap'],
     keywords: ['404', 'not found', 'no existe', 'no encontrada', 'roto'],
-    craft: 'qa',
+    craft: 'functional',
     difficulty: 'easy',
   },
   {
@@ -95,7 +95,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
       'icono ?',
     ],
     keywords: ['aria', 'label', 'boton', 'icono', 'iconos', 'footer', 'pie', 'ayuda', 'simbolo'],
-    craft: 'ux-ui',
+    craft: 'functional',
     difficulty: 'medium',
   },
   {
@@ -106,7 +106,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     anchors: ['22px', '20px', '18px', '22', '20', '18'],
     minAnchors: 2,
     keywords: ['linkedin', 'github', 'instagram', 'icono', 'iconos', 'social', 'hit', 'target', 'tamano', 'clic'],
-    craft: 'ux-ui',
+    craft: 'functional',
     difficulty: 'medium',
   },
   {
@@ -116,7 +116,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['skip', 'saltar al contenido', 'saltar contenido', '#contenido', 'skip to'],
     keywords: ['contenido', 'ancla', 'main', 'teclado', 'id', 'href'],
-    craft: 'frontend',
+    craft: 'functional',
     difficulty: 'medium',
   },
   {
@@ -135,7 +135,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
       'no es un link',
     ],
     keywords: ['logo', 'wordmark', 'div', 'navbar', 'enlace', 'link', 'accesib'],
-    craft: 'frontend',
+    craft: 'functional',
     difficulty: 'hard',
   },
   {
@@ -145,7 +145,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/api/careers/feed', '/empleos'],
     anchors: ['enviroment', 'content-type', 'content type', 'text/html'],
     keywords: ['feed', 'json', 'html', 'cabecera', 'header', 'api'],
-    craft: 'backend',
+    craft: 'api',
     difficulty: 'hard',
   },
   {
@@ -155,7 +155,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/api/careers/feed', '/empleos'],
     anchors: ['jobs: []', 'jobs:[]', '"jobs": []', '"jobs":[]', 'jobs vacio', 'jobs vacío'],
     keywords: ['feed', 'vacio', 'vacantes', 'listado', 'desfas', 'contrato', 'json'],
-    craft: 'fullstack',
+    craft: 'api',
     difficulty: 'hard',
   },
   {
@@ -205,7 +205,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/', '/ingeniero-plataforma'],
     anchors: ['ingeniero de plataforma', '/ingeniero-plataforma'],
     keywords: ['404', 'no existe', 'vacante', 'tarjeta', 'listado', 'roto'],
-    craft: 'qa',
+    craft: 'functional',
     difficulty: 'medium',
   },
   {
@@ -215,7 +215,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['ordenar por fecha', 'ordenar', 'por fecha'],
     keywords: ['select', 'listado', 'no cambia', 'no hace', 'orden'],
-    craft: 'qa',
+    craft: 'functional',
     difficulty: 'medium',
   },
   {
@@ -226,7 +226,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     anchors: ['ultima sincronizacion', '1 ene 2024', '1 de enero de 2024', 'sincronizacion con el feed'],
     minAnchors: 2,
     keywords: ['stale', 'desfas', 'viejo', 'feed', 'fecha'],
-    craft: 'qa',
+    craft: 'functional',
     difficulty: 'hard',
   },
   {
@@ -236,7 +236,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['pagina 2 de 1', 'página 2 de 1', '2 de 1'],
     keywords: ['paginacion', 'paginador', 'listado', 'inconsist'],
-    craft: 'qa',
+    craft: 'functional',
     difficulty: 'hard',
   },
   {
@@ -246,7 +246,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['search open positions', 'open positions'],
     keywords: ['placeholder', 'busqueda', 'ingles', 'idioma', 'input'],
-    craft: 'ux-ui',
+    craft: 'functional',
     difficulty: 'easy',
   },
   {
@@ -256,7 +256,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['home / careers', 'home/careers', 'home / careers'],
     keywords: ['breadcrumb', 'miga', 'ingles', 'idioma', 'careers'],
-    craft: 'ux-ui',
+    craft: 'functional',
     difficulty: 'easy',
   },
   {
@@ -267,7 +267,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     anchors: ['solo remoto', 'contraste', 'gris claro', 'zinc-300'],
     minAnchors: 2,
     keywords: ['legible', 'accesib', 'wcag', 'color', 'filtro'],
-    craft: 'ux-ui',
+    craft: 'functional',
     difficulty: 'hard',
   },
   {
@@ -277,7 +277,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['recalculo de ranking', 'recálculo de ranking', '9px', 'text-[9px]'],
     keywords: ['legible', 'tipografia', 'aviso', 'contraste', 'pequeno'],
-    craft: 'ux-ui',
+    craft: 'functional',
     difficulty: 'hard',
   },
   {
@@ -287,7 +287,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['compartir listado', 'span', 'role="button"'],
     keywords: ['teclado', 'boton', 'enlace', 'click', 'accesib'],
-    craft: 'frontend',
+    craft: 'functional',
     difficulty: 'easy',
   },
   {
@@ -297,7 +297,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['tabindex', 'tabindex=3', 'tab index', 'orden de foco'],
     keywords: ['teclado', 'tab', 'foco', 'focus', 'positivo'],
-    craft: 'frontend',
+    craft: 'functional',
     difficulty: 'easy',
   },
   {
@@ -307,7 +307,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/', '/ingeniero-plataforma'],
     anchors: ['guardar', 'boton dentro', 'anidado', 'nested'],
     keywords: ['enlace', 'html', 'interactivo', 'tarjeta', 'ingeniero'],
-    craft: 'frontend',
+    craft: 'functional',
     difficulty: 'medium',
   },
   {
@@ -317,7 +317,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['ver archivo de vacantes', 'role="link"', 'role=link', 'sin href'],
     keywords: ['div', 'enlace', 'teclado', 'href', 'accesib'],
-    craft: 'frontend',
+    craft: 'functional',
     difficulty: 'hard',
   },
   {
@@ -327,7 +327,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/api/careers/feed', '/empleos'],
     anchors: ['http_date', 'wed, 01 jan 2024', '01 jan 2024', '1 de enero de 2024'],
     keywords: ['date', 'cabecera', 'header', 'stale', 'feed'],
-    craft: 'backend',
+    craft: 'api',
     difficulty: 'easy',
   },
   {
@@ -337,7 +337,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/api/careers/feed', '/empleos'],
     anchors: ['201 created', 'status 201', 'codigo 201', 'http 201'],
     keywords: ['get', 'created', 'status', 'feed', 'rest'],
-    craft: 'backend',
+    craft: 'api',
     difficulty: 'easy',
   },
   {
@@ -347,7 +347,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/api/careers/health', '/empleos'],
     anchors: ['conected', 'db": "conected"', "db: 'conected'"],
     keywords: ['health', 'typo', 'ok', 'json', 'estado'],
-    craft: 'backend',
+    craft: 'api',
     difficulty: 'easy',
   },
   {
@@ -358,7 +358,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     anchors: ['ok: false', '"ok": false', 'ok false', '200'],
     minAnchors: 2,
     keywords: ['health', 'status', 'inconsist', 'degrad', 'json'],
-    craft: 'backend',
+    craft: 'api',
     difficulty: 'medium',
   },
   {
@@ -369,7 +369,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     anchors: ['rel="next"', 'rel=next', '/empleos/interna'],
     minAnchors: 2,
     keywords: ['link', 'cabecera', 'header', 'paginacion', 'feed'],
-    craft: 'backend',
+    craft: 'api',
     difficulty: 'medium',
   },
   {
@@ -379,7 +379,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/api/careers/feed', '/empleos'],
     anchors: ['allow: post', 'allow post', 'allow:post'],
     keywords: ['cabecera', 'header', 'metodo', 'get', 'feed'],
-    craft: 'backend',
+    craft: 'api',
     difficulty: 'hard',
   },
   {
@@ -389,7 +389,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/api/careers/health', '/empleos'],
     anchors: ['retry-after', 'retry after', 'retry-after: 120'],
     keywords: ['health', 'cabecera', 'header', '200', 'reintento'],
-    craft: 'backend',
+    craft: 'api',
     difficulty: 'hard',
   },
   {
@@ -399,7 +399,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/api/careers/feed', '/empleos'],
     anchors: ['total: 3', '"total": 3', 'total 3'],
     keywords: ['feed', 'listado', 'vacantes', 'desfas', 'json', 'conteo'],
-    craft: 'fullstack',
+    craft: 'api',
     difficulty: 'easy',
   },
   {
@@ -410,7 +410,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     anchors: ['solo remoto', 'aria-pressed', 'no filtra'],
     minAnchors: 2,
     keywords: ['filtro', 'no filtra', 'listado', 'remoto', 'ui'],
-    craft: 'fullstack',
+    craft: 'api',
     difficulty: 'easy',
   },
   {
@@ -421,7 +421,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     anchors: ['apply_url', '/empleos/interna'],
     minAnchors: 2,
     keywords: ['feed', 'postular', 'contrato', 'json', 'ruta'],
-    craft: 'fullstack',
+    craft: 'api',
     difficulty: 'medium',
   },
   {
@@ -431,7 +431,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['canonical', 'rel=canonical', 'www.codiva.dev/empleos', 'codiva.dev/empleos'],
     keywords: ['seo', 'host', 'career', 'meta', 'listado'],
-    craft: 'fullstack',
+    craft: 'api',
     difficulty: 'medium',
   },
   {
@@ -441,7 +441,7 @@ export const HUNT_SEEDS: HuntSeed[] = [
     paths: ['/empleos', '/'],
     anchors: ['0 vacantes abiertas', '0 vacantes', 'meta description'],
     keywords: ['meta', 'seo', 'listado', 'desfas', 'og'],
-    craft: 'fullstack',
+    craft: 'api',
     difficulty: 'hard',
   },
   {
@@ -491,7 +491,7 @@ export function huntSeedCatalogText() {
   ];
   for (const craft of HUNT_COVER_CRAFTS) {
     const seeds = HUNT_SEEDS.filter((seed) => seed.craft === craft);
-    lines.push(`${CAREER_DISCIPLINE_LABELS[craft]} (${seeds.length})`);
+    lines.push(`${HUNT_FINDING_TYPE_LABELS[craft]} (${seeds.length})`);
     for (const difficulty of levels) {
       for (const seed of seeds.filter((row) => row.difficulty === difficulty)) {
         const where = seed.paths.includes('*') ? 'sitio' : seed.paths.join(', ');

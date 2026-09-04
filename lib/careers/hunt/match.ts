@@ -1,7 +1,8 @@
 import {
-  CAREER_DISCIPLINES,
   isCareerDiscipline,
+  huntFindingTypeForDiscipline,
   type CareerDiscipline,
+  type HuntFindingType,
 } from '@/lib/ops/career-disciplines';
 import { HUNT_SEEDS, huntSeedById, type HuntDifficulty, type HuntSeed, type HuntSurface } from './seeds';
 import { careerBaseUrl } from '@/lib/ops/host';
@@ -70,15 +71,10 @@ function isStrongToken(token: string): boolean {
   return t.length >= 12 || /[_/=#.:\[\]]/.test(t) || (t.length >= 8 && t.includes('-'));
 }
 
-/** Oficio dueño + full stack (front o back) + «otro» (cualquiera). */
-export function craftsCountedFor(discipline: CareerDiscipline): CareerDiscipline[] {
-  if (discipline === 'fullstack') return ['frontend', 'backend', 'fullstack'];
-  if (discipline === 'other') return [...CAREER_DISCIPLINES];
-  return [discipline];
-}
-
+/** El oficio cuenta el tipo de hallazgo mapeado. «Otro» cuenta cualquiera. */
 export function seedCountsForDiscipline(seed: HuntSeed, discipline: CareerDiscipline): boolean {
-  return craftsCountedFor(discipline).includes(seed.craft);
+  if (discipline === 'other') return true;
+  return seed.craft === huntFindingTypeForDiscipline(discipline);
 }
 
 export function matchedSeedCountsForDiscipline(
@@ -92,7 +88,7 @@ export function matchedSeedCountsForDiscipline(
 export type HuntMatch = {
   seedId: string;
   title: string;
-  craft: CareerDiscipline;
+  craft: HuntFindingType;
   difficulty: HuntDifficulty;
   countsForCraft: boolean;
   score: number;
@@ -126,7 +122,7 @@ export function matchHuntReport(input: {
 
     const countsForCraft = discipline
       ? seedCountsForDiscipline(seed, discipline)
-      : seed.craft !== 'other';
+      : true;
     const score =
       anchors.length * 25 +
       support.length * 8 +

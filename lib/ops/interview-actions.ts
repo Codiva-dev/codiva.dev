@@ -162,6 +162,40 @@ export async function removeInterviewAssignment(assignmentId: string) {
   revalidateInterviewPaths();
 }
 
+export async function deleteInterviewPartnerMember(memberId: string) {
+  await requireAdminStaff();
+  const t = await getT();
+  if (!isInterviewUuid(memberId)) throw new Error(t('ops.team.interviewerInvalid'));
+  const admin = createAdminClient();
+  const { data: row } = await admin
+    .from('ops_recruiting_partner_members')
+    .select('id, user_id, full_name')
+    .eq('id', memberId)
+    .maybeSingle();
+  if (!row) throw new Error(t('ops.team.interviewerNotFound'));
+
+  await admin.from('ops_interview_assignments').delete().eq('member_id', memberId);
+  await admin
+    .from('ops_job_interview_rounds')
+    .update({ partner_member_id: null })
+    .eq('partner_member_id', memberId);
+  const { error } = await admin.from('ops_recruiting_partner_members').delete().eq('id', memberId);
+  if (error) throw await throwDb(error);
+
+  const { data: staff } = await admin.from('staff_profiles').select('id').eq('id', row.user_id).maybeSingle();
+  if (!staff?.id) {
+    await admin.auth.admin.deleteUser(row.user_id).catch(() => undefined);
+  }
+
+  await logActivity({
+    entityType: 'interview_partner_member',
+    entityId: memberId,
+    action: 'interview_partner_deleted',
+    metadata: { name: row.full_name },
+  });
+  revalidateInterviewPaths();
+}
+
 export async function syncRoundAssignee(opts: {
   roundId: string;
   applicationId: string;

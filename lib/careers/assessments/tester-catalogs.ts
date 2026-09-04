@@ -779,7 +779,7 @@ export const TESTER_SECURITY: AssessmentCatalog = catalog(
 export const TESTER_GENERAL: AssessmentCatalog = catalog(
   'tester-general',
   'Tester Integral',
-  'Examen de criterio — selección múltiple. 8 preguntas · tiempo estimado: 15 minutos. Al aprobar, reportas un hallazgo de cada oficio en el sitio (salvo «otro»). El tablero muestra lo encontrado y lo que falta. Sin las dos partes no se habilita el CV.',
+  'Examen de criterio — selección múltiple. 8 preguntas · tiempo estimado: 15 minutos. Al aprobar, reportas un hallazgo de cada tipo de prueba en el sitio (funcional, de API y de seguridad). El tablero muestra lo encontrado y lo que falta. Sin las dos partes no se habilita el CV.',
   [
     {
       id: 'ti-tipos-prueba',

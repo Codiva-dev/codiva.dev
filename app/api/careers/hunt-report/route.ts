@@ -223,7 +223,7 @@ export async function POST(request: Request) {
     hunt_crafts: hunt?.coverAllCrafts
       ? hunt.crafts.map((slot) => ({ craft: slot.craft, found: slot.found }))
       : [],
-    matched_craft: match?.craft && match.craft !== 'other' ? match.craft : null,
+    matched_craft: match?.craft ?? null,
     counts_for_craft: match?.countsForCraft ?? false,
   });
 }

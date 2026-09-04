@@ -133,6 +133,7 @@ export type WorkAssignment = {
   comments: WorkComment[];
   files: WorkFile[];
   subtask_edit_request: WorkSubtaskEditRequest | null;
+  unread_mention_count: number;
 };
 
 export type WorkSubtaskEditRequest = {
@@ -180,6 +181,43 @@ export function keepPendingMentions<T extends { assignment_id: string }>(
 ) {
   return mentions.filter((row) =>
     isPendingMentionStatus(statusByAssignmentId.get(row.assignment_id))
+  );
+}
+
+export function unreadMentionCountByAssignmentId(
+  mentions: { assignment_id: string }[]
+) {
+  const counts = new Map<string, number>();
+  for (const row of mentions) {
+    if (!row.assignment_id) continue;
+    counts.set(row.assignment_id, (counts.get(row.assignment_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+export function workCardPendingCount({
+  unreadMentionCount,
+  status,
+  hasOpenEditRequest,
+  canManage,
+}: {
+  unreadMentionCount: number;
+  status: string;
+  hasOpenEditRequest: boolean;
+  canManage: boolean;
+}) {
+  const mentions = isPendingMentionStatus(status) ? Math.max(0, unreadMentionCount || 0) : 0;
+  return mentions + (canManage && hasOpenEditRequest ? 1 : 0);
+}
+
+export function clearWorkAssignmentUnreadMentions(
+  assignments: WorkAssignment[],
+  assignmentId: string
+) {
+  return assignments.map((row) =>
+    row.id === assignmentId && row.unread_mention_count
+      ? { ...row, unread_mention_count: 0 }
+      : row
   );
 }
 

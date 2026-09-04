@@ -82,10 +82,10 @@
       "footer": "If you no longer participate in this project, ignore this message or let Codiva.dev know."
     },
     "careerHunt": {
-      "preview": "Next step: one finding per craft",
-      "title": "Next: one finding per craft",
+      "preview": "Next step: one finding per test type",
+      "title": "Next: one finding per test type",
       "body1": "You passed the {{craft}} criteria test. Part two remains: find and report a finding in your craft on the Codiva.dev site.",
-      "body1All": "You passed the criteria test. Part two remains: report one finding per craft (frontend, backend, full-stack, UX/UI, QA, and security). “Another craft” does not count.",
+      "body1All": "You passed the criteria test. Part two remains: report one finding per test type (functional, API, and security).",
       "body2": "Use the same email. Walk the site and describe the URL, steps, and expected vs. actual. You do not need to inspect code.",
       "body3": "You can also report here:",
       "cta": "Continue the test"
@@ -94,7 +94,7 @@
       "preview": "You can apply to Codiva.dev now",
       "title": "You can apply now",
       "body1": "We received a finding in your craft. The test is complete.",
-      "body1All": "You covered one finding per craft. The test is complete.",
+      "body1All": "You covered one finding per test type. The test is complete.",
       "body2": "Continue with the same email and send your CV.",
       "cta": "Continue to apply"
     },
@@ -102,7 +102,7 @@
       "preview": "Whenever you’re ready, continue with the finding",
       "title": "Whenever you’re ready, continue with the finding",
       "body1": "The criteria test is done. Next is reporting a finding in your craft on the site.",
-      "body1All": "The criteria test is done. Next is reporting one finding per craft on the site. The board shows what is still missing.",
+      "body1All": "The criteria test is done. Next is reporting one finding per test type on the site. The board shows what is still missing.",
       "body2": "Use the same email. You can also report here:",
       "cta": "Continue the test"
     },
@@ -111,7 +111,7 @@
       "preview": "The test is done. Only the CV is missing.",
       "title": "Your CV is missing",
       "body1": "A couple of days ago we received a finding in your craft. The test is complete.",
-      "body1All": "A couple of days ago you covered one finding per craft. The test is complete.",
+      "body1All": "A couple of days ago you covered one finding per test type. The test is complete.",
       "body2": "The CV is the last step for the application to arrive. Use the same email.",
       "cta": "Send CV"
     },

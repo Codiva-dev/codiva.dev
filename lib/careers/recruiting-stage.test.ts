@@ -39,15 +39,15 @@ describe('isCandidateReadyForCv', () => {
     ).toBe(true);
   });
 
-  it('requires every craft when huntNeeded is 6', () => {
+  it('requires every finding type when huntNeeded is 3', () => {
     expect(
       isCandidateReadyForCv({
         email: 'a@x.com',
         passed: true,
         catalogKey: 'tester-general',
-        craftHits: 5,
+        craftHits: 2,
         leftActiveQueueEmails: queue([]),
-        huntNeeded: 6,
+        huntNeeded: 3,
       })
     ).toBe(false);
     expect(
@@ -55,9 +55,9 @@ describe('isCandidateReadyForCv', () => {
         email: 'a@x.com',
         passed: true,
         catalogKey: 'tester-general',
-        craftHits: 6,
+        craftHits: 3,
         leftActiveQueueEmails: queue([]),
-        huntNeeded: 6,
+        huntNeeded: 3,
       })
     ).toBe(true);
   });

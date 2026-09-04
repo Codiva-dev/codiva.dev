@@ -11,6 +11,7 @@ import {
   careerOpsLabels,
   careerDisciplineLabels,
   applicationRoleLabel,
+  huntFindingTypeLabel,
   isCareerDiscipline,
   isClosedApplicationStatus,
   isDiscardedApplicationStatus,
@@ -31,7 +32,8 @@ import OpsApplicationInterviews, {
 import {
   createJobPosting,
   createPersonnelOfferFromApplication,
-  deleteDraftJobPosting,
+  deleteJobApplication,
+  deleteJobPosting,
   updateHuntReportReview,
   updateJobApplicationStatus,
 } from '@/lib/ops/career-actions';
@@ -335,7 +337,7 @@ function HuntFindingEmbed({
                 seed
                   ? countsForCraft
                     ? t('ops.careers.seedCounts')
-                    : t('ops.careers.seed', { craft: disciplineLabels[seed.craft] })
+                    : t('ops.careers.seed', { craft: huntFindingTypeLabel(seed.craft, locale) || seed.craft })
                   : t('ops.careers.noMatch')
               }
               tone={seed ? (countsForCraft ? 'success' : 'info') : 'neutral'}
@@ -698,6 +700,22 @@ function ApplicationCard({
               {t('ops.team.save')}
             </button>
           </ToastForm>
+          {canManage ? (
+            <ToastForm
+              success={t('ops.careers.applicationDeleted')}
+              confirmTitle={t('ops.careers.deleteApplicationConfirmTitle')}
+              confirmMessage={t('ops.careers.deleteApplicationConfirm')}
+              confirmLabel={t('ops.careers.deleteApplication')}
+              action={async () => {
+                'use server';
+                await deleteJobApplication(row.id);
+              }}
+            >
+              <button type="submit" className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">
+                {t('ops.careers.deleteApplication')}
+              </button>
+            </ToastForm>
+          ) : null}
         </div>
       </details>
       <OpsApplicationInterviews
@@ -1127,19 +1145,22 @@ export default async function OpsCareersPanel({
                     triggerLabel={t('ops.careers.pipelineHtml')}
                     triggerHint={t('ops.careers.pipelineHint')}
                   />
-                  {canManage && row.status === 'draft' ? (
+                  {canManage ? (
                     <ToastForm
                       success={t('ops.careers.deleted')}
+                      confirmTitle={t('ops.careers.deleteConfirmTitle')}
+                      confirmMessage={t('ops.careers.deleteConfirm')}
+                      confirmLabel={t('ops.careers.delete')}
                       action={async () => {
                         'use server';
-                        await deleteDraftJobPosting(row.id);
+                        await deleteJobPosting(row.id);
                       }}
                     >
                       <button
                         type="submit"
                         className="inline-flex max-w-full items-center rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-800 transition hover:bg-red-100"
                       >
-                        {t('ops.careers.deleteDraft')}
+                        {t('ops.careers.delete')}
                       </button>
                     </ToastForm>
                   ) : null}

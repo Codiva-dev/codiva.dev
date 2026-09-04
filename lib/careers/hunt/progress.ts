@@ -19,7 +19,7 @@ export type HuntCraftSlot = {
 export type HuntProgress = {
   required: boolean;
   ready: boolean;
-  /** Primera vez que se cubrió lo pedido (un oficio, o el último de los seis). */
+  /** Primera vez que se cubrió lo pedido (un tipo, o el último de los tres). */
   readyAt: string | null;
   matched: number;
   needed: number;
@@ -113,11 +113,10 @@ export function huntProgressFromReports(
     const firstAt = new Map<HuntCoverCraft, string>();
     for (const row of reports) {
       const seed = row.matched_seed_id ? huntSeedById(row.matched_seed_id) : null;
-      if (!seed || seed.craft === 'other') continue;
-      if (!HUNT_COVER_CRAFTS.includes(seed.craft as HuntCoverCraft)) continue;
+      if (!seed || !HUNT_COVER_CRAFTS.includes(seed.craft)) continue;
       const at = String(row.created_at || '');
-      const prev = firstAt.get(seed.craft as HuntCoverCraft);
-      if (!prev || (at && at < prev)) firstAt.set(seed.craft as HuntCoverCraft, at);
+      const prev = firstAt.get(seed.craft);
+      if (!prev || (at && at < prev)) firstAt.set(seed.craft, at);
     }
     const crafts: HuntCraftSlot[] = HUNT_COVER_CRAFTS.map((craft) => ({
       craft,
