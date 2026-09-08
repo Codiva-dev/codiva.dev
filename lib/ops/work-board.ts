@@ -425,13 +425,30 @@ export function workFileHref(id: string, opts?: { download?: boolean }) {
   return `/api/ops/assignment-file?${params}`;
 }
 
-export type WorkFilePreviewMode = 'image' | 'embed' | 'download';
+export type WorkFilePreviewMode = 'image' | 'embed' | 'office' | 'download';
+export type WorkOfficeKind = 'docx' | 'pptx';
+
+const OFFICE_DOCX_MIMES = new Set([
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]);
+const OFFICE_PPTX_MIMES = new Set([
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+]);
+
+export function workOfficeKind(file: Pick<WorkFile, 'file_name' | 'content_type'>): WorkOfficeKind | null {
+  const ext = fileExt(file.file_name);
+  const mime = String(file.content_type || '').trim().toLowerCase();
+  if (ext === 'docx' || OFFICE_DOCX_MIMES.has(mime)) return 'docx';
+  if (ext === 'pptx' || OFFICE_PPTX_MIMES.has(mime)) return 'pptx';
+  return null;
+}
 
 export function workFilePreviewMode(file: Pick<WorkFile, 'kind' | 'file_name' | 'content_type'>): WorkFilePreviewMode {
   const ext = fileExt(file.file_name);
   const mime = String(file.content_type || '').trim().toLowerCase();
   if (file.kind === 'image' || ext === 'svg' || mime === 'image/svg+xml') return 'image';
   if (ext === 'pdf' || mime === 'application/pdf' || mime === 'application/x-pdf') return 'embed';
+  if (workOfficeKind(file)) return 'office';
   if (
     mime.startsWith('text/') ||
     mime === 'application/json' ||

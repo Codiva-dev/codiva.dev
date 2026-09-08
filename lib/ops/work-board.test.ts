@@ -31,6 +31,7 @@ import {
   workFileHref,
   workFileKind,
   workFilePreviewMode,
+  workOfficeKind,
   workFileProblem,
   workSubtaskCounts,
   appendWorkFormFiles,
@@ -77,7 +78,11 @@ describe('work-board progress', () => {
     expect(workFilePreviewMode({ kind: 'file', file_name: 'logo.svg', content_type: 'image/svg+xml' })).toBe('image');
     expect(workFilePreviewMode({ kind: 'file', file_name: 'brief.pdf', content_type: 'application/pdf' })).toBe('embed');
     expect(workFilePreviewMode({ kind: 'file', file_name: 'notes.txt', content_type: 'text/plain' })).toBe('embed');
-    expect(workFilePreviewMode({ kind: 'file', file_name: 'deck.pptx', content_type: '' })).toBe('download');
+    expect(workFilePreviewMode({ kind: 'file', file_name: 'deck.pptx', content_type: '' })).toBe('office');
+    expect(workFilePreviewMode({ kind: 'file', file_name: 'brief.docx', content_type: '' })).toBe('office');
+    expect(workOfficeKind({ file_name: 'deck.pptx', content_type: '' })).toBe('pptx');
+    expect(workOfficeKind({ file_name: 'nota.docx', content_type: '' })).toBe('docx');
+    expect(workOfficeKind({ file_name: 'brief.pdf', content_type: 'application/pdf' })).toBeNull();
     expect(workFileHref('abc')).toBe('/api/ops/assignment-file?id=abc');
     expect(workFileHref('abc', { download: true })).toBe('/api/ops/assignment-file?id=abc&download=1');
     expect(workFileProblem({ name: 'ok.png', type: 'image/png', size: 12 })).toBeNull();

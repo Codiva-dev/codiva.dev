@@ -9,6 +9,7 @@ import {
   workFilePreviewMode,
   type WorkFile,
 } from '@/lib/ops/work-board';
+import WorkOfficePreview from './WorkOfficePreview';
 
 export default function WorkFileLightbox({
   files,
@@ -112,6 +113,8 @@ export default function WorkFileLightbox({
         </div>
       ) : file && mode === 'embed' ? (
         <iframe title={title} src={href} className="min-h-0 w-full flex-1 bg-zinc-100" />
+      ) : file && mode === 'office' ? (
+        <WorkOfficePreview href={href} fileName={file.file_name} contentType={file.content_type} />
       ) : (
         <p className="m-auto max-w-md px-6 py-10 text-center text-sm text-zinc-600">
           {t('ops.asignaciones.previewUnavailable')}

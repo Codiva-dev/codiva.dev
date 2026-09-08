@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
+  transpilePackages: ['docx-preview', 'pptx-preview'],
   serverActions: {
     bodySizeLimit: '10mb',
   },

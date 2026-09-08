@@ -1972,6 +1972,8 @@
       "noAttachments": "Todavía no hay archivos.",
       "downloadFile": "Descargar",
       "previewUnavailable": "Este archivo no se puede previsualizar aquí. Descárgalo para abrirlo.",
+      "previewLoading": "Cargando vista previa…",
+      "previewFailed": "No se pudo armar la vista previa. Descárgalo para abrirlo.",
       "previewPrev": "Anterior",
       "previewNext": "Siguiente",
       "previewCount": "{{n}} de {{total}}",

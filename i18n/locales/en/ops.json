@@ -1976,6 +1976,8 @@
       "noAttachments": "No files yet.",
       "downloadFile": "Download",
       "previewUnavailable": "This file cannot be previewed here. Download it to open it.",
+      "previewLoading": "Loading preview…",
+      "previewFailed": "The preview could not be built. Download the file to open it.",
       "previewPrev": "Previous",
       "previewNext": "Next",
       "previewCount": "{{n}} of {{total}}",
