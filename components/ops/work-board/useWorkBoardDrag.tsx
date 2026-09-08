@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { workBoardEdgeScrollDelta } from '@/lib/ops/work-board-drag';
 
 const DRAG_THRESHOLD_PX = 8;
+const TOUCH_DRAG_HOLD_MS = 300;
 
 export function isWorkCardInteractiveTarget(target: EventTarget | null) {
   if (!(target instanceof Element)) return false;
@@ -33,6 +34,7 @@ export function useWorkBoardDrag({
     offsetY: number;
     width: number;
     started: boolean;
+    isTouch: boolean;
   } | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
@@ -40,6 +42,8 @@ export function useWorkBoardDrag({
   const ignoreClickRef = useRef(false);
   const pointerRef = useRef({ x: 0, y: 0 });
   const rafRef = useRef(0);
+  const holdTimerRef = useRef(0);
+  const beginDragRef = useRef<() => void>(() => {});
   const onDropRef = useRef(onDrop);
   onDropRef.current = onDrop;
 
@@ -64,7 +68,21 @@ export function useWorkBoardDrag({
     }
   }, []);
 
+  const clearHold = useCallback(() => {
+    if (!holdTimerRef.current) return;
+    window.clearTimeout(holdTimerRef.current);
+    holdTimerRef.current = 0;
+  }, []);
+
+  const suppressClick = useCallback(() => {
+    ignoreClickRef.current = true;
+    window.setTimeout(() => {
+      ignoreClickRef.current = false;
+    }, 80);
+  }, []);
+
   const endSession = useCallback(() => {
+    clearHold();
     stopScrollLoop();
     sessionRef.current = null;
     dropStatusRef.current = '';
@@ -72,7 +90,8 @@ export function useWorkBoardDrag({
     setDropStatus('');
     document.body.style.removeProperty('cursor');
     document.body.style.removeProperty('user-select');
-  }, [stopScrollLoop]);
+    document.body.style.removeProperty('touch-action');
+  }, [clearHold, stopScrollLoop]);
 
   const onCardPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>, assignment: { id: string; title: string }) => {
@@ -81,6 +100,7 @@ export function useWorkBoardDrag({
       const id = String(assignment?.id || '').trim();
       if (!id) return;
       const rect = event.currentTarget.getBoundingClientRect();
+      const isTouch = event.pointerType === 'touch';
       pointerRef.current = { x: event.clientX, y: event.clientY };
       sessionRef.current = {
         id,
@@ -91,9 +111,13 @@ export function useWorkBoardDrag({
         offsetY: event.clientY - rect.top,
         width: rect.width,
         started: false,
+        isTouch,
       };
+      if (!isTouch) return;
+      clearHold();
+      holdTimerRef.current = window.setTimeout(() => beginDragRef.current(), TOUCH_DRAG_HOLD_MS);
     },
-    []
+    [clearHold]
   );
 
   useEffect(() => {
@@ -121,6 +145,21 @@ export function useWorkBoardDrag({
       rafRef.current = requestAnimationFrame(tick);
     }
 
+    function beginDrag() {
+      const session = sessionRef.current;
+      if (!session || session.started) return;
+      clearHold();
+      session.started = true;
+      setDraggingId(session.id);
+      document.body.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+      document.body.style.touchAction = 'none';
+      startScrollLoop();
+      placeGhost(pointerRef.current.x, pointerRef.current.y);
+      applyDropStatus(dropStatusAt(pointerRef.current.x, pointerRef.current.y));
+    }
+    beginDragRef.current = beginDrag;
+
     function onMove(event: PointerEvent) {
       const session = sessionRef.current;
       if (!session) return;
@@ -129,11 +168,12 @@ export function useWorkBoardDrag({
       const dy = event.clientY - session.originY;
       if (!session.started) {
         if (Math.hypot(dx, dy) < DRAG_THRESHOLD_PX) return;
-        session.started = true;
-        setDraggingId(session.id);
-        document.body.style.cursor = 'grabbing';
-        document.body.style.userSelect = 'none';
-        startScrollLoop();
+        if (session.isTouch) {
+          suppressClick();
+          endSession();
+          return;
+        }
+        beginDrag();
       }
       event.preventDefault();
       placeGhost(event.clientX, event.clientY);
@@ -148,10 +188,7 @@ export function useWorkBoardDrag({
       const status = dropStatusRef.current;
       endSession();
       if (started) {
-        ignoreClickRef.current = true;
-        window.setTimeout(() => {
-          ignoreClickRef.current = false;
-        }, 80);
+        suppressClick();
         if (status) void onDropRef.current?.(id, status);
       }
     }
@@ -164,8 +201,9 @@ export function useWorkBoardDrag({
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
       stopScrollLoop();
+      clearHold();
     };
-  }, [applyDropStatus, endSession, placeGhost, stopScrollLoop]);
+  }, [applyDropStatus, clearHold, endSession, placeGhost, stopScrollLoop, suppressClick]);
 
   const consumeClickIfDragged = useCallback(() => {
     if (!ignoreClickRef.current) return false;

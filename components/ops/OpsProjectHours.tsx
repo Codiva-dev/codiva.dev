@@ -42,7 +42,7 @@ export default async function OpsProjectHours({
   return (
     <div className="space-y-6">
       <section className="rounded-xl border border-zinc-200 bg-white p-5">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold">{t('ops.hours.title')}</h2>
           <p className="text-sm text-zinc-500">{t('ops.hours.totalListed', { hours: total.toFixed(1) })}</p>
         </div>
@@ -99,16 +99,16 @@ export default async function OpsProjectHours({
         </ToastForm>
       </section>
 
-      <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-        <table className="min-w-full text-sm">
+      <section className="max-w-full overflow-x-auto overscroll-x-contain touch-pan-x rounded-xl border border-zinc-200 bg-white">
+        <table className="w-full min-w-[44rem] text-sm">
           <thead className="bg-zinc-50 text-left text-zinc-600">
             <tr>
-              <th className="px-4 py-3 font-medium">{t('ops.hours.colDate')}</th>
-              <th className="px-4 py-3 font-medium">{t('ops.hours.colWho')}</th>
-              <th className="px-4 py-3 font-medium">{t('ops.hours.colHours')}</th>
-              <th className="px-4 py-3 font-medium">{t('ops.hours.colItem')}</th>
-              <th className="px-4 py-3 font-medium">{t('ops.hours.colNotes')}</th>
-              <th className="px-4 py-3 font-medium" />
+              <th className="whitespace-nowrap px-4 py-3 font-medium">{t('ops.hours.colDate')}</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">{t('ops.hours.colWho')}</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">{t('ops.hours.colHours')}</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">{t('ops.hours.colItem')}</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium">{t('ops.hours.colNotes')}</th>
+              <th className="whitespace-nowrap px-4 py-3 font-medium" />
             </tr>
           </thead>
           <tbody>

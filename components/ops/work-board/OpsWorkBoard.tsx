@@ -289,7 +289,7 @@ export default function OpsWorkBoard({
       {view === 'board' ? (
         <div
           ref={scrollerRef}
-          className="flex min-h-[28rem] min-w-0 max-w-full gap-2 overflow-x-auto pb-2"
+          className="-mx-4 flex min-h-[28rem] min-w-0 gap-2 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
         >
           {WORK_BOARD_COLUMNS.map((status) => {
             const cards = visible.filter((row) => row.status === status);
@@ -540,7 +540,7 @@ function WorkCard({
         onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
         onClick={open}
         className={`min-w-0 max-w-full overflow-hidden rounded-lg border px-2.5 py-2 ${tone.card} ${
-          draggable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-pointer'
+          draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
         } ${isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''}`}
       >
         <div className="flex items-start gap-1">
@@ -580,7 +580,7 @@ function WorkCard({
     <article
       onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
       onClick={open}
-      className={`min-w-0 max-w-full overflow-hidden rounded-xl border p-3 ${tone.card} ${draggable ? 'cursor-grab touch-none active:cursor-grabbing' : 'cursor-pointer'} ${
+      className={`min-w-0 max-w-full overflow-hidden rounded-xl border p-3 ${tone.card} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
         isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''
       }`}
     >

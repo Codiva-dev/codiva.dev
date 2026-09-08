@@ -132,8 +132,8 @@ export default async function WorkloadPage() {
                 <h3 className="mb-2 text-sm font-medium text-zinc-700">{t('ops.workloadPage.sprint')}</h3>
                 <ul className="space-y-2">
                   {person.sprintItems.map((item) => (
-                    <li key={item.id} className="flex items-start justify-between gap-2 text-sm">
-                      <div>
+                    <li key={item.id} className="flex min-w-0 items-start justify-between gap-2 text-sm">
+                      <div className="min-w-0">
                         <Link
                           href={opsProjectPath(item.projectSlug, '?tab=sprints')}
                           className="font-medium hover:text-codiva-primary"
@@ -159,8 +159,8 @@ export default async function WorkloadPage() {
                 <h3 className="mb-2 text-sm font-medium text-zinc-700">{t('ops.workloadPage.tickets')}</h3>
                 <ul className="space-y-2">
                   {person.tickets.map((t) => (
-                    <li key={t.id} className="flex items-start justify-between gap-2 text-sm">
-                      <Link href={`/tickets/${t.id}`} className="font-medium hover:text-codiva-primary">
+                    <li key={t.id} className="flex min-w-0 items-start justify-between gap-2 text-sm">
+                      <Link href={`/tickets/${t.id}`} className="min-w-0 break-words font-medium hover:text-codiva-primary">
                         {t.title}
                       </Link>
                       <StatusBadge label={TICKET_STATUS_LABELS[t.status] ?? t.status} tone={ticketTone(t.status)} />

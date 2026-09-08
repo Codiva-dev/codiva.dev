@@ -38,7 +38,7 @@ export default async function PortalLayout({
         visibility={visibility}
         showProjectsLink={!isStaffPreview}
       />
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
       <footer className="border-t border-zinc-200 py-6 text-center text-xs text-zinc-500">
         <p>{t('portal.powered')}</p>
         <p className="mt-2 flex flex-wrap items-center justify-center gap-3">

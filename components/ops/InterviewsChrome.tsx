@@ -51,12 +51,12 @@ export default async function InterviewsChrome({
         </div>
       ) : null}
       <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <div>
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
+          <div className="min-w-0">
             <CodivaWordmarkMark size="sm" />
             <p className="text-xs font-medium text-zinc-500">{orgName || t('interviews.eyebrow')}</p>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Link href={homeHref} className="text-sm text-zinc-500 hover:text-zinc-800">
               {t('interviews.title')}
             </Link>
@@ -68,7 +68,7 @@ export default async function InterviewsChrome({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }

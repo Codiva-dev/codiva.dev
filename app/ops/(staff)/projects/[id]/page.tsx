@@ -292,23 +292,25 @@ export default async function ProjectDetailPage({
         }
       />
 
-      <div className="mb-6 flex flex-wrap items-center gap-3">
+      <div className="mb-6 flex min-w-0 flex-wrap items-center gap-3">
         <StatusBadge label={PROJECT_STATUS_LABELS[project.status]} tone={projectTone(project.status)} />
         <PortalClientUrl slug={project.slug} />
       </div>
 
-      <nav className="mb-8 flex flex-wrap gap-2 border-b border-zinc-200 pb-3">
-        {tabs.map((tabItem) => (
-          <Link
-            key={tabItem.key}
-            href={opsProjectPath(projectSlug, `?tab=${tabItem.key}`)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-              tab === tabItem.key ? 'bg-codiva-primary text-white' : 'text-zinc-600 hover:bg-zinc-100'
-            }`}
-          >
-            {t(tabItem.labelKey)}
-          </Link>
-        ))}
+      <nav className="-mx-4 mb-8 overflow-x-auto overscroll-x-contain touch-pan-x border-b border-zinc-200 px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="flex w-max gap-2">
+          {tabs.map((tabItem) => (
+            <Link
+              key={tabItem.key}
+              href={opsProjectPath(projectSlug, `?tab=${tabItem.key}`)}
+              className={`shrink-0 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium ${
+                tab === tabItem.key ? 'bg-codiva-primary text-white' : 'text-zinc-600 hover:bg-zinc-100'
+              }`}
+            >
+              {t(tabItem.labelKey)}
+            </Link>
+          ))}
+        </div>
       </nav>
 
       {tab === 'resumen' && (

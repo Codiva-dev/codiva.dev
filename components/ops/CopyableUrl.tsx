@@ -34,7 +34,7 @@ export default function CopyableUrl({ href, label, className = '' }: Props) {
 
   return (
     <div
-      className={`inline-flex max-w-full items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 py-1 pl-2.5 pr-1 ${className}`}
+      className={`inline-flex min-w-0 max-w-full items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 py-1 pl-2.5 pr-1 ${className}`}
     >
       <a
         href={absolute}

@@ -40,15 +40,15 @@ export default async function PortalProyectosPage() {
   return (
     <div className="min-h-screen bg-codiva-background">
       <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
             <Image src="/logo.svg" alt="Codiva" width={32} height={32} />
-            <div>
+            <div className="min-w-0">
               <CodivaWordmarkMark size="sm" />
-              <h1 className="text-xl font-bold text-zinc-900">{t('portal.hub.title')}</h1>
+              <h1 className="break-words text-xl font-bold text-zinc-900">{t('portal.hub.title')}</h1>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4">
             <Link href="/cuenta" className="text-sm text-zinc-500 hover:text-zinc-800">
               {t('portal.account.nav')}
             </Link>
@@ -58,7 +58,7 @@ export default async function PortalProyectosPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         {projects.length === 0 ? (
           <div className="rounded-2xl border border-zinc-200 bg-white p-8 text-center">
             <p className="text-sm text-zinc-600">{t('portal.hub.empty')}</p>

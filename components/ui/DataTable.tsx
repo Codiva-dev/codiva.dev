@@ -4,8 +4,13 @@ import EmptyState from './EmptyState';
 
 export function DataTable({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <div className={cn('overflow-hidden rounded-xl border border-zinc-200 bg-white', className)}>
-      <table className="min-w-full text-sm">{children}</table>
+    <div
+      className={cn(
+        'max-w-full overflow-x-auto overscroll-x-contain touch-pan-x rounded-xl border border-zinc-200 bg-white',
+        className
+      )}
+    >
+      <table className="w-full min-w-[52rem] text-sm">{children}</table>
     </div>
   );
 }
@@ -16,7 +21,7 @@ export function THead({ children }: { children: ReactNode }) {
 
 export function Th({ className, children, ...props }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th className={cn('px-4 py-3 font-medium', className)} {...props}>
+    <th className={cn('whitespace-nowrap px-4 py-3 font-medium', className)} {...props}>
       {children}
     </th>
   );

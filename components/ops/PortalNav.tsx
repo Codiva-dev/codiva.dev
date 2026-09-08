@@ -54,17 +54,17 @@ export default function PortalNav({
 
   return (
     <header className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-3 sm:items-center">
+      <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <div className="flex min-w-0 items-start gap-3 sm:items-center">
           <Link href={`/p/${slug}`} className="mt-0.5 flex shrink-0 items-center gap-2 sm:mt-0">
             <Image src="/logo.svg" alt="Codiva" width={32} height={32} />
             <CodivaWordmarkMark size="sm" />
           </Link>
-          <div>
+          <div className="min-w-0">
             <p className="text-xs font-medium text-zinc-500">
               {t('portal.projectPortal')}
             </p>
-            <h1 className="text-xl font-bold text-zinc-900">{projectName}</h1>
+            <h1 className="break-words text-xl font-bold text-zinc-900">{projectName}</h1>
             {showProjectsLink ? (
               <Link
                 href="/proyectos"
@@ -75,7 +75,7 @@ export default function PortalNav({
             ) : null}
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <LanguageSwitcher />
           <Link
             href={`/p/${slug}/cuenta`}
@@ -90,7 +90,7 @@ export default function PortalNav({
           </button>
         </div>
       </div>
-      <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-6 pb-3">
+      <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto overscroll-x-contain touch-pan-x px-4 pb-3 sm:px-6">
         {items.map((l) => {
           const active =
             l.href === `/p/${slug}`

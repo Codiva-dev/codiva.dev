@@ -119,7 +119,7 @@ export default async function OpsProjectSprints({
                   'use server';
                   await updateProjectSprint(sprint.id, projectId, fd);
                 }}
-                className="mb-4 grid gap-2 sm:grid-cols-4"
+                className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4"
               >
                 <input name="name" defaultValue={sprint.name} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
                 <select name="status" defaultValue={sprint.status} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm">
@@ -131,7 +131,7 @@ export default async function OpsProjectSprints({
                 </select>
                 <input name="startsOn" type="date" defaultValue={sprint.starts_on ?? ''} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
                 <input name="endsOn" type="date" defaultValue={sprint.ends_on ?? ''} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
-                <textarea name="goal" defaultValue={sprint.goal} rows={2} className="sm:col-span-4 rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
+                <textarea name="goal" defaultValue={sprint.goal} rows={2} className="rounded-lg border border-zinc-300 px-3 py-2 text-sm sm:col-span-2 lg:col-span-4" />
                 <button type="submit" className="rounded-lg border border-zinc-300 px-3 py-2 text-sm hover:bg-zinc-50">
                   {t('ops.sprints.save')}
                 </button>

@@ -17,8 +17,8 @@ export function Tabs({
     <div
       className={cn(
         variant === 'underline'
-          ? 'mb-8 flex gap-4 overflow-x-auto scrollbar-hidden border-b border-zinc-200 sm:gap-6'
-          : 'mb-6 flex flex-wrap gap-2',
+          ? 'mb-8 flex gap-4 overflow-x-auto overscroll-x-contain touch-pan-x scrollbar-hidden border-b border-zinc-200 sm:gap-6'
+          : 'mb-6 flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain touch-pan-x scrollbar-hidden sm:flex-wrap sm:overflow-visible',
         className
       )}
     >
@@ -44,7 +44,7 @@ export function TabLink({
       className={
         variant === 'pills'
           ? cn(
-              'rounded-full px-3 py-1 text-xs no-underline',
+              'shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-xs no-underline',
               active
                 ? 'bg-codiva-primary font-semibold text-white hover:text-white'
                 : 'border border-zinc-300 font-medium text-zinc-600 hover:bg-zinc-50 hover:no-underline'

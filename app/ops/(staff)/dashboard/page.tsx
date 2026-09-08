@@ -175,8 +175,8 @@ export default async function DashboardPage({
                 } | null;
                 const project = Array.isArray(sprint?.projects) ? sprint?.projects[0] : sprint?.projects;
                 return (
-                  <li key={item.id} className="flex items-center justify-between gap-3 text-sm">
-                    <div>
+                  <li key={item.id} className="flex min-w-0 items-center justify-between gap-3 text-sm">
+                    <div className="min-w-0">
                       <Link
                         href={opsProjectPath(project?.slug || sprint?.project_id || '', '?tab=sprints')}
                         className="font-medium hover:text-codiva-primary"
@@ -213,8 +213,8 @@ export default async function DashboardPage({
             />
             <ul className="space-y-3">
               {(leads ?? []).map((l) => (
-                <li key={l.id} className="flex items-center justify-between gap-3 text-sm">
-                  <Link href={`/leads/${l.id}`} className="font-medium hover:text-codiva-primary">
+                <li key={l.id} className="flex min-w-0 items-center justify-between gap-3 text-sm">
+                  <Link href={`/leads/${l.id}`} className="min-w-0 truncate font-medium hover:text-codiva-primary">
                     {l.company || l.name}
                   </Link>
                   <StatusBadge label={LEAD_STATUS_LABELS[l.status]} tone={leadTone(l.status)} />
@@ -262,8 +262,8 @@ export default async function DashboardPage({
           />
           <ul className="space-y-3">
             {(tickets ?? []).map((t) => (
-              <li key={t.id} className="flex items-center justify-between gap-3 text-sm">
-                <Link href={`/tickets/${t.id}`} className="truncate font-medium hover:text-codiva-primary">
+              <li key={t.id} className="flex min-w-0 items-center justify-between gap-3 text-sm">
+                <Link href={`/tickets/${t.id}`} className="min-w-0 truncate font-medium hover:text-codiva-primary">
                   {t.title}
                 </Link>
                 <StatusBadge label={TICKET_STATUS_LABELS[t.status]} tone={ticketTone(t.status)} />
@@ -285,8 +285,8 @@ export default async function DashboardPage({
           <ul className="space-y-3">
             {(projects ?? []).map((p) => (
               <li key={p.id} className="text-sm">
-                <div className="flex items-center justify-between gap-2">
-                  <Link href={opsProjectPath(p.slug)} className="font-medium hover:text-codiva-primary">
+                <div className="flex min-w-0 items-center justify-between gap-2">
+                  <Link href={opsProjectPath(p.slug)} className="min-w-0 truncate font-medium hover:text-codiva-primary">
                     {p.name}
                   </Link>
                   <StatusBadge label={PROJECT_STATUS_LABELS[p.status]} tone={projectTone(p.status)} />

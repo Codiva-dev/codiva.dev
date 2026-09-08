@@ -37,7 +37,7 @@ export default function OpsQuotePhases({
   return (
     <div className="space-y-3">
       <input type="hidden" name={name} value={serialized} />
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium text-zinc-800">{t('ops.quotePhases.title')}</p>
         <button
           type="button"

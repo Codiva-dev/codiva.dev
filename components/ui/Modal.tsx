@@ -5,10 +5,10 @@ import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 const sizes = {
-  sm: 'max-w-sm p-5',
-  md: 'max-w-lg p-5',
-  frame: 'flex h-[min(92vh,900px)] max-w-6xl flex-col overflow-hidden p-0',
-  frameLg: 'flex max-h-[min(92vh,900px)] max-w-5xl flex-col overflow-hidden p-0',
+  sm: 'max-h-[min(92dvh,900px)] max-w-sm overflow-y-auto p-5',
+  md: 'max-h-[min(92dvh,900px)] max-w-lg overflow-y-auto p-5',
+  frame: 'flex h-[min(92dvh,900px)] max-w-6xl flex-col overflow-hidden p-0',
+  frameLg: 'flex max-h-[min(92dvh,900px)] max-w-5xl flex-col overflow-hidden p-0',
 };
 
 const layers = {
@@ -86,7 +86,7 @@ export default function Modal({
   if (!open || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className={cn('fixed inset-0 flex items-center justify-center p-4', layers[layer])}>
+    <div className={cn('fixed inset-0 flex items-center justify-center p-3 sm:p-4', layers[layer])}>
       <button
         type="button"
         className={cn('absolute inset-0', backdrop === 'dark' ? 'bg-zinc-900/70' : 'bg-zinc-900/40')}

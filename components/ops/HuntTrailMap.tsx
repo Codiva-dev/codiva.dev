@@ -69,7 +69,7 @@ export default function HuntTrailMap({
         <p className="mt-1 text-sm text-zinc-500">{t('ops.attempt.huntMapHint')}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-xl border border-zinc-200 bg-white px-4 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">{stat.label}</p>

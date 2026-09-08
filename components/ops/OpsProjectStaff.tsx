@@ -71,7 +71,7 @@ export default async function OpsProjectStaff({
           }}
           className="flex flex-wrap gap-2"
         >
-          <select name="staffId" required className="rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+          <select name="staffId" required className="min-w-0 flex-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm">
             <option value="">{t('ops.projectStaff.select')}</option>
             {available.map((s) => (
               <option key={s.id} value={s.id}>

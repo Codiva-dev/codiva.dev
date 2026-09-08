@@ -47,9 +47,9 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn('mb-4 flex items-center justify-between gap-3', className)}>
-      <h2 className="font-semibold text-zinc-900">{title}</h2>
-      {action}
+    <div className={cn('mb-4 flex min-w-0 flex-wrap items-start justify-between gap-3', className)}>
+      <h2 className="min-w-0 font-semibold text-zinc-900">{title}</h2>
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }
