@@ -99,7 +99,7 @@ export default async function OpsProjectHours({
         </ToastForm>
       </section>
 
-      <section className="max-w-full overflow-x-auto overscroll-x-contain touch-pan-x rounded-xl border border-zinc-200 bg-white">
+      <section className="max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-zinc-200 bg-white">
         <table className="w-full min-w-[44rem] text-sm">
           <thead className="bg-zinc-50 text-left text-zinc-600">
             <tr>

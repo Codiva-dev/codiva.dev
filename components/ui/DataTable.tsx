@@ -6,7 +6,7 @@ export function DataTable({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cn(
-        'max-w-full overflow-x-auto overscroll-x-contain touch-pan-x rounded-xl border border-zinc-200 bg-white',
+        'max-w-full overflow-x-auto overscroll-x-contain rounded-xl border border-zinc-200 bg-white',
         className
       )}
     >

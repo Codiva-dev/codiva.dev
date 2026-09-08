@@ -49,6 +49,10 @@ export default function OpsStaffShell({
     return () => window.removeEventListener('keydown', onKey);
   }, [mobileOpen]);
 
+  useEffect(() => {
+    document.body.style.removeProperty('touch-action');
+  }, []);
+
   return (
     <div className="flex h-dvh overflow-hidden">
       {mobileOpen ? (

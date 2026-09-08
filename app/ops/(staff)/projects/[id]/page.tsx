@@ -297,7 +297,7 @@ export default async function ProjectDetailPage({
         <PortalClientUrl slug={project.slug} />
       </div>
 
-      <nav className="-mx-4 mb-8 overflow-x-auto overscroll-x-contain touch-pan-x border-b border-zinc-200 px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <nav className="-mx-4 mb-8 overflow-x-auto overflow-y-hidden overscroll-x-contain border-b border-zinc-200 px-4 pb-3 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <div className="flex w-max gap-2">
           {tabs.map((tabItem) => (
             <Link

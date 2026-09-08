@@ -90,7 +90,7 @@ export default function PortalNav({
           </button>
         </div>
       </div>
-      <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto overscroll-x-contain touch-pan-x px-4 pb-3 sm:px-6">
+      <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 pb-3 sm:px-6">
         {items.map((l) => {
           const active =
             l.href === `/p/${slug}`

@@ -153,7 +153,6 @@ export function useWorkBoardDrag({
       setDraggingId(session.id);
       document.body.style.cursor = 'grabbing';
       document.body.style.userSelect = 'none';
-      document.body.style.touchAction = 'none';
       startScrollLoop();
       placeGhost(pointerRef.current.x, pointerRef.current.y);
       applyDropStatus(dropStatusAt(pointerRef.current.x, pointerRef.current.y));
@@ -202,6 +201,9 @@ export function useWorkBoardDrag({
       window.removeEventListener('pointercancel', onUp);
       stopScrollLoop();
       clearHold();
+      document.body.style.removeProperty('cursor');
+      document.body.style.removeProperty('user-select');
+      document.body.style.removeProperty('touch-action');
     };
   }, [applyDropStatus, clearHold, endSession, placeGhost, stopScrollLoop, suppressClick]);
 

@@ -17,8 +17,8 @@ export function Tabs({
     <div
       className={cn(
         variant === 'underline'
-          ? 'mb-8 flex gap-4 overflow-x-auto overscroll-x-contain touch-pan-x scrollbar-hidden border-b border-zinc-200 sm:gap-6'
-          : 'mb-6 flex flex-nowrap gap-2 overflow-x-auto overscroll-x-contain touch-pan-x scrollbar-hidden sm:flex-wrap sm:overflow-visible',
+          ? 'mb-8 flex gap-4 overflow-x-auto overflow-y-hidden overscroll-x-contain scrollbar-hidden border-b border-zinc-200 sm:gap-6'
+          : 'mb-6 flex flex-nowrap gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain scrollbar-hidden sm:flex-wrap sm:overflow-visible',
         className
       )}
     >
