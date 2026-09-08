@@ -10,11 +10,11 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
+  serverActions: {
+    bodySizeLimit: '10mb',
+  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
-    serverActions: {
-      bodySizeLimit: '10mb',
-    },
   },
   async redirects() {
     return [

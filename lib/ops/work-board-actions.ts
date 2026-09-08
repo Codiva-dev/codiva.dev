@@ -27,10 +27,10 @@ import {
   rollupProgressFromSubtasks,
   WORK_FILE_MAX_COUNT,
   WORK_FILE_PROBLEM_I18N,
-  isWorkFormFile,
   workFileKind,
   workFileLabel,
   workFileProblem,
+  workFilesFromInput,
   type WorkProcessKind,
   type WorkStatus,
   type WorkStream,
@@ -115,10 +115,6 @@ async function closeOpenEditRequest(
     .eq('assignment_id', assignmentId)
     .eq('status', 'open');
   if (error) throw await throwDb(error);
-}
-
-function filesFromForm(formData: FormData) {
-  return formData.getAll('files').filter(isWorkFormFile);
 }
 
 async function saveWorkFiles({
@@ -238,7 +234,7 @@ async function syncProgress(
   return progress;
 }
 
-export async function createWorkAssignment(formData: FormData) {
+export async function createWorkAssignment(formData: FormData, files?: File[]) {
   const access = await assertCapability('assignments_manage');
   const t = await getT();
 
@@ -299,7 +295,7 @@ export async function createWorkAssignment(formData: FormData) {
   await saveWorkFiles({
     supabase: access.supabase,
     assignmentId: row.id,
-    files: filesFromForm(formData),
+    files: workFilesFromInput(files?.length ? files : formData),
     staffId: access.staff.id,
     existingCount: 0,
   });
@@ -315,7 +311,7 @@ export async function createWorkAssignment(formData: FormData) {
   revalidateBoard();
 }
 
-export async function updateWorkAssignment(assignmentId: string, formData: FormData) {
+export async function updateWorkAssignment(assignmentId: string, formData: FormData, files?: File[]) {
   const access = await assertCapability('assignments_manage');
   const t = await getT();
 
@@ -349,6 +345,21 @@ export async function updateWorkAssignment(assignmentId: string, formData: FormD
 
   const { error } = await access.supabase.from('work_assignments').update(patch).eq('id', assignmentId);
   if (error) throw await throwDb(error);
+
+  const uploaded = workFilesFromInput(files?.length ? files : formData);
+  if (uploaded.length) {
+    const { count } = await access.supabase
+      .from('work_assignment_files')
+      .select('id', { count: 'exact', head: true })
+      .eq('assignment_id', assignmentId);
+    await saveWorkFiles({
+      supabase: access.supabase,
+      assignmentId,
+      files: uploaded,
+      staffId: access.staff.id,
+      existingCount: count ?? 0,
+    });
+  }
 
   await logActivity({
     entityType: 'work_assignment',
@@ -820,7 +831,6 @@ export async function markWorkMentionRead(mentionId: string) {
     .is('read_at', null);
   if (error) throw await throwDb(error);
   revalidatePath('/pendientes');
-  revalidatePath('/asignaciones');
 }
 
 export async function markWorkMentionsReadForAssignment(assignmentId: string) {
@@ -833,14 +843,13 @@ export async function markWorkMentionsReadForAssignment(assignmentId: string) {
     .is('read_at', null);
   if (error) throw await throwDb(error);
   revalidatePath('/pendientes');
-  revalidatePath('/asignaciones');
 }
 
-export async function addWorkAssignmentFiles(assignmentId: string, formData: FormData) {
+export async function addWorkAssignmentFiles(assignmentId: string, filesInput: File[] | FormData) {
   const access = await assertAssignmentsAccess();
   const t = await getT();
   const manage = can(access.staff, 'assignments_manage');
-  const files = filesFromForm(formData);
+  const files = workFilesFromInput(filesInput);
   if (!files.length) throw new Error(t('ops.asignaciones.fileRequired'));
 
   const { data: current, error: loadErr } = await access.supabase

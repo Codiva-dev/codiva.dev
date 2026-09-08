@@ -17,6 +17,8 @@ import {
   unreadMentionCountByAssignmentId,
   workCardPendingCount,
   clearWorkAssignmentUnreadMentions,
+  applyPendingWorkSubtaskStatuses,
+  dropConfirmedWorkSubtaskStatuses,
   OPEN_WORK_STATUSES,
   parentCannotMarkDoneWithOpenSubtasks,
   parseSubtaskLines,
@@ -33,6 +35,7 @@ import {
   workSubtaskCounts,
   appendWorkFormFiles,
   isWorkFormFile,
+  workFilesFromInput,
 } from './work-board';
 
 describe('work-board progress', () => {
@@ -95,6 +98,9 @@ describe('work-board progress', () => {
     expect(stored).toHaveLength(1);
     expect(stored[0]).toBeInstanceOf(File);
     expect((stored[0] as File).name).toBe('nota.txt');
+    expect(workFilesFromInput([file]).map((row) => row.name)).toEqual(['nota.txt']);
+    expect(workFilesFromInput(fd)).toHaveLength(1);
+    expect(workFilesFromInput(undefined)).toEqual([]);
   });
 
   it('counts subtasks on a card', () => {
@@ -227,6 +233,45 @@ describe('work-board pending status', () => {
       'a'
     );
     expect(next[0].unread_mention_count).toBe(0);
+  });
+
+  it('keeps in-flight subtask toggles when the server snapshot is stale', () => {
+    const assignments = [
+      {
+        id: 'a',
+        title: 't',
+        description: '',
+        stream: 'delivery' as const,
+        status: 'backlog' as const,
+        assignee_id: null,
+        assignee_name: '',
+        due_at: null,
+        progress_pct: 0,
+        process_kind: 'none' as const,
+        process_id: null,
+        process_label: '',
+        process_href: null,
+        status_entered_at: '2026-01-01T00:00:00.000Z',
+        created_at: '2026-01-01T00:00:00.000Z',
+        created_by: null,
+        subtasks: [
+          { id: 's1', assignment_id: 'a', title: 'one', status: 'open' as const, sort_order: 0, due_at: null },
+        ],
+        stage_events: [],
+        comments: [],
+        files: [],
+        subtask_edit_request: null,
+        unread_mention_count: 0,
+      },
+    ];
+    const pending = new Map<string, 'open' | 'done'>([['s1', 'done']]);
+    const next = applyPendingWorkSubtaskStatuses(assignments, pending);
+    expect(next[0].subtasks[0].status).toBe('done');
+    expect(next[0].progress_pct).toBe(100);
+    dropConfirmedWorkSubtaskStatuses(assignments, pending);
+    expect(pending.get('s1')).toBe('done');
+    dropConfirmedWorkSubtaskStatuses(next, pending);
+    expect(pending.has('s1')).toBe(false);
   });
 });
 

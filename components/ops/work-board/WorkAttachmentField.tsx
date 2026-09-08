@@ -34,7 +34,6 @@ export default function WorkAttachmentField({
   }
 
   useEffect(() => {
-    onFilesChangeRef.current?.([]);
     return () => onFilesChangeRef.current?.([]);
   }, []);
 

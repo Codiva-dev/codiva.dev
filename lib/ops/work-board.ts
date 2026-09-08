@@ -221,6 +221,30 @@ export function clearWorkAssignmentUnreadMentions(
   );
 }
 
+export function applyPendingWorkSubtaskStatuses(
+  assignments: WorkAssignment[],
+  pending: Iterable<readonly [string, WorkSubtask['status']]>
+) {
+  let next = assignments;
+  for (const [id, status] of pending) {
+    const current = next.flatMap((row) => row.subtasks).find((sub) => sub.id === id);
+    if (!current || current.status === status) continue;
+    next = patchWorkSubtaskStatus(next, id, status);
+  }
+  return next;
+}
+
+export function dropConfirmedWorkSubtaskStatuses(
+  assignments: WorkAssignment[],
+  pending: Map<string, WorkSubtask['status']>
+) {
+  for (const [id, status] of pending) {
+    const current = assignments.flatMap((row) => row.subtasks).find((sub) => sub.id === id);
+    if (!current || current.status === status) pending.delete(id);
+  }
+  return pending;
+}
+
 export function isWorkProcessKind(value: string): value is WorkProcessKind {
   return (WORK_PROCESS_KINDS as readonly string[]).includes(value);
 }
@@ -435,6 +459,12 @@ export function appendWorkFormFiles(formData: FormData, files: File[], field = '
   for (const file of files) {
     if (file.size > 0) formData.append(field, file, file.name);
   }
+}
+
+export function workFilesFromInput(files?: File[] | FormData | null) {
+  if (!files) return [];
+  if (Array.isArray(files)) return files.filter(isWorkFormFile);
+  return files.getAll('files').filter(isWorkFormFile);
 }
 
 export function clampWorkProgress(pct: number) {

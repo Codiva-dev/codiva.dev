@@ -46,7 +46,8 @@ import {
   workColorTone,
   workFileHref,
   workSubtaskCounts,
-  appendWorkFormFiles,
+  applyPendingWorkSubtaskStatuses,
+  dropConfirmedWorkSubtaskStatuses,
   type WorkAssignment,
   type WorkFile,
   type WorkProcessKind,
@@ -100,13 +101,14 @@ export default function OpsWorkBoard({
   const [pendingDelete, setPendingDelete] = useState<WorkAssignment | null>(null);
   const urlId = initialAssignmentId || '';
   const [selectedId, setSelectedId] = useState(urlId);
+  const pendingSubtasksRef = useRef(new Map<string, 'open' | 'done'>());
 
   useEffect(() => {
-    setAssignments(
-      selectedId
-        ? clearWorkAssignmentUnreadMentions(initialAssignments, selectedId)
-        : initialAssignments
-    );
+    const fromServer = selectedId
+      ? clearWorkAssignmentUnreadMentions(initialAssignments, selectedId)
+      : initialAssignments;
+    setAssignments(applyPendingWorkSubtaskStatuses(fromServer, pendingSubtasksRef.current));
+    dropConfirmedWorkSubtaskStatuses(initialAssignments, pendingSubtasksRef.current);
   }, [initialAssignments, selectedId]);
 
   useEffect(() => {
@@ -208,20 +210,17 @@ export default function OpsWorkBoard({
   }
 
   async function onToggleSub(id: string) {
-    let from: 'open' | 'done' | null = null;
-    let next: 'open' | 'done' | null = null;
-    setAssignments((prev) => {
-      const current = prev.flatMap((row) => row.subtasks).find((sub) => sub.id === id);
-      if (!current) return prev;
-      from = current.status;
-      next = current.status === 'done' ? 'open' : 'done';
-      return patchWorkSubtaskStatus(prev, id, next);
-    });
-    if (!from || !next) return;
+    const current = assignments.flatMap((row) => row.subtasks).find((sub) => sub.id === id);
+    if (!current) return;
+    const from = current.status;
+    const next = current.status === 'done' ? 'open' : 'done';
+    pendingSubtasksRef.current.set(id, next);
+    setAssignments((prev) => patchWorkSubtaskStatus(prev, id, next));
     try {
       await toggleWorkSubtask(id, next);
     } catch (err) {
-      setAssignments((prev) => patchWorkSubtaskStatus(prev, id, from as 'open' | 'done'));
+      pendingSubtasksRef.current.delete(id);
+      setAssignments((prev) => patchWorkSubtaskStatus(prev, id, from));
       toast.error(toUserErrorMessage(err, t('common.status.actionFailed')));
     }
   }
@@ -810,8 +809,8 @@ function CreateModal({
         className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"
         success={t('ops.asignaciones.created')}
         action={async (fd) => {
-          appendWorkFormFiles(fd, filesRef.current);
-          await createWorkAssignment(fd);
+          await createWorkAssignment(fd, filesRef.current);
+          filesRef.current = [];
           onClose();
         }}
       >
@@ -993,7 +992,8 @@ function DetailModal({
             className="space-y-3"
             success={t('ops.asignaciones.saved')}
             action={async (fd) => {
-              await updateWorkAssignment(assignment.id, fd);
+              await updateWorkAssignment(assignment.id, fd, filesRef.current);
+              filesRef.current = [];
               onRefresh();
             }}
           >
@@ -1067,9 +1067,9 @@ function DetailModal({
               validate={() =>
                 filesRef.current.length ? null : t('ops.asignaciones.fileRequired')
               }
-              action={async (fd) => {
-                appendWorkFormFiles(fd, filesRef.current);
-                await addWorkAssignmentFiles(assignment.id, fd);
+              action={async () => {
+                await addWorkAssignmentFiles(assignment.id, filesRef.current);
+                filesRef.current = [];
                 onRefresh();
               }}
             >
