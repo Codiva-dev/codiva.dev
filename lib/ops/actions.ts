@@ -1258,7 +1258,7 @@ export async function uploadDocument(projectId: string, formData: FormData) {
       files.length === 1
         ? sharedTitle || file.name
         : sharedTitle
-          ? `${sharedTitle} — ${file.name}`
+          ? `${sharedTitle} - ${file.name}`
           : file.name;
 
     const { doc, sha256, path, scan } = isSignedNda

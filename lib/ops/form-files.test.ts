@@ -22,8 +22,8 @@ describe('form-files', () => {
   it('names each file when several are uploaded', () => {
     expect(titlesForUploads('', [file('a.pdf'), file('b.pdf')])).toEqual(['a', 'b']);
     expect(titlesForUploads('Logo', [file('a.pdf'), file('b.pdf')])).toEqual([
-      'Logo — a',
-      'Logo — b',
+      'Logo - a',
+      'Logo - b',
     ]);
   });
 

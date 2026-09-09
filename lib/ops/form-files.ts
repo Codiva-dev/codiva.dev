@@ -23,6 +23,6 @@ export function titlesForUploads(sharedTitle: string, files: File[]): string[] {
   if (files.length === 1) return [shared || titleFromFileName(files[0].name)];
   return files.map((file) => {
     const fromFile = titleFromFileName(file.name);
-    return shared ? `${shared} — ${fromFile}` : fromFile;
+    return shared ? `${shared} - ${fromFile}` : fromFile;
   });
 }

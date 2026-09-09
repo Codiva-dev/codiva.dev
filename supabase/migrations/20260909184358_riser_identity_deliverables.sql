@@ -5,7 +5,7 @@ INSERT INTO public.deliverables (
   (
     'e11c82f4-38d2-418d-9c19-f99742c293e1',
     'b11c82f4-38d2-418d-9c19-f99742c293e6',
-    'Fondo videollamada — navy',
+    'Fondo videollamada - navy',
     'Fondo de videollamada con lockup centrado sobre navy.',
     '/client-packs/riser/videocall-navy.png',
     'other', 2, true
@@ -13,7 +13,7 @@ INSERT INTO public.deliverables (
   (
     'e11c82f4-38d2-418d-9c19-f99742c293e2',
     'b11c82f4-38d2-418d-9c19-f99742c293e6',
-    'Fondo videollamada — claro',
+    'Fondo videollamada - claro',
     'Fondo de videollamada con lockup centrado sobre fondo claro.',
     '/client-packs/riser/videocall-claro.png',
     'other', 3, true
@@ -21,7 +21,7 @@ INSERT INTO public.deliverables (
   (
     'e11c82f4-38d2-418d-9c19-f99742c293e3',
     'b11c82f4-38d2-418d-9c19-f99742c293e6',
-    'Fondo videollamada — Ricardo abajo derecha navy',
+    'Fondo videollamada - Ricardo abajo derecha navy',
     'Fondo navy con lockup y nombre abajo a la derecha.',
     '/client-packs/riser/videocall-ricardo-abajo-der-navy.png',
     'other', 4, true
@@ -29,7 +29,7 @@ INSERT INTO public.deliverables (
   (
     'e11c82f4-38d2-418d-9c19-f99742c293e4',
     'b11c82f4-38d2-418d-9c19-f99742c293e6',
-    'Fondo videollamada — Ricardo abajo derecha claro',
+    'Fondo videollamada - Ricardo abajo derecha claro',
     'Fondo claro con lockup y nombre abajo a la derecha.',
     '/client-packs/riser/videocall-ricardo-abajo-der-claro.png',
     'other', 5, true
@@ -37,7 +37,7 @@ INSERT INTO public.deliverables (
   (
     'e11c82f4-38d2-418d-9c19-f99742c293e5',
     'b11c82f4-38d2-418d-9c19-f99742c293e6',
-    'Fondo videollamada — Ricardo arriba izquierda navy',
+    'Fondo videollamada - Ricardo arriba izquierda navy',
     'Fondo navy con lockup y nombre arriba a la izquierda.',
     '/client-packs/riser/videocall-ricardo-arriba-izq-navy.png',
     'other', 6, true
@@ -45,7 +45,7 @@ INSERT INTO public.deliverables (
   (
     'e11c82f4-38d2-418d-9c19-f99742c293e6',
     'b11c82f4-38d2-418d-9c19-f99742c293e6',
-    'Fondo videollamada — Ricardo arriba izquierda claro',
+    'Fondo videollamada - Ricardo arriba izquierda claro',
     'Fondo claro con lockup y nombre arriba a la izquierda.',
     '/client-packs/riser/videocall-ricardo-arriba-izq-claro.png',
     'other', 7, true
