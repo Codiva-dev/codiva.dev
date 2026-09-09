@@ -46,6 +46,20 @@ export default function OpsMentionComposer({
   }
 
   function onKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.nativeEvent.isComposing) return;
+
+    if (
+      event.key === 'Enter' &&
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+      if (!value.trim()) return;
+      event.currentTarget.form?.requestSubmit();
+      return;
+    }
+
     if (!query || !matches.length) return;
     if (event.key === 'Enter' || event.key === 'Tab') {
       event.preventDefault();
