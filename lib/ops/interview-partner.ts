@@ -101,7 +101,7 @@ export function assignedJobPostingIds(assignments: InterviewAssignmentScope[]): 
     ...new Set(
       assignments
         .map((row) => row.job_posting_id)
-        .filter((id): id is string => Boolean(id) && isInterviewUuid(id))
+        .filter((id): id is string => typeof id === 'string' && isInterviewUuid(id))
     ),
   ];
 }
