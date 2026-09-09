@@ -1,7 +1,12 @@
 import { createAdminClient } from '@/lib/supabase/admin';
-import { isClosedApplicationStatus } from '@/lib/ops/careers';
-import { interviewFollowUp, visibleApplicationIds } from '@/lib/ops/interview-partner';
+import { isDiscardedApplicationStatus } from '@/lib/ops/careers';
+import { assignedJobPostingIds, interviewFollowUp, visibleApplicationIds } from '@/lib/ops/interview-partner';
 import type { InterviewPartnerMember } from '@/lib/ops/auth';
+import {
+  applicationCoversAttempt,
+  isFailedAssessmentAttempt,
+  latestAttemptByJobEmail,
+} from '@/lib/careers/recruiting-stage';
 
 export type InterviewQueueRow = {
   id: string;
@@ -48,7 +53,7 @@ export async function listInterviewQueue(opts: {
     visibleApplicationIds(assignments ?? [], applications ?? [], rounds ?? [])
   );
   const scoped = (applications ?? []).filter(
-    (row) => visible.has(row.id) && !isClosedApplicationStatus(row.status)
+    (row) => visible.has(row.id) && row.status !== 'hired'
   );
   const roundIds = (rounds ?? []).filter((row) => visible.has(row.application_id)).map((row) => row.id);
   const { data: reports } = roundIds.length
@@ -71,6 +76,98 @@ export async function listInterviewQueue(opts: {
     }
   }
   return toQueueRows(scoped, followUpByApp);
+}
+
+export type InterviewFailedAttemptRow = {
+  id: string;
+  full_name: string;
+  email: string;
+  jobTitle: string | null;
+  scorePct: number | null;
+  status: string;
+  completedAt: string | null;
+};
+
+type FailedAttemptLite = {
+  id: string;
+  email: string;
+  full_name: string;
+  job_posting_id: string;
+  started_at: string;
+  completed_at: string | null;
+  status: string;
+  passed: boolean | null;
+  score_pct: number | null;
+};
+
+export function selectFailedAttemptsForPartner<T extends FailedAttemptLite>(
+  attempts: T[],
+  applications: { email: string; job_posting_id?: string | null }[]
+): T[] {
+  return [...latestAttemptByJobEmail(attempts).values()]
+    .filter((row) => {
+      if (!isFailedAssessmentAttempt(row)) return false;
+      return !applicationCoversAttempt({
+        email: row.email,
+        jobPostingId: row.job_posting_id,
+        applications,
+      });
+    })
+    .sort((a, b) => {
+      const da = new Date(a.completed_at || a.started_at).getTime();
+      const db = new Date(b.completed_at || b.started_at).getTime();
+      return db - da;
+    });
+}
+
+export async function listFailedInterviewAttempts(opts: {
+  member: InterviewPartnerMember | null;
+}): Promise<InterviewFailedAttemptRow[]> {
+  if (!opts.member) return [];
+  const admin = createAdminClient();
+  const { data: assignments } = await admin
+    .from('ops_interview_assignments')
+    .select('round_id, application_id, job_posting_id')
+    .eq('member_id', opts.member.id);
+  const jobIds = assignedJobPostingIds(assignments ?? []);
+  if (!jobIds.length) return [];
+
+  const [{ data: attempts }, { data: applications }, { data: postings }] = await Promise.all([
+    admin
+      .from('ops_job_assessment_attempts')
+      .select('id, email, full_name, job_posting_id, started_at, completed_at, status, passed, score_pct')
+      .in('job_posting_id', jobIds)
+      .in('status', ['completed', 'expired', 'abandoned'])
+      .order('started_at', { ascending: false })
+      .limit(200),
+    admin
+      .from('ops_job_applications')
+      .select('email, job_posting_id')
+      .in('job_posting_id', jobIds)
+      .limit(200),
+    admin.from('ops_job_postings').select('id, title').in('id', jobIds),
+  ]);
+
+  const titles = new Map((postings ?? []).map((row) => [row.id, row.title]));
+  return selectFailedAttemptsForPartner(attempts ?? [], applications ?? []).map((row) => ({
+    id: row.id,
+    full_name: row.full_name,
+    email: row.email,
+    jobTitle: titles.get(row.job_posting_id) ?? null,
+    scorePct: row.score_pct,
+    status: row.status,
+    completedAt: row.completed_at,
+  }));
+}
+
+export function partitionInterviewQueue(rows: InterviewQueueRow[]) {
+  const open: InterviewQueueRow[] = [];
+  const rejected: InterviewQueueRow[] = [];
+  for (const row of rows) {
+    if (isDiscardedApplicationStatus(row.status)) rejected.push(row);
+    else open.push(row);
+  }
+  return { open, rejected };
 }
 
 function rankFollowUp(value: ReturnType<typeof interviewFollowUp>) {

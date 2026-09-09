@@ -242,6 +242,8 @@ export async function middleware(request: NextRequest) {
             pathname.startsWith('/aceptar/') ||
             pathname === '/reset-password' ||
             pathname.startsWith('/reset-password/') ||
+            pathname === '/intento' ||
+            pathname.startsWith('/intento/') ||
             INTERVIEW_APP_ID.test(pathname)
           ? `/ops/entrevistas${pathname === '/' ? '' : pathname}`
           : null;

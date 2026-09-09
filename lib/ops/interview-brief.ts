@@ -96,9 +96,9 @@ export function toInterviewPartnerBrief(dossier: RecruitingDossier): InterviewPa
   };
 }
 
-export async function loadInterviewPartnerBrief(
+export async function loadRecruitingDossierForApplication(
   applicationId: string
-): Promise<InterviewPartnerBrief | null> {
+): Promise<RecruitingDossier | null> {
   if (!isInterviewUuid(applicationId)) return null;
   const admin = createAdminClient();
   const { data: application } = await admin
@@ -120,7 +120,21 @@ export async function loadInterviewPartnerBrief(
     attemptId = attempt?.id ?? null;
   }
   if (!attemptId) return null;
+  return loadRecruitingDossier(attemptId);
+}
 
+export async function loadInterviewPartnerBrief(
+  applicationId: string
+): Promise<InterviewPartnerBrief | null> {
+  const dossier = await loadRecruitingDossierForApplication(applicationId);
+  if (!dossier) return null;
+  return toInterviewPartnerBrief(dossier);
+}
+
+export async function loadInterviewPartnerBriefFromAttempt(
+  attemptId: string
+): Promise<InterviewPartnerBrief | null> {
+  if (!isInterviewUuid(attemptId)) return null;
   const dossier = await loadRecruitingDossier(attemptId);
   if (!dossier) return null;
   return toInterviewPartnerBrief(dossier);

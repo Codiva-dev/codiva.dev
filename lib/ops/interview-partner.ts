@@ -96,6 +96,16 @@ export function visibleApplicationIds(
   return [...ids];
 }
 
+export function assignedJobPostingIds(assignments: InterviewAssignmentScope[]): string[] {
+  return [
+    ...new Set(
+      assignments
+        .map((row) => row.job_posting_id)
+        .filter((id): id is string => Boolean(id) && isInterviewUuid(id))
+    ),
+  ];
+}
+
 export function partnerMaySetApplicationStatus(_status: string): boolean {
   return false;
 }

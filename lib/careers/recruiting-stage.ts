@@ -73,6 +73,13 @@ export function isCandidateReadyForCv(input: {
   return true;
 }
 
+/** Completed the criterion without passing, or the attempt expired. In-progress attempts stay out. */
+export function isFailedAssessmentAttempt(row: { status: string; passed: boolean | null }): boolean {
+  if (row.passed === true) return false;
+  if (row.status === 'expired' || row.status === 'abandoned') return true;
+  return row.status === 'completed' && row.passed === false;
+}
+
 export function classifyRecruitingStage(input: {
   email: string;
   passed: boolean | null;

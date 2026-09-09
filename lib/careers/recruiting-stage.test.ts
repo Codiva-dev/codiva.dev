@@ -5,6 +5,7 @@ import {
   careerEmailKey,
   classifyRecruitingStage,
   isCandidateReadyForCv,
+  isFailedAssessmentAttempt,
   latestAttemptByJobEmail,
   recruitingAttemptKey,
   recruitingStageLabel,
@@ -103,6 +104,16 @@ describe('isCandidateReadyForCv', () => {
         leftActiveQueueEmails: queue(['a@x.com']),
       })
     ).toBe(false);
+  });
+});
+
+describe('isFailedAssessmentAttempt', () => {
+  it('keeps completed fails and expired attempts, not in-progress or passed', () => {
+    expect(isFailedAssessmentAttempt({ status: 'completed', passed: false })).toBe(true);
+    expect(isFailedAssessmentAttempt({ status: 'expired', passed: null })).toBe(true);
+    expect(isFailedAssessmentAttempt({ status: 'abandoned', passed: null })).toBe(true);
+    expect(isFailedAssessmentAttempt({ status: 'started', passed: null })).toBe(false);
+    expect(isFailedAssessmentAttempt({ status: 'completed', passed: true })).toBe(false);
   });
 });
 

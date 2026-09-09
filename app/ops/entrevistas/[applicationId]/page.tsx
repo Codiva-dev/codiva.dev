@@ -4,6 +4,7 @@ import InterviewCandidateBrief from '@/components/ops/InterviewCandidateBrief';
 import StatusBadge from '@/components/ops/StatusBadge';
 import ToastForm from '@/components/ops/ToastForm';
 import CareerCvLightbox from '@/components/ops/CareerCvLightbox';
+import OpsReportLightbox from '@/components/ops/OpsReportLightbox';
 import { requireInterviewsAccess } from '@/lib/ops/auth';
 import { getAcceptanceStatus } from '@/lib/ops/legal/acceptances';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -13,6 +14,7 @@ import { labelsFor } from '@/lib/ops/labels';
 import {
   JOB_INTERVIEW_OUTCOMES,
   JOB_INTERVIEW_ROUND_STATUSES,
+  isDiscardedApplicationStatus,
   isJobInterviewKind,
   isJobInterviewOutcome,
   isJobInterviewRoundStatus,
@@ -135,13 +137,25 @@ export default async function InterviewsApplicationPage({
         {t('interviews.contact')}: {application.email}
         {application.phone ? ` · ${application.phone}` : ''}
       </p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <StatusBadge label={jobApplicationStatusLabel(application.status, t.locale)} tone="info" />
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <StatusBadge
+          label={jobApplicationStatusLabel(application.status, t.locale)}
+          tone={isDiscardedApplicationStatus(application.status) ? 'danger' : 'info'}
+        />
         <CareerCvLightbox
           applicationId={application.id}
           name={application.full_name}
           srcBase="/api/entrevistas/cv"
         />
+        {brief ? (
+          <OpsReportLightbox
+            title={t('interviews.brief.title')}
+            htmlSrc={`/api/entrevistas/recruiting-report?id=${application.id}`}
+            downloadHref={`/api/entrevistas/recruiting-report?id=${application.id}&format=pdf`}
+            triggerLabel={t('interviews.brief.openReport')}
+            downloadLabel={t('interviews.brief.downloadPdf')}
+          />
+        ) : null}
       </div>
 
       {brief ? <InterviewCandidateBrief brief={brief} t={t} /> : null}

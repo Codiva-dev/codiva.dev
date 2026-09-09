@@ -167,6 +167,13 @@ describe('renderRecruitingDossierHtml', () => {
     );
     expect(html).not.toContain('<h2>Entrevistas</h2>');
   });
+
+  it('omits window-blur telemetry for partner downloads', () => {
+    const html = renderRecruitingDossierHtml(dossier({ blurCount: 3 }), { audience: 'partner' });
+    expect(html).toContain('12 min 3s');
+    expect(html).not.toContain('salidas de ventana');
+    expect(renderRecruitingDossierHtml(dossier({ blurCount: 3 }))).toContain('3 salidas de ventana');
+  });
 });
 
 describe('renderRecruitingPipelineHtml', () => {

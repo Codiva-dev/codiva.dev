@@ -50,6 +50,13 @@
     "account": "Cuenta",
     "queue": "Candidatos asignados",
     "queueEmpty": "Todavía no tienes candidatos asignados.",
+    "rejectedTitle": "Descartados",
+    "rejectedHint": "Perfiles que Codiva marcó como descartados. Siguen visibles para consulta y para descargar el reporte.",
+    "failedTitle": "No aprobaron la prueba",
+    "failedHint": "Personas de tus vacantes asignadas que hicieron el criterio y no lo pasaron. Aún no postularon.",
+    "failedBadge": "No aprobó",
+    "expiredBadge": "Expiró",
+    "failedReadOnly": "Este perfil no llegó a postular. Puedes consultar la evaluación y descargar el reporte.",
     "back": "← Cola",
     "previewBanner": "Vista previa staff del portal de entrevistas.",
     "previewAsBanner": "Viendo como {{name}} ({{org}}). Solo lectura; su acceso no cambia.",
@@ -96,7 +103,9 @@
       "doesNotCount": "No cuenta",
       "discarded": "Descartado",
       "evidence": "{{n}} evidencia(s)",
-      "expected": "Esperado"
+      "expected": "Esperado",
+      "openReport": "Ver reporte",
+      "downloadPdf": "Descargar PDF"
     },
     "login": {
       "title": "Entrevistas Codiva",

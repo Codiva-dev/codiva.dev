@@ -74,6 +74,8 @@ describe('host surfaces', () => {
     expect(interviewsAppHref('interviews.codiva.dev', `/${id}`)).toBe(`/${id}`);
     expect(interviewsAppHref('ops.codiva.dev', '/')).toBe('/entrevistas');
     expect(interviewsAppHref('ops.codiva.dev', `/${id}`)).toBe(`/entrevistas/${id}`);
+    expect(interviewsAppHref('interviews.codiva.dev', `/intento/${id}`)).toBe(`/intento/${id}`);
+    expect(interviewsAppHref('ops.codiva.dev', `/intento/${id}`)).toBe(`/entrevistas/intento/${id}`);
     expect(interviewsAppHref('ops.codiva.dev', '/cuenta')).toBe('/entrevistas/cuenta');
   });
 

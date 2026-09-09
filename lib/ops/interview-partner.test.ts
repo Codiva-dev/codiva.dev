@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   assignmentMatchesApplication,
+  assignedJobPostingIds,
   buildInterviewReportPath,
   encodeInterviewAssignee,
   interviewFollowUp,
@@ -45,6 +46,16 @@ describe('assignment visibility', () => {
         [round]
       )
     ).toBe(false);
+  });
+
+  it('lists vacancy assignments without leaking candidate-only scopes', () => {
+    expect(
+      assignedJobPostingIds([
+        { job_posting_id: app.job_posting_id },
+        { application_id: app.id },
+        { job_posting_id: app.job_posting_id },
+      ])
+    ).toEqual([app.job_posting_id]);
   });
 });
 

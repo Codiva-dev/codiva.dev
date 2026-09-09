@@ -1036,7 +1036,18 @@ function findingArticles(rows: RecruitingFinding[], empty: string): string {
     .join('');
 }
 
-export function renderRecruitingDossierHtml(d: RecruitingDossier): string {
+export type RecruitingReportAudience = 'staff' | 'partner';
+
+function timeCopy(d: RecruitingDossier, audience: RecruitingReportAudience): string {
+  if (audience === 'partner') return d.durationLabel;
+  return `${d.durationLabel} · ${d.blurCount ? `${d.blurCount} salidas de ventana` : 'sin salidas de ventana'}`;
+}
+
+export function renderRecruitingDossierHtml(
+  d: RecruitingDossier,
+  opts?: { audience?: RecruitingReportAudience }
+): string {
+  const audience = opts?.audience ?? 'staff';
   const competencies = d.competencies
     .map(
       (row) =>
@@ -1065,7 +1076,7 @@ export function renderRecruitingDossierHtml(d: RecruitingDossier): string {
         <tr><th>Fase</th><td>${escapeHtml(d.stageLabel)}</td></tr>
         <tr><th>Postulación</th><td>${escapeHtml(applicationCopy(d))}</td></tr>
         <tr><th>Criterio</th><td>${escapeHtml(resultCopy(d))}${d.scoreCorrect != null ? ` · ${d.scoreCorrect}/${d.scoreTotal} pts` : ''} · intento ${d.attemptNumber}</td></tr>
-        <tr><th>Tiempo</th><td>${escapeHtml(d.durationLabel)} · ${d.blurCount ? `${d.blurCount} salidas de ventana` : 'sin salidas de ventana'}</td></tr>
+        <tr><th>Tiempo</th><td>${escapeHtml(timeCopy(d, audience))}</td></tr>
         <tr><th>Fechas</th><td>Inicio ${escapeHtml(formatWhen(d.startedAt))}${d.completedAt ? ` · cierre ${escapeHtml(formatWhen(d.completedAt))}` : ''}</td></tr>
         <tr><th>Cacería</th><td>${escapeHtml(huntBits.join(' · '))}</td></tr>
       </table>

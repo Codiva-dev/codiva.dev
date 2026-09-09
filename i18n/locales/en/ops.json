@@ -50,6 +50,13 @@
     "account": "Account",
     "queue": "Assigned candidates",
     "queueEmpty": "You do not have assigned candidates yet.",
+    "rejectedTitle": "Discarded",
+    "rejectedHint": "Profiles Codiva marked as discarded. They stay visible so you can review them and download the report.",
+    "failedTitle": "Did not pass the assessment",
+    "failedHint": "People in your assigned vacancies who took the assessment and did not pass. They have not applied yet.",
+    "failedBadge": "Did not pass",
+    "expiredBadge": "Expired",
+    "failedReadOnly": "This profile did not apply. You can review the evaluation and download the report.",
     "back": "← Queue",
     "previewBanner": "Staff preview of the interview portal.",
     "previewAsBanner": "Viewing as {{name}} ({{org}}). Read-only; their access is unchanged.",
@@ -96,7 +103,9 @@
       "doesNotCount": "Does not count",
       "discarded": "Discarded",
       "evidence": "{{n}} evidence file(s)",
-      "expected": "Expected"
+      "expected": "Expected",
+      "openReport": "View report",
+      "downloadPdf": "Download PDF"
     },
     "login": {
       "title": "Codiva interviews",
