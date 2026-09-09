@@ -35,6 +35,7 @@ import {
   disposeExpiredDocuments,
 } from '@/lib/ops/document-ingest';
 import { getRequestAudit } from '@/lib/ops/request-audit';
+import { formFiles, titlesForUploads, OPS_FORM_MAX_FILES } from '@/lib/ops/form-files';
 import { parseLineItemsJson, parsePhasesJson } from '@/lib/ops/quote-document';
 import { applyQuoteHourlyRate, inferredQuoteHourlyRate, parseHourlyRate } from '@/lib/ops/quote-rate';
 import { isInboxLane } from '@/lib/ops/inbox-lane';
@@ -1231,10 +1232,13 @@ export async function uploadDocument(projectId: string, formData: FormData) {
   const access = await assertCapability('documents');
   await assertProjectAccessOrThrow(access, projectId);
   const { user, supabase } = access;
-  const file = formData.get('file') as File | null;
-  if (!file?.size) throw new Error('Archivo requerido');
+  const files = formFiles(formData);
+  if (!files.length) throw new Error('Archivo requerido');
+  if (files.length > OPS_FORM_MAX_FILES) {
+    throw new Error(`Máximo ${OPS_FORM_MAX_FILES} archivos`);
+  }
 
-  const title = String(formData.get('title') || file.name);
+  const sharedTitle = String(formData.get('title') || '').trim();
   const type = String(formData.get('type') || 'other');
   const signed = formData.get('signed') === 'on';
   const visibleToClient = formData.get('visibleToClient') === 'on';
@@ -1249,58 +1253,67 @@ export async function uploadDocument(projectId: string, formData: FormData) {
   const organizationId = project?.organization_id ?? null;
   const isSignedNda = type === 'nda' && signed && Boolean(organizationId);
 
-  const { doc, sha256, path, scan } = isSignedNda
-    ? await ingestOrgDocument({
-        organizationId: organizationId!,
-        projectId,
-        file,
-        type,
-        title,
-        notes,
-        signed: true,
-        visibleToClient,
-        source: 'staff',
-        uploadedBy: user.id,
-        folder: 'nda',
-        audit,
-      })
-    : await ingestProjectDocument({
-        projectId,
-        file,
-        type,
-        title,
-        notes,
-        signed,
-        visibleToClient,
-        source: 'staff',
-        uploadedBy: user.id,
-        folder: 'documents',
-        audit,
-      });
+  for (const [index, file] of files.entries()) {
+    const title =
+      files.length === 1
+        ? sharedTitle || file.name
+        : sharedTitle
+          ? `${sharedTitle} — ${file.name}`
+          : file.name;
 
-  if (isSignedNda && organizationId) {
-    await markOrganizationMutualNdaSigned({ organizationId, documentId: doc.id });
-    revalidatePath('/p', 'layout');
+    const { doc, sha256, path, scan } = isSignedNda
+      ? await ingestOrgDocument({
+          organizationId: organizationId!,
+          projectId,
+          file,
+          type,
+          title,
+          notes,
+          signed: true,
+          visibleToClient,
+          source: 'staff',
+          uploadedBy: user.id,
+          folder: 'nda',
+          audit,
+        })
+      : await ingestProjectDocument({
+          projectId,
+          file,
+          type,
+          title,
+          notes,
+          signed,
+          visibleToClient,
+          source: 'staff',
+          uploadedBy: user.id,
+          folder: 'documents',
+          audit,
+        });
+
+    if (isSignedNda && organizationId && index === 0) {
+      await markOrganizationMutualNdaSigned({ organizationId, documentId: doc.id });
+      revalidatePath('/p', 'layout');
+    }
+
+    await logActivity({
+      entityType: 'document',
+      entityId: doc.id,
+      action: 'uploaded',
+      actorId: user.id,
+      metadata: {
+        project_id: projectId,
+        title,
+        type,
+        source: 'staff',
+        file_path: path,
+        content_sha256: sha256,
+        scan_status: scan.status,
+        scan_provider: scan.provider,
+        ip: audit.ip,
+        user_agent: audit.userAgent,
+      },
+    });
   }
-
-  await logActivity({
-    entityType: 'document',
-    entityId: doc.id,
-    action: 'uploaded',
-    actorId: user.id,
-    metadata: {
-      project_id: projectId,
-      title,
-      type,
-      source: 'staff',
-      file_path: path,
-      content_sha256: sha256,
-      scan_status: scan.status,
-      scan_provider: scan.provider,
-      ip: audit.ip,
-      user_agent: audit.userAgent,
-    },
-  });
 
   revalidatePath(`/projects/${projectId}`);
 }
@@ -1308,54 +1321,62 @@ export async function uploadDocument(projectId: string, formData: FormData) {
 export async function createDeliverable(projectId: string, formData: FormData) {
   const access = await assertCapability('deliverables');
   await assertProjectAccessOrThrow(access, projectId);
-  const { supabase } = access;
+  const { user, supabase } = access;
 
-  const file = formData.get('file') as File | null;
-  let filePath: string | null = null;
-  let fileUrl: string | null = null;
-
-  if (file?.size) {
-    const uploaded = await uploadOpsFile(file, `projects/${projectId}/deliverables`);
-    filePath = uploaded.path;
-    fileUrl = uploaded.url;
+  const files = formFiles(formData);
+  if (files.length > OPS_FORM_MAX_FILES) {
+    throw new Error(`Máximo ${OPS_FORM_MAX_FILES} archivos`);
   }
+
+  const titles = titlesForUploads(String(formData.get('title') || ''), files);
+  if (!titles.length) throw new Error('Título o archivo requerido');
 
   const kind = String(formData.get('kind') || 'other');
   const sortOrder = parseInt(String(formData.get('sortOrder') || '0'), 10) || 0;
-  const title = String(formData.get('title') || '');
+  const description = String(formData.get('description') || '');
+  const url = String(formData.get('url') || '') || null;
+  const visibleToClient = formData.get('visibleToClient') === 'on';
+  const rows = files.length ? files.map((file, index) => ({ file, title: titles[index] })) : [{ file: null, title: titles[0] }];
 
-  const { data: deliverable, error } = await supabase
-    .from('deliverables')
-    .insert({
-      project_id: projectId,
-      title,
-      description: String(formData.get('description') || ''),
-      url: String(formData.get('url') || '') || null,
-      file_path: filePath,
-      file_url: fileUrl,
-      visible_to_client: formData.get('visibleToClient') !== 'off',
-      kind,
-      sort_order: sortOrder,
-    })
-    .select('id')
-    .single();
-  if (error || !deliverable) throw await throwDb(error);
+  for (const [index, row] of rows.entries()) {
+    let filePath: string | null = null;
+    let fileUrl: string | null = null;
+    if (row.file) {
+      const uploaded = await uploadOpsFile(row.file, `projects/${projectId}/deliverables`);
+      filePath = uploaded.path;
+      fileUrl = uploaded.url;
+    }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  await logActivity({
-    entityType: 'deliverable',
-    entityId: deliverable.id,
-    action: 'created',
-    actorId: user?.id,
-    metadata: {
-      project_id: projectId,
-      title,
-      kind,
-      file_path: filePath,
-    },
-  });
+    const { data: deliverable, error } = await supabase
+      .from('deliverables')
+      .insert({
+        project_id: projectId,
+        title: row.title,
+        description,
+        url,
+        file_path: filePath,
+        file_url: fileUrl,
+        visible_to_client: visibleToClient,
+        kind,
+        sort_order: sortOrder + index,
+      })
+      .select('id')
+      .single();
+    if (error || !deliverable) throw await throwDb(error);
+
+    await logActivity({
+      entityType: 'deliverable',
+      entityId: deliverable.id,
+      action: 'created',
+      actorId: user.id,
+      metadata: {
+        project_id: projectId,
+        title: row.title,
+        kind,
+        file_path: filePath,
+      },
+    });
+  }
 
   revalidatePath(`/projects/${projectId}`);
 }

@@ -927,7 +927,7 @@ export default async function ProjectDetailPage({
               <option value="other">{DOCUMENT_TYPE_LABELS.other}</option>
             </select>
             <textarea name="notes" placeholder={t('ops.project.notesClient')} rows={2} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
-            <BrandedFileInput required hint={t('ops.project.fileHint')} />
+            <BrandedFileInput required multiple hint={t('ops.project.fileHint')} />
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="visibleToClient" defaultChecked /> {t('ops.project.visibleClientCheck')}</label>
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="signed" /> {t('ops.project.signed')}</label>
             <button type="submit" className="rounded-lg bg-codiva-primary px-4 py-2 text-sm text-white">{t('ops.project.upload')}</button>
@@ -1033,12 +1033,13 @@ export default async function ProjectDetailPage({
           </p>
           <ToastForm success={t('ops.project.deliverableCreated')} action={async (fd) => { 'use server'; await createDeliverable(id, fd); }} className="rounded-xl border border-zinc-200 bg-white p-5 space-y-3">
             <h3 className="font-semibold">{t('ops.project.newDeliverable')}</h3>
-            <input name="title" required placeholder={t('ops.project.title')} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
+            <input name="title" placeholder={t('ops.project.title')} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
+            <p className="text-xs text-zinc-500">{t('ops.project.deliverableTitleHint')}</p>
             <input type="hidden" name="kind" value="other" />
             <input name="sortOrder" type="number" defaultValue={0} placeholder={t('ops.project.requestOrder')} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
             <input name="url" placeholder={t('ops.project.urlPlaceholder')} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
             <textarea name="description" placeholder={t('ops.project.description')} rows={2} className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" />
-            <BrandedFileInput hint={t('ops.project.fileHintOptional')} />
+            <BrandedFileInput multiple hint={t('ops.project.fileHintOptional')} />
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="visibleToClient" defaultChecked /> {t('ops.project.visibleClientCheck')}</label>
             <button type="submit" className="rounded-lg bg-codiva-primary px-4 py-2 text-sm text-white">{t('ops.project.save')}</button>
           </ToastForm>
