@@ -1324,7 +1324,17 @@
       "roleViewerShort": "Viewer",
       "roleApproverShort": "Approver",
       "sendEmail": "Enviar correo de aviso",
-      "add": "Agregar"
+      "add": "Agregar",
+      "hubTitle": "Usuario universal",
+      "hubDesc": "Asocia este login a todos los proyectos del intermediario cuyo nombre coincida. No se envía correo.",
+      "hubToggle": "Usuario universal (partner hub)",
+      "hubName": "Nombre del intermediario",
+      "hubNamePlaceholder": "Ej. Miguel Alonso",
+      "hubSave": "Guardar y asociar proyectos",
+      "hubSaved": "Perfil universal actualizado",
+      "hubSync": "Sincronizar proyectos del intermediario",
+      "hubSynced": "Proyectos del intermediario asociados",
+      "hubBadge": "Universal"
     },
     "ticketsPage": {
       "colTicket": "Ticket",

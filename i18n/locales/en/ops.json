@@ -1324,7 +1324,17 @@
       "roleViewerShort": "Viewer",
       "roleApproverShort": "Approver",
       "sendEmail": "Send notification email",
-      "add": "Add"
+      "add": "Add",
+      "hubTitle": "Universal user",
+      "hubDesc": "Attach this login to every intermediary project whose partner name matches. No email is sent.",
+      "hubToggle": "Universal user (partner hub)",
+      "hubName": "Intermediary name",
+      "hubNamePlaceholder": "e.g. Miguel Alonso",
+      "hubSave": "Save and associate projects",
+      "hubSaved": "Universal profile updated",
+      "hubSync": "Sync intermediary projects",
+      "hubSynced": "Intermediary projects associated",
+      "hubBadge": "Universal"
     },
     "ticketsPage": {
       "colTicket": "Ticket",

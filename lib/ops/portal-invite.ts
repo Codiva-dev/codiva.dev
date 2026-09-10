@@ -87,18 +87,24 @@ export async function invitePortalUserCore(opts: {
     isNewUser = true;
   }
 
+  const { data: existingMembers } = await admin
+    .from('project_members')
+    .select('project_id')
+    .eq('user_id', userId)
+    .in('project_id', projectIds);
+  const existingIds = new Set((existingMembers ?? []).map((row) => row.project_id));
+
   const now = new Date().toISOString();
   for (const project of projects) {
-    const { error: memberError } = await admin.from('project_members').upsert(
-      {
+    if (!existingIds.has(project.id)) {
+      const { error: memberError } = await admin.from('project_members').insert({
         project_id: project.id,
         user_id: userId,
         role,
         accepted_at: now,
-      },
-      { onConflict: 'project_id,user_id' }
-    );
-    if (memberError) throw await throwDb(memberError);
+      });
+      if (memberError) throw await throwDb(memberError);
+    }
 
     if (!project.client_visible) {
       await admin.from('projects').update({ client_visible: true }).eq('id', project.id);

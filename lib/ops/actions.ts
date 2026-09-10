@@ -43,6 +43,11 @@ import { ensureQuoteAccessToken, publicQuoteUrl } from '@/lib/ops/quote-tokens';
 import { invitePortalUserCore } from '@/lib/ops/portal-invite';
 import { findUserIdByEmail } from '@/lib/ops/auth-users';
 import {
+  associatePartnerPortalUsers,
+  syncHubUserPartnerProjects,
+  upsertPortalHubProfile,
+} from '@/lib/ops/portal-hub';
+import {
   architectureStarterHtml,
   isCanvasKind,
   MAX_ARCHITECTURE_HTML_CHARS,
@@ -493,6 +498,8 @@ export async function convertLeadToProject(leadId: string) {
     role_on_project: staff.role === 'dev' ? 'dev' : 'pm',
   });
 
+  await associatePartnerPortalUsers({ projectId: project.id, lead });
+
   await logActivity({
     entityType: 'project',
     entityId: project.id,
@@ -936,6 +943,25 @@ export async function addPortalUserProjects(userId: string, formData: FormData) 
   revalidatePath('/users');
   revalidatePath(`/users/${userId}`);
   for (const id of projectIds) revalidatePath(`/projects/${id}`);
+}
+
+export async function setPortalUserHub(userId: string, formData: FormData) {
+  await assertCapability('portal_users');
+  const isHub = formData.get('isHub') === 'on';
+  const displayName = String(formData.get('displayName') || '').trim() || null;
+  await upsertPortalHubProfile(userId, { isHub, displayName });
+  const ids = isHub ? await syncHubUserPartnerProjects(userId) : [];
+  revalidatePath('/users');
+  revalidatePath(`/users/${userId}`);
+  for (const id of ids) revalidatePath(`/projects/${id}`);
+}
+
+export async function syncPortalHubProjects(userId: string) {
+  await assertCapability('portal_users');
+  const ids = await syncHubUserPartnerProjects(userId);
+  revalidatePath('/users');
+  revalidatePath(`/users/${userId}`);
+  for (const id of ids) revalidatePath(`/projects/${id}`);
 }
 
 export async function removePortalUserProject(userId: string, projectId: string) {
