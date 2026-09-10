@@ -762,7 +762,8 @@
       "staff": "Staff preview",
       "body": "This is how the client sees the portal for",
       "noLegal": "Legal acceptances are not recorded in this mode.",
-      "back": "Back to project"
+      "back": "Back to project",
+      "popupTitle": "Preview"
     },
     "modality": {
       "remote": "Remote",
@@ -1508,7 +1509,7 @@
       "noMilestones": "No milestones.",
       "quotesHintPrefix": "This is where the document is built. The client sees the same thing in the",
       "quotesHintStrong": "Quote",
-      "quotesHintSuffix": "tab of the portal (not as a loose PDF in Documents).",
+      "quotesHintSuffix": "tab of the portal. If it is visible to the client, drafts show there too (sending is still required to accept).",
       "newQuote": "New quote",
       "proposalTitle": "Proposal - {{name}}",
       "portal": "Portal:",

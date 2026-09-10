@@ -4,7 +4,10 @@ import {
   nextSecurityHeaderSources,
   portalCanvasHeaders,
   PORTAL_CANVAS_HEADER_SOURCE,
+  PORTAL_PREVIEW_HEADER_SOURCE,
   PORTAL_QUOTE_DOC_HEADER_SOURCE,
+  QUOTE_PREVIEW_HEADER_SOURCE,
+  OFFER_LETTER_HEADER_SOURCE,
   sameOriginEmbedHeaders,
   securityHeaders,
 } from './security-headers';
@@ -38,6 +41,15 @@ describe('security headers', () => {
     const sources = nextSecurityHeaderSources(false).map((row) => row.source);
     expect(sources[0]).toContain('p/[^/]+/cotizacion/[^/]+');
     expect(sources).toContain(PORTAL_QUOTE_DOC_HEADER_SOURCE);
+  });
+
+  it('allows same-origin iframes for project and quote previews in the modal', () => {
+    const sources = nextSecurityHeaderSources(false).map((row) => row.source);
+    expect(sources[0]).toContain('p/');
+    expect(sources[0]).toContain('quotes/[^/]+/preview');
+    expect(sources).toContain(PORTAL_PREVIEW_HEADER_SOURCE);
+    expect(sources).toContain(QUOTE_PREVIEW_HEADER_SOURCE);
+    expect(sources).toContain(OFFER_LETTER_HEADER_SOURCE);
   });
 
   it('allows same-origin iframes for portal architecture canvases', () => {

@@ -43,6 +43,11 @@ export type QuoteDocumentData = {
   phases?: QuotePhase[];
 };
 
+export type QuoteDocumentOptions = {
+  /** Internal Ops only. Client documents never include hours or hourly rate. */
+  showHourlyBreakdown?: boolean;
+};
+
 const BRAND = BRAND_EMAIL;
 
 function formatIssuedDate(value: string | Date, locale: Locale = DEFAULT_LOCALE): string {
@@ -109,8 +114,21 @@ function phasesBlock(phases: QuotePhase[], locale: Locale): string {
     </section>`;
 }
 
-function lineItemsBlock(items: QuoteLineItem[], currency: string, totalAmount?: number | null): string {
+function lineItemsBlock(
+  items: QuoteLineItem[],
+  currency: string,
+  totalAmount: number | null | undefined,
+  locale: Locale,
+  showHourlyBreakdown: boolean
+): string {
   if (!items.length) return '';
+
+  const hourHeader = showHourlyBreakdown
+    ? `<th style="padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:${BRAND.muted};">${escapeHtml(tSync(locale, 'quoteDoc.hours'))}</th>`
+    : '';
+  const rateHeader = showHourlyBreakdown
+    ? `<th style="padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:${BRAND.muted};">${escapeHtml(tSync(locale, 'quoteDoc.rate'))}</th>`
+    : '';
 
   const rows = items
     .map((item, index) => {
@@ -123,14 +141,20 @@ function lineItemsBlock(items: QuoteLineItem[], currency: string, totalAmount?: 
           ? `${formatCurrency(item.rate, currency)}${item.rateLabel ? ` ${escapeHtml(item.rateLabel)}` : ''}`
           : EMPTY_LABEL;
       const total = item.total != null ? formatCurrency(item.total, currency) : EMPTY_LABEL;
+      const hourCell = showHourlyBreakdown
+        ? `<td style="padding:14px 12px;vertical-align:top;font-size:13px;color:${BRAND.muted};white-space:nowrap;">${hours}</td>`
+        : '';
+      const rateCell = showHourlyBreakdown
+        ? `<td style="padding:14px 12px;vertical-align:top;font-size:13px;color:${BRAND.muted};white-space:nowrap;">${rate}</td>`
+        : '';
 
       return `
         <tr style="border-top:1px solid ${BRAND.border};">
           <td style="padding:14px 12px;vertical-align:top;font-size:14px;color:${BRAND.text};">
             <strong>${index + 1}. ${escapeHtml(item.title)}</strong>${detail}
           </td>
-          <td style="padding:14px 12px;vertical-align:top;font-size:13px;color:${BRAND.muted};white-space:nowrap;">${hours}</td>
-          <td style="padding:14px 12px;vertical-align:top;font-size:13px;color:${BRAND.muted};white-space:nowrap;">${rate}</td>
+          ${hourCell}
+          ${rateCell}
           <td style="padding:14px 12px;vertical-align:top;font-size:14px;font-weight:600;color:${BRAND.text};white-space:nowrap;">${total}</td>
         </tr>`;
     })
@@ -139,22 +163,22 @@ function lineItemsBlock(items: QuoteLineItem[], currency: string, totalAmount?: 
   const summary =
     totalAmount != null
       ? `<div style="margin-top:16px;padding:16px 18px;border-radius:10px;background:${BRAND.background};border:1px solid ${BRAND.border};">
-          <p style="margin:0;font-size:13px;color:${BRAND.muted};">Total estimado del proyecto</p>
+          <p style="margin:0;font-size:13px;color:${BRAND.muted};">${escapeHtml(tSync(locale, 'quoteDoc.estimatedTotal'))}</p>
           <p style="margin:6px 0 0;font-size:24px;font-weight:700;color:${BRAND.primary};">${formatCurrency(totalAmount, currency)}</p>
         </div>`
       : '';
 
   return `
     <section style="margin-top:28px;">
-      <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${BRAND.primary};">Estimación económica</h2>
+      <h2 style="margin:0 0 12px;font-size:15px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${BRAND.primary};">${escapeHtml(tSync(locale, 'quoteDoc.estimate'))}</h2>
       <div style="overflow-x:auto;border:1px solid ${BRAND.border};border-radius:10px;">
-        <table style="width:100%;border-collapse:collapse;min-width:520px;">
+        <table style="width:100%;border-collapse:collapse;min-width:${showHourlyBreakdown ? '520px' : '360px'};">
           <thead>
             <tr style="background:${BRAND.background};">
-              <th style="padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:${BRAND.muted};">Módulo</th>
-              <th style="padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:${BRAND.muted};">Horas</th>
-              <th style="padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:${BRAND.muted};">Tarifa</th>
-              <th style="padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:${BRAND.muted};">Total</th>
+              <th style="padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:${BRAND.muted};">${escapeHtml(tSync(locale, 'quoteDoc.module'))}</th>
+              ${hourHeader}
+              ${rateHeader}
+              <th style="padding:12px;text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;color:${BRAND.muted};">${escapeHtml(tSync(locale, 'quoteDoc.total'))}</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -174,11 +198,13 @@ function metaRow(label: string, value: string, valueHtml?: string): string {
 
 export function renderQuoteDocumentHtml(
   data: QuoteDocumentData,
-  locale: Locale = DEFAULT_LOCALE
+  locale: Locale = DEFAULT_LOCALE,
+  options: QuoteDocumentOptions = {}
 ): string {
   const currency = data.currency || 'MXN';
   const heading = serviceTypeHeading(data.serviceType, data.heading);
   const lineItems = Array.isArray(data.lineItems) ? data.lineItems : [];
+  const showHourlyBreakdown = options.showHourlyBreakdown === true;
   const validUntilBlock = data.validUntil
     ? metaRow(tSync(locale, 'quoteDoc.validUntil'), formatDate(data.validUntil, locale))
     : '';
@@ -219,7 +245,7 @@ export function renderQuoteDocumentHtml(
       <p style="margin:4px 0 0;font-size:13px;"><a href="mailto:${CODIVA_BRAND.urls.email}" style="color:${BRAND.primary};text-decoration:none;">${CODIVA_BRAND.urls.email}</a></p>
       ${section(tSync(locale, 'quoteDoc.scope'), data.scope)}
       ${data.deliverables ? section(tSync(locale, 'quoteDoc.deliverables'), data.deliverables) : ''}
-      ${lineItemsBlock(lineItems, currency, data.totalAmount)}
+      ${lineItemsBlock(lineItems, currency, data.totalAmount, locale, showHourlyBreakdown)}
       ${phasesBlock(data.phases ?? [], locale)}
       ${data.considerations ? section(tSync(locale, 'quoteDoc.considerations'), data.considerations) : ''}
       ${data.optionalExtras ? section(tSync(locale, 'quoteDoc.extras'), data.optionalExtras) : ''}

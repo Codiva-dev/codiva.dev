@@ -4,7 +4,7 @@ import StatusBadge, { projectTone } from '@/components/ops/StatusBadge';
 import { requireProjectMember } from '@/lib/ops/auth';
 import { getActiveChargeNotices } from '@/lib/ops/charges';
 import { labelsFor } from '@/lib/ops/labels';
-import { filterProposalCanvases, filterQuoteCanvases, getPortalVisibility, withQuoteNav } from '@/lib/ops/portal-visibility';
+import { filterProposalCanvases, filterQuoteCanvases, getPortalVisibility, withQuoteNav, PORTAL_QUOTE_STATUSES } from '@/lib/ops/portal-visibility';
 import { getT } from '@/i18n/locale';
 import type { Translator } from '@/i18n/translate';
 
@@ -89,7 +89,7 @@ export default async function PortalHomePage({
           .select('id, title, total_amount, currency, status, valid_until')
           .eq('project_id', project.id)
           .eq('visible_to_client', true)
-          .in('status', ['sent', 'accepted', 'rejected', 'expired'])
+          .in('status', [...PORTAL_QUOTE_STATUSES])
           .order('version', { ascending: false })
           .limit(1)
       : Promise.resolve({ data: [] as { id: string; title: string; total_amount: number; currency: string; status: string; valid_until: string | null }[] }),

@@ -8,7 +8,7 @@ import { requireProjectMember } from '@/lib/ops/auth';
 import { clientAcceptQuote, clientRejectQuote } from '@/lib/ops/actions';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
-import { filterQuoteCanvases, getPortalVisibility } from '@/lib/ops/portal-visibility';
+import { filterQuoteCanvases, getPortalVisibility, PORTAL_QUOTE_STATUSES } from '@/lib/ops/portal-visibility';
 import { portalCanvasPath } from '@/lib/ops/architecture';
 import { buildQuoteDocumentHtml } from '@/lib/ops/quote-preview';
 import { portalQuoteDocumentPath } from '@/lib/ops/quotes';
@@ -49,7 +49,7 @@ export default async function PortalQuotePage({
         )
         .eq('project_id', project.id)
         .eq('visible_to_client', true)
-        .in('status', ['sent', 'accepted', 'rejected', 'expired'])
+        .in('status', [...PORTAL_QUOTE_STATUSES])
         .order('version', { ascending: false })
     : Promise.resolve({ data: [] as never[] }));
 

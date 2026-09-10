@@ -15,6 +15,14 @@ const PORTAL_CANVAS_EXCLUDE = 'p/[^/]+/canvas/';
 /** Quote HTML served into the Cotización iframe (not the listing page). */
 export const PORTAL_QUOTE_DOC_HEADER_SOURCE = '/p/:slug/cotizacion/:quoteId';
 const PORTAL_QUOTE_DOC_EXCLUDE = 'p/[^/]+/cotizacion/[^/]+';
+/** Staff preview of the client portal, opened in the in-app preview modal. */
+export const PORTAL_PREVIEW_HEADER_SOURCE = '/p/:path*';
+const PORTAL_PREVIEW_EXCLUDE = 'p/';
+/** Staff quote document preview, opened in the in-app preview modal. */
+export const QUOTE_PREVIEW_HEADER_SOURCE = '/quotes/:id/preview';
+const QUOTE_PREVIEW_EXCLUDE = 'quotes/[^/]+/preview';
+export const OFFER_LETTER_HEADER_SOURCE = '/api/ops/alta-personal/:id/carta';
+const OFFER_LETTER_EXCLUDE = 'api/ops/alta-personal/[^/]+/carta';
 const MERMAID_CDN = 'https://cdn.jsdelivr.net';
 
 export function contentSecurityPolicy(
@@ -79,6 +87,9 @@ export function nextSecurityHeaderSources(isDev = process.env.NODE_ENV !== 'prod
     ...SAME_ORIGIN_EMBED_PATHS.map((path) => `${path.replace(/^\//, '')}$`),
     PORTAL_CANVAS_EXCLUDE,
     PORTAL_QUOTE_DOC_EXCLUDE,
+    PORTAL_PREVIEW_EXCLUDE,
+    QUOTE_PREVIEW_EXCLUDE,
+    OFFER_LETTER_EXCLUDE,
   ].join('|');
   return [
     {
@@ -95,6 +106,18 @@ export function nextSecurityHeaderSources(isDev = process.env.NODE_ENV !== 'prod
     },
     {
       source: PORTAL_QUOTE_DOC_HEADER_SOURCE,
+      headers: sameOriginEmbedHeaders(isDev),
+    },
+    {
+      source: PORTAL_PREVIEW_HEADER_SOURCE,
+      headers: portalCanvasHeaders(isDev),
+    },
+    {
+      source: QUOTE_PREVIEW_HEADER_SOURCE,
+      headers: sameOriginEmbedHeaders(isDev),
+    },
+    {
+      source: OFFER_LETTER_HEADER_SOURCE,
       headers: sameOriginEmbedHeaders(isDev),
     },
   ];

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import OpsQuoteEditor from '@/components/ops/OpsQuoteEditor';
 import StatusBadge from '@/components/ops/StatusBadge';
 import { requireStaff } from '@/lib/ops/auth';
@@ -90,12 +91,12 @@ export default async function QuoteEditorPage({
               {backLabel}
             </Link>
             {projectSlug && (
-              <Link
+              <PreviewPopupLink
                 href={staffPortalPreviewPath(projectSlug, '/cotizacion')}
                 className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
               >
                 {t('ops.quotePage.viewAsClient')}
-              </Link>
+              </PreviewPopupLink>
             )}
           </div>
         }

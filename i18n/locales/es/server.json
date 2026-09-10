@@ -200,6 +200,12 @@
     "intermediary": "Intermediario",
     "titleSuffix": "Cotización Codiva",
     "plan": "Plan de entregas",
-    "weeks": "Sem. {{weeks}}"
+    "weeks": "Sem. {{weeks}}",
+    "estimate": "Estimación económica",
+    "module": "Módulo",
+    "hours": "Horas",
+    "rate": "Tarifa",
+    "total": "Total",
+    "estimatedTotal": "Total estimado del proyecto"
   }
 }

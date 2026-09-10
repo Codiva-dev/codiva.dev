@@ -67,12 +67,12 @@ export default async function ArchitectureEditorPage({
             >
               {t('ops.architecture.openCanvas')}
             </PreviewPopupLink>
-            <Link
+            <PreviewPopupLink
               href={staffPortalPreviewPath(project.slug, '/propuesta')}
               className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
             >
               {t('ops.architecture.viewProposal')}
-            </Link>
+            </PreviewPopupLink>
             <Link
               href={portalCanvasPdfPath(project.slug, deliverable.id)}
               className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"

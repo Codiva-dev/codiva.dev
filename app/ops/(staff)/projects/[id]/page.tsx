@@ -274,13 +274,13 @@ export default async function ProjectDetailPage({
             >
               {t('ops.project.exportCompliance')}
             </a>
-            <a
+            <PreviewPopupLink
               href={staffPortalPreviewPath(project.slug)}
               className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
               title={t('ops.project.previewTitle')}
             >
               {t('ops.project.preview')}
-            </a>
+            </PreviewPopupLink>
             <a
               href={projectPortalUrl(project.slug)}
               className="rounded-lg bg-codiva-primary px-4 py-2 text-sm font-medium text-white hover:bg-codiva-primary-dark"
@@ -1156,9 +1156,9 @@ export default async function ProjectDetailPage({
                 {t('ops.project.clientLogin')}
                 <PortalClientUrl slug={project.slug} path="/login" />
               </span>
-              <Link href={staffPortalPreviewPath(project.slug)} className="text-codiva-primary hover:underline">
+              <PreviewPopupLink href={staffPortalPreviewPath(project.slug)} className="text-codiva-primary hover:underline">
                 {t('ops.project.previewOps')}
-              </Link>
+              </PreviewPopupLink>
             </div>
             <ul className="space-y-2 text-sm">
               {(members ?? []).map((m) => {

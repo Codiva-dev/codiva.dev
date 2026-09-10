@@ -3,10 +3,9 @@ import { requirePortalAccess } from '@/lib/ops/auth';
 import { getAcceptanceStatus } from '@/lib/ops/legal/acceptances';
 import { buildQuoteDocumentHtml } from '@/lib/ops/quote-preview';
 import { getT } from '@/i18n/locale';
+import { isPortalQuoteStatus } from '@/lib/ops/portal-visibility';
 
 type RouteContext = { params: Promise<{ slug: string; quoteId: string }> };
-
-const CLIENT_STATUSES = new Set(['sent', 'accepted', 'rejected', 'expired']);
 
 export async function GET(_request: Request, context: RouteContext) {
   const { slug, quoteId } = await context.params;
@@ -34,7 +33,7 @@ export async function GET(_request: Request, context: RouteContext) {
   }
 
   if (!access.isStaffPreview) {
-    if (quote.visible_to_client === false || !CLIENT_STATUSES.has(quote.status)) {
+    if (quote.visible_to_client === false || !isPortalQuoteStatus(quote.status)) {
       return new NextResponse('Cotización no publicada', { status: 403 });
     }
   }

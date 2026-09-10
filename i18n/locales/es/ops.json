@@ -762,7 +762,8 @@
       "staff": "Vista previa staff",
       "body": "Así ve el cliente el portal de",
       "noLegal": "No se registran aceptaciones legales en este modo.",
-      "back": "Volver al proyecto"
+      "back": "Volver al proyecto",
+      "popupTitle": "Vista previa"
     },
     "modality": {
       "remote": "Remoto",
@@ -1508,7 +1509,7 @@
       "noMilestones": "Sin hitos.",
       "quotesHintPrefix": "Aquí se arma el documento. El cliente lo ve igual en la pestaña",
       "quotesHintStrong": "Cotización",
-      "quotesHintSuffix": "del portal (no como PDF suelto en Documentos).",
+      "quotesHintSuffix": "del portal. Si está visible al cliente, también se muestra en borrador (enviar sigue siendo necesario para aceptar).",
       "newQuote": "Nueva cotización",
       "proposalTitle": "Propuesta - {{name}}",
       "portal": "Portal:",
