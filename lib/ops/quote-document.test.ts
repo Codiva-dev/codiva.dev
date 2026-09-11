@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderQuoteDocumentHtml, type QuoteDocumentData } from './index';
+import { renderQuoteDocumentHtml, type QuoteDocumentData } from './quote-document';
 
 const sample: QuoteDocumentData = {
   serviceType: 'Web',

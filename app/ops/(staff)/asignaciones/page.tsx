@@ -9,6 +9,7 @@ import {
   isWorkProcessKind,
   isWorkStatus,
   isWorkStream,
+  asWorkUrgency,
   processHref,
   unreadMentionCountByAssignmentId,
   type WorkAssignment,
@@ -65,7 +66,7 @@ export default async function AsignacionesPage({
     supabase
       .from('work_assignments')
       .select(
-        'id, title, description, stream, status, assignee_id, due_at, progress_pct, process_kind, process_id, status_entered_at, created_at, created_by'
+        'id, title, description, stream, status, urgency, assignee_id, due_at, progress_pct, process_kind, process_id, status_entered_at, created_at, created_by'
       )
       .order('status_entered_at', { ascending: false }),
     supabase
@@ -212,6 +213,7 @@ export default async function AsignacionesPage({
       description: row.description || '',
       stream: asStream(row.stream),
       status: asStatus(row.status),
+      urgency: asWorkUrgency(row.urgency),
       assignee_id: row.assignee_id,
       assignee_name: (row.assignee_id && staffName.get(row.assignee_id)) || '',
       due_at: row.due_at,

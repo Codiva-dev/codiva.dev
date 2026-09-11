@@ -591,13 +591,19 @@
         "evolution": "Evolution",
         "people": "People"
       },
-      "workProcess": {
+        "workProcess": {
         "none": "No link",
         "internal": "Internal structure",
         "lead": "Lead",
         "project": "Project",
         "quote": "Quote",
         "ticket": "Ticket"
+      },
+      "workUrgency": {
+        "critical": "Critical",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
       }
     },
     "login": {
@@ -1947,6 +1953,8 @@
       "commentRequired": "Write a comment.",
       "allStreams": "All processes",
       "allPeople": "Everyone",
+      "urgency": "Urgency",
+      "allUrgencies": "All urgencies",
       "viewBoard": "Board",
       "viewList": "List",
       "cardsCompact": "Compact",

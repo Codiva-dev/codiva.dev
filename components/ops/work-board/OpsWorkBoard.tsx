@@ -31,6 +31,7 @@ import {
   WORK_PROCESS_KINDS,
   WORK_STATUSES,
   WORK_STREAMS,
+  WORK_URGENCIES,
   canMutateWorkAssignment,
   clampWorkProgress,
   clearWorkAssignmentUnreadMentions,
@@ -46,12 +47,14 @@ import {
   workColorTone,
   workFileHref,
   workSubtaskCounts,
+  workUrgencyTone,
+  sortWorkCardsByUrgency,
   applyPendingWorkSubtaskStatuses,
   dropConfirmedWorkSubtaskStatuses,
   type WorkAssignment,
   type WorkFile,
   type WorkProcessKind,
-  type WorkStatus,
+  type WorkUrgency,
 } from '@/lib/ops/work-board';
 import OpsMentionComposer, { type MentionStaff } from './OpsMentionComposer';
 import WorkAttachmentField from './WorkAttachmentField';
@@ -95,6 +98,7 @@ export default function OpsWorkBoard({
   const [assignments, setAssignments] = useState(initialAssignments);
   const [stream, setStream] = useState('');
   const [person, setPerson] = useState('');
+  const [urgency, setUrgency] = useState('');
   const [view, setView] = useState<'board' | 'list'>('board');
   const [density, setDensity] = useState<'compact' | 'expanded'>('compact');
   const [createOpen, setCreateOpen] = useState(false);
@@ -149,6 +153,13 @@ export default function OpsWorkBoard({
       >,
     [t]
   );
+  const urgencyLabels = useMemo(
+    () => Object.fromEntries(WORK_URGENCIES.map((id) => [id, t(`ops.labels.workUrgency.${id}`)])) as Record<
+      WorkUrgency,
+      string
+    >,
+    [t]
+  );
 
   const people = useMemo(() => {
     const map = new Map<string, string>();
@@ -161,12 +172,15 @@ export default function OpsWorkBoard({
   }, [assignments, locale]);
 
   const visible = useMemo(() => {
-    return assignments.filter((row) => {
-      if (stream && row.stream !== stream) return false;
-      if (person && row.assignee_id !== person) return false;
-      return true;
-    });
-  }, [assignments, stream, person]);
+    return sortWorkCardsByUrgency(
+      assignments.filter((row) => {
+        if (stream && row.stream !== stream) return false;
+        if (person && row.assignee_id !== person) return false;
+        if (urgency && row.urgency !== urgency) return false;
+        return true;
+      })
+    );
+  }, [assignments, stream, person, urgency]);
 
   const selected = visible.find((row) => row.id === selectedId) ?? assignments.find((row) => row.id === selectedId);
 
@@ -245,6 +259,14 @@ export default function OpsWorkBoard({
             </option>
           ))}
         </Select>
+        <Select size="sm" className="w-auto min-w-40" value={urgency} onChange={(e) => setUrgency(e.target.value)}>
+          <option value="">{t('ops.asignaciones.allUrgencies')}</option>
+          {WORK_URGENCIES.map((id) => (
+            <option key={id} value={id}>
+              {urgencyLabels[id]}
+            </option>
+          ))}
+        </Select>
         <div className="flex rounded-lg border border-zinc-200 p-0.5">
           <button
             type="button"
@@ -298,9 +320,9 @@ export default function OpsWorkBoard({
               <section
                 key={status}
                 data-work-drop-status={status}
-                className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 xl:min-w-0 ${
+                className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
                   density === 'compact' ? 'min-w-64' : 'min-w-72'
-                } ${active ? 'border-codiva-primary ring-2 ring-codiva-primary/30' : 'border-zinc-200'}`}
+                } ${active ? 'border-codiva-primary ring-2 ring-inset ring-codiva-primary/30' : 'border-zinc-200'}`}
               >
                 <header className="mb-1.5 flex shrink-0 items-center justify-between px-1 py-0.5">
                   <h2 className="text-sm font-semibold text-zinc-800">{statusLabels[status]}</h2>
@@ -308,13 +330,14 @@ export default function OpsWorkBoard({
                     <span className="text-xs text-zinc-500">{cards.length}</span>
                   )}
                 </header>
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-y-contain">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-y-contain p-1">
                   {cards.map((row) => (
                     <WorkCard
                       key={`${row.id}-${density}`}
                       assignment={row}
                       locale={locale}
                       streamLabel={streamLabels[row.stream]}
+                      urgencyLabel={urgencyLabels[row.urgency]}
                       collapsible
                       compact={density === 'compact'}
                       canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
@@ -353,6 +376,7 @@ export default function OpsWorkBoard({
                         assignment={row}
                         locale={locale}
                         streamLabel={streamLabels[row.stream]}
+                      urgencyLabel={urgencyLabels[row.urgency]}
                         showStatus
                         canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
                         canManage={canManage}
@@ -381,6 +405,7 @@ export default function OpsWorkBoard({
         staff={staff}
         processOptions={processOptions}
         streamLabels={streamLabels}
+        urgencyLabels={urgencyLabels}
         processLabels={processLabels}
       />
 
@@ -395,6 +420,7 @@ export default function OpsWorkBoard({
           locale={locale}
           statusLabels={statusLabels}
           streamLabels={streamLabels}
+          urgencyLabels={urgencyLabels}
           processLabels={processLabels}
           onRefresh={() => router.refresh()}
           onToggleSubtask={onToggleSub}
@@ -459,10 +485,34 @@ function CardExpandButton({
   );
 }
 
+function WorkUrgencyBadge({
+  urgency,
+  label,
+  compact = false,
+}: {
+  urgency: WorkUrgency;
+  label: string;
+  compact?: boolean;
+}) {
+  const tone = workUrgencyTone(urgency);
+  return (
+    <span
+      title={label}
+      className={`inline-flex shrink-0 items-center gap-1 rounded-full font-semibold ${tone.badge} ${
+        compact ? 'px-1.5 py-0 text-[10px] leading-4' : 'px-2 py-0.5 text-[11px]'
+      }`}
+    >
+      <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} aria-hidden />
+      {label}
+    </span>
+  );
+}
+
 function WorkCard({
   assignment,
   locale,
   streamLabel,
+  urgencyLabel,
   statusLabel,
   compact = false,
   collapsible = false,
@@ -483,6 +533,7 @@ function WorkCard({
   assignment: WorkAssignment;
   locale: 'es' | 'en';
   streamLabel: string;
+  urgencyLabel: string;
   statusLabel?: string;
   compact?: boolean;
   collapsible?: boolean;
@@ -504,6 +555,7 @@ function WorkCard({
   const [expanded, setExpanded] = useState(!compact);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const tone = workColorTone(assignment.stream);
+  const urgencyTone = workUrgencyTone(assignment.urgency);
   const counts = workSubtaskCounts(assignment);
   const pendingCount = workCardPendingCount({
     unreadMentionCount: assignment.unread_mention_count,
@@ -536,22 +588,23 @@ function WorkCard({
     if (counts.total) meta.push(t('ops.asignaciones.subtaskCount', { done: counts.done, total: counts.total }));
     return (
       <article
-        title={`${streamLabel} · ${assigneeName}`}
+        title={`${urgencyLabel} · ${streamLabel} · ${assigneeName}`}
         onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
         onClick={open}
-        className={`min-w-0 max-w-full overflow-hidden rounded-lg border px-2.5 py-2 ${tone.card} ${
+        className={`min-w-0 max-w-full overflow-hidden rounded-lg border border-l-[3px] px-2.5 py-2 ${tone.card} ${urgencyTone.bar} ${
           draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
-        } ${isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''}`}
+        } ${isDragging ? 'opacity-40 ring-2 ring-inset ring-zinc-400/70' : isMine ? `ring-2 ring-inset ${tone.ring}` : ''}`}
       >
         <div className="flex items-start gap-1">
-          <h3 className="min-w-0 flex-1 line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">
+          <h3 className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-snug text-zinc-900">
             {assignment.title}
           </h3>
+          <WorkUrgencyBadge urgency={assignment.urgency} label={urgencyLabel} compact />
           <PendingNotificationBadge count={pendingCount} />
           {expandToggle}
         </div>
         {assignment.process_label ? (
-          <p className="mt-0.5 truncate text-[11px] text-zinc-500">{assignment.process_label}</p>
+          <p className="mt-0.5 break-words text-[11px] text-zinc-500">{assignment.process_label}</p>
         ) : null}
         <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
           <span
@@ -580,8 +633,8 @@ function WorkCard({
     <article
       onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
       onClick={open}
-      className={`min-w-0 max-w-full overflow-hidden rounded-xl border p-3 ${tone.card} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
-        isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''
+      className={`min-w-0 max-w-full overflow-hidden rounded-xl border border-l-[3px] p-3 ${tone.card} ${urgencyTone.bar} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
+        isDragging ? 'opacity-40 ring-2 ring-inset ring-zinc-400/70' : isMine ? `ring-2 ring-inset ${tone.ring}` : ''
       }`}
     >
       <div className="flex items-start gap-2">
@@ -590,6 +643,7 @@ function WorkCard({
             <h3 className="min-w-0 flex-1 break-words text-sm font-semibold text-zinc-900">
               {assignment.title}
             </h3>
+            <WorkUrgencyBadge urgency={assignment.urgency} label={urgencyLabel} />
             <PendingNotificationBadge count={pendingCount} />
           </div>
           <p className="mt-0.5 text-xs text-zinc-600">
@@ -625,13 +679,13 @@ function WorkCard({
         assignment.process_href ? (
           <Link
             href={assignment.process_href}
-            className="mt-1 inline-block max-w-full truncate text-xs font-medium text-codiva-primary hover:underline"
+            className="mt-1 inline-block max-w-full break-words text-xs font-medium text-codiva-primary hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
             {assignment.process_label}
           </Link>
         ) : (
-          <p className="mt-1 truncate text-xs text-zinc-600">{assignment.process_label}</p>
+          <p className="mt-1 break-words text-xs text-zinc-600">{assignment.process_label}</p>
         )
       ) : null}
       {assignment.description ? (
@@ -785,6 +839,7 @@ function CreateModal({
   staff,
   processOptions,
   streamLabels,
+  urgencyLabels,
   processLabels,
 }: {
   open: boolean;
@@ -792,6 +847,7 @@ function CreateModal({
   staff: MentionStaff[];
   processOptions: ProcessOption[];
   streamLabels: Record<string, string>;
+  urgencyLabels: Record<string, string>;
   processLabels: Record<string, string>;
 }) {
   const { t } = useTranslation();
@@ -817,15 +873,26 @@ function CreateModal({
         <Field label={t('ops.asignaciones.titlePlaceholder')} htmlFor="work-title">
           <Input id="work-title" name="title" required size="sm" placeholder={t('ops.asignaciones.titlePlaceholder')} />
         </Field>
-        <Field label={t('ops.asignaciones.stream')}>
-          <Select name="stream" defaultValue="delivery" size="sm">
-            {WORK_STREAMS.map((id) => (
-              <option key={id} value={id}>
-                {streamLabels[id]}
-              </option>
-            ))}
-          </Select>
-        </Field>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label={t('ops.asignaciones.stream')}>
+            <Select name="stream" defaultValue="delivery" size="sm">
+              {WORK_STREAMS.map((id) => (
+                <option key={id} value={id}>
+                  {streamLabels[id]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label={t('ops.asignaciones.urgency')}>
+            <Select name="urgency" defaultValue="normal" size="sm">
+              {WORK_URGENCIES.map((id) => (
+                <option key={id} value={id}>
+                  {urgencyLabels[id]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        </div>
         <Field label={t('ops.asignaciones.assignee')}>
           <Select name="assigneeId" defaultValue="" size="sm">
             <option value="">{t('ops.asignaciones.unassigned')}</option>
@@ -908,6 +975,7 @@ function DetailModal({
   locale,
   statusLabels,
   streamLabels,
+  urgencyLabels,
   processLabels,
   onRefresh,
   onToggleSubtask,
@@ -922,6 +990,7 @@ function DetailModal({
   locale: 'es' | 'en';
   statusLabels: Record<string, string>;
   streamLabels: Record<string, string>;
+  urgencyLabels: Record<string, string>;
   processLabels: Record<string, string>;
   onRefresh: () => void;
   onToggleSubtask: (id: string) => void;
@@ -1010,6 +1079,15 @@ function DetailModal({
                   ))}
                 </Select>
               </Field>
+              <Field label={t('ops.asignaciones.urgency')}>
+                <Select name="urgency" size="sm" defaultValue={assignment.urgency}>
+                  {WORK_URGENCIES.map((id) => (
+                    <option key={id} value={id}>
+                      {urgencyLabels[id]}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
               {statusSelect}
               <Field label={t('ops.asignaciones.assignee')}>
                 <Select name="assigneeId" size="sm" defaultValue={assignment.assignee_id || ''}>
@@ -1050,6 +1128,8 @@ function DetailModal({
               <p>{assignment.process_label}</p>
             ) : null}
             <p>
+              {urgencyLabels[assignment.urgency]}
+              {' · '}
               {assignment.assignee_name || t('ops.asignaciones.unassigned')}
               {assignment.due_at ? ` · ${assignment.due_at.slice(0, 10)}` : ''}
             </p>

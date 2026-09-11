@@ -8,10 +8,12 @@ export const WORK_STATUSES = [
   'done',
 ] as const;
 export const WORK_PROCESS_KINDS = ['none', 'internal', 'project', 'lead', 'quote', 'ticket'] as const;
+export const WORK_URGENCIES = ['critical', 'high', 'normal', 'low'] as const;
 
 export type WorkStream = (typeof WORK_STREAMS)[number];
 export type WorkStatus = (typeof WORK_STATUSES)[number];
 export type WorkProcessKind = (typeof WORK_PROCESS_KINDS)[number];
+export type WorkUrgency = (typeof WORK_URGENCIES)[number];
 
 export const WORK_BOARD_COLUMNS: readonly WorkStatus[] = [
   'backlog',
@@ -73,6 +75,36 @@ export const WORK_COLOR_TONE: Record<
   },
 };
 
+export const WORK_URGENCY_RANK: Record<WorkUrgency, number> = {
+  critical: 0,
+  high: 1,
+  normal: 2,
+  low: 3,
+};
+
+export const WORK_URGENCY_TONE: Record<WorkUrgency, { badge: string; bar: string; dot: string }> = {
+  critical: {
+    badge: 'bg-red-600 text-white',
+    bar: 'border-l-red-600',
+    dot: 'bg-white',
+  },
+  high: {
+    badge: 'bg-amber-500 text-white',
+    bar: 'border-l-amber-500',
+    dot: 'bg-white',
+  },
+  normal: {
+    badge: 'bg-white/80 text-zinc-600 ring-1 ring-inset ring-zinc-200',
+    bar: 'border-l-zinc-300',
+    dot: 'bg-zinc-400',
+  },
+  low: {
+    badge: 'bg-sky-100 text-sky-800',
+    bar: 'border-l-sky-400',
+    dot: 'bg-sky-500',
+  },
+};
+
 export type WorkSubtask = {
   id: string;
   assignment_id: string;
@@ -117,6 +149,7 @@ export type WorkAssignment = {
   description: string;
   stream: WorkStream;
   status: WorkStatus;
+  urgency: WorkUrgency;
   assignee_id: string | null;
   assignee_name: string;
   due_at: string | null;
@@ -247,6 +280,27 @@ export function dropConfirmedWorkSubtaskStatuses(
 
 export function isWorkProcessKind(value: string): value is WorkProcessKind {
   return (WORK_PROCESS_KINDS as readonly string[]).includes(value);
+}
+
+export function isWorkUrgency(value: string): value is WorkUrgency {
+  return (WORK_URGENCIES as readonly string[]).includes(value);
+}
+
+export function asWorkUrgency(value: string | null | undefined): WorkUrgency {
+  const id = String(value || '').trim().toLowerCase();
+  return isWorkUrgency(id) ? id : 'normal';
+}
+
+export function workUrgencyTone(value: string | null | undefined) {
+  return WORK_URGENCY_TONE[asWorkUrgency(value)];
+}
+
+export function compareWorkUrgency(a: string | null | undefined, b: string | null | undefined) {
+  return WORK_URGENCY_RANK[asWorkUrgency(a)] - WORK_URGENCY_RANK[asWorkUrgency(b)];
+}
+
+export function sortWorkCardsByUrgency<T extends { urgency?: string | null }>(rows: T[]) {
+  return [...rows].sort((a, b) => compareWorkUrgency(a.urgency, b.urgency));
 }
 
 export function workColorForStream(stream: string) {

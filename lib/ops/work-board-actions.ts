@@ -18,6 +18,7 @@ import {
   isWorkProcessKind,
   isWorkStatus,
   isWorkStream,
+  isWorkUrgency,
   mentionedStaffIds,
   mentionDisplayName,
   mentionPlainText,
@@ -34,6 +35,7 @@ import {
   type WorkProcessKind,
   type WorkStatus,
   type WorkStream,
+  type WorkUrgency,
 } from '@/lib/ops/work-board';
 
 function revalidateWorkLists() {
@@ -243,6 +245,8 @@ export async function createWorkAssignment(formData: FormData, files?: File[]) {
 
   const streamRaw = String(formData.get('stream') || 'delivery').trim();
   const stream: WorkStream = isWorkStream(streamRaw) ? streamRaw : 'delivery';
+  const urgencyRaw = String(formData.get('urgency') || 'normal').trim();
+  const urgency: WorkUrgency = isWorkUrgency(urgencyRaw) ? urgencyRaw : 'normal';
   const assigneeId = String(formData.get('assigneeId') || '').trim() || null;
   const dueAt = String(formData.get('dueAt') || '').trim() || null;
   const description = String(formData.get('description') || '').trim();
@@ -259,6 +263,7 @@ export async function createWorkAssignment(formData: FormData, files?: File[]) {
       title,
       description,
       stream,
+      urgency,
       status: 'backlog',
       assignee_id: assigneeId,
       due_at: dueAt,
@@ -304,7 +309,7 @@ export async function createWorkAssignment(formData: FormData, files?: File[]) {
     entityType: 'work_assignment',
     entityId: row.id,
     action: 'created',
-    metadata: { title, stream, process_kind },
+    metadata: { title, stream, urgency, process_kind },
     actorId: access.staff.id,
   });
 
@@ -326,6 +331,8 @@ export async function updateWorkAssignment(assignmentId: string, formData: FormD
   if (!title) throw new Error(t('ops.asignaciones.titleRequired'));
   const streamRaw = String(formData.get('stream') || 'delivery').trim();
   const stream: WorkStream = isWorkStream(streamRaw) ? streamRaw : 'delivery';
+  const urgencyRaw = String(formData.get('urgency') || 'normal').trim();
+  const urgency: WorkUrgency = isWorkUrgency(urgencyRaw) ? urgencyRaw : 'normal';
   const description = String(formData.get('description') || '').trim();
   const dueAt = String(formData.get('dueAt') || '').trim() || null;
   const { process_kind, process_id } = parseProcess(formData);
@@ -337,6 +344,7 @@ export async function updateWorkAssignment(assignmentId: string, formData: FormD
     title,
     description,
     stream,
+    urgency,
     due_at: dueAt,
     process_kind,
     process_id,
