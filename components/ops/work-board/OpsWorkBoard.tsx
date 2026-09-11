@@ -226,9 +226,9 @@ export default function OpsWorkBoard({
   }
 
   return (
-    <div className="min-w-0 space-y-4">
+    <div className={`flex min-h-0 min-w-0 flex-col gap-4 ${view === 'board' ? 'lg:min-h-0 lg:flex-1' : ''}`}>
       {ghost}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <Select size="sm" className="w-auto min-w-40" value={stream} onChange={(e) => setStream(e.target.value)}>
           <option value="">{t('ops.asignaciones.allStreams')}</option>
           {WORK_STREAMS.map((id) => (
@@ -289,7 +289,7 @@ export default function OpsWorkBoard({
       {view === 'board' ? (
         <div
           ref={scrollerRef}
-          className="-mx-4 flex min-h-[28rem] min-w-0 gap-2 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+          className="-mx-4 flex min-h-[28rem] min-w-0 gap-2 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:min-h-0 lg:flex-1 lg:px-8"
         >
           {WORK_BOARD_COLUMNS.map((status) => {
             const cards = visible.filter((row) => row.status === status);
@@ -298,17 +298,17 @@ export default function OpsWorkBoard({
               <section
                 key={status}
                 data-work-drop-status={status}
-                className={`flex shrink-0 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
-                  density === 'compact' ? 'w-64 min-w-64 max-w-64' : 'w-72 min-w-72 max-w-72'
+                className={`flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 xl:min-w-0 ${
+                  density === 'compact' ? 'min-w-64' : 'min-w-72'
                 } ${active ? 'border-codiva-primary ring-2 ring-codiva-primary/30' : 'border-zinc-200'}`}
               >
-                <header className="mb-1.5 flex items-center justify-between px-1 py-0.5">
+                <header className="mb-1.5 flex shrink-0 items-center justify-between px-1 py-0.5">
                   <h2 className="text-sm font-semibold text-zinc-800">{statusLabels[status]}</h2>
                   {status === 'done' ? null : (
                     <span className="text-xs text-zinc-500">{cards.length}</span>
                   )}
                 </header>
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-y-contain">
                   {cards.map((row) => (
                     <WorkCard
                       key={`${row.id}-${density}`}
