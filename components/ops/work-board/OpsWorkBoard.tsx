@@ -495,6 +495,7 @@ function WorkUrgencyBadge({
   compact?: boolean;
 }) {
   const tone = workUrgencyTone(urgency);
+  const showLabel = !compact || urgency !== 'normal';
   return (
     <span
       title={label}
@@ -503,7 +504,7 @@ function WorkUrgencyBadge({
       }`}
     >
       <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} aria-hidden />
-      {label}
+      {showLabel ? label : <span className="sr-only">{label}</span>}
     </span>
   );
 }
@@ -596,15 +597,14 @@ function WorkCard({
         } ${isDragging ? 'opacity-40 ring-2 ring-inset ring-zinc-400/70' : isMine ? `ring-2 ring-inset ${tone.ring}` : ''}`}
       >
         <div className="flex items-start gap-1">
-          <h3 className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-snug text-zinc-900">
+          <h3 className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-zinc-900 [overflow-wrap:anywhere]">
             {assignment.title}
           </h3>
-          <WorkUrgencyBadge urgency={assignment.urgency} label={urgencyLabel} compact />
           <PendingNotificationBadge count={pendingCount} />
           {expandToggle}
         </div>
         {assignment.process_label ? (
-          <p className="mt-0.5 break-words text-[11px] text-zinc-500">{assignment.process_label}</p>
+          <p className="mt-0.5 truncate text-[11px] text-zinc-500">{assignment.process_label}</p>
         ) : null}
         <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
           <span
@@ -616,6 +616,9 @@ function WorkCard({
             {initials || '–'}
           </span>
           <p className="min-w-0 flex-1 truncate text-[11px] text-zinc-600">{meta.join(' · ')}</p>
+          {assignment.urgency === 'normal' ? null : (
+            <WorkUrgencyBadge urgency={assignment.urgency} label={urgencyLabel} compact />
+          )}
         </div>
         {assignment.subtask_edit_request ? (
           <p className="mt-1 text-[11px] font-medium text-amber-800">{t('ops.asignaciones.requestPendingBadge')}</p>
@@ -640,10 +643,9 @@ function WorkCard({
       <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-start gap-2">
-            <h3 className="min-w-0 flex-1 break-words text-sm font-semibold text-zinc-900">
+            <h3 className="min-w-0 flex-1 text-sm font-semibold text-zinc-900 [overflow-wrap:anywhere]">
               {assignment.title}
             </h3>
-            <WorkUrgencyBadge urgency={assignment.urgency} label={urgencyLabel} />
             <PendingNotificationBadge count={pendingCount} />
           </div>
           <p className="mt-0.5 text-xs text-zinc-600">
@@ -674,7 +676,10 @@ function WorkCard({
           </button>
         ) : null}
       </div>
-      <p className="mt-1 text-[11px] font-medium uppercase tracking-wide text-zinc-500">{streamLabel}</p>
+      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">{streamLabel}</p>
+        <WorkUrgencyBadge urgency={assignment.urgency} label={urgencyLabel} />
+      </div>
       {assignment.process_label ? (
         assignment.process_href ? (
           <Link
