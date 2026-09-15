@@ -266,11 +266,13 @@ export default async function AsignacionesPage({
   }));
 
   return (
-    <div>
-      <OpsPageHeader
-        title={t('ops.asignaciones.title')}
-        description={t('ops.asignaciones.description')}
-      />
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="shrink-0">
+        <OpsPageHeader
+          title={t('ops.asignaciones.title')}
+          description={t('ops.asignaciones.description')}
+        />
+      </div>
       <OpsWorkBoard
         assignments={assignments}
         staff={staffOptions}

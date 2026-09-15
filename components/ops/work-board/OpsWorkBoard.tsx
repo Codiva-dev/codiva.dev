@@ -226,9 +226,13 @@ export default function OpsWorkBoard({
   }
 
   return (
-    <div className="min-w-0 space-y-4">
+    <div
+      className={
+        view === 'board' ? 'flex min-h-0 min-w-0 flex-1 flex-col gap-4' : 'min-w-0 space-y-4'
+      }
+    >
       {ghost}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
         <Select size="sm" className="w-auto min-w-40" value={stream} onChange={(e) => setStream(e.target.value)}>
           <option value="">{t('ops.asignaciones.allStreams')}</option>
           {WORK_STREAMS.map((id) => (
@@ -289,7 +293,7 @@ export default function OpsWorkBoard({
       {view === 'board' ? (
         <div
           ref={scrollerRef}
-          className="-mx-4 flex min-h-[28rem] min-w-0 gap-2 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+          className="-mx-4 flex min-h-0 min-w-0 flex-1 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
         >
           {WORK_BOARD_COLUMNS.map((status) => {
             const cards = visible.filter((row) => row.status === status);
@@ -298,17 +302,17 @@ export default function OpsWorkBoard({
               <section
                 key={status}
                 data-work-drop-status={status}
-                className={`flex shrink-0 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
+                className={`flex h-full min-h-0 shrink-0 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
                   density === 'compact' ? 'w-64 min-w-64 max-w-64' : 'w-72 min-w-72 max-w-72'
                 } ${active ? 'border-codiva-primary ring-2 ring-codiva-primary/30' : 'border-zinc-200'}`}
               >
-                <header className="mb-1.5 flex items-center justify-between px-1 py-0.5">
+                <header className="mb-1.5 flex shrink-0 items-center justify-between px-1 py-0.5">
                   <h2 className="text-sm font-semibold text-zinc-800">{statusLabels[status]}</h2>
                   {status === 'done' ? null : (
                     <span className="text-xs text-zinc-500">{cards.length}</span>
                   )}
                 </header>
-                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto overscroll-y-contain">
                   {cards.map((row) => (
                     <WorkCard
                       key={`${row.id}-${density}`}
@@ -539,19 +543,19 @@ function WorkCard({
         title={`${streamLabel} · ${assigneeName}`}
         onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
         onClick={open}
-        className={`min-w-0 max-w-full overflow-hidden rounded-lg border px-2.5 py-2 ${tone.card} ${
+        className={`h-auto w-full min-w-0 shrink-0 overflow-hidden rounded-lg border px-2.5 py-2 ${tone.card} ${
           draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
         } ${isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''}`}
       >
         <div className="flex items-start gap-1">
-          <h3 className="min-w-0 flex-1 line-clamp-2 text-[13px] font-semibold leading-snug text-zinc-900">
+          <h3 className="min-w-0 flex-1 break-words text-[13px] font-semibold leading-snug text-zinc-900">
             {assignment.title}
           </h3>
           <PendingNotificationBadge count={pendingCount} />
           {expandToggle}
         </div>
         {assignment.process_label ? (
-          <p className="mt-0.5 truncate text-[11px] text-zinc-500">{assignment.process_label}</p>
+          <p className="mt-0.5 break-words text-[11px] leading-snug text-zinc-500">{assignment.process_label}</p>
         ) : null}
         <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
           <span
@@ -580,7 +584,7 @@ function WorkCard({
     <article
       onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
       onClick={open}
-      className={`min-w-0 max-w-full overflow-hidden rounded-xl border p-3 ${tone.card} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
+      className={`h-auto w-full min-w-0 max-w-full shrink-0 overflow-hidden rounded-xl border p-3 ${tone.card} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
         isDragging ? 'opacity-40 ring-2 ring-zinc-400/70' : isMine ? `ring-1 ${tone.ring}` : ''
       }`}
     >
