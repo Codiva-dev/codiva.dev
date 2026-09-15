@@ -4,7 +4,7 @@ import StatusBadge from '@/components/ops/StatusBadge';
 import { requireProjectMember } from '@/lib/ops/auth';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
-import { filterProposalCanvases, getPortalVisibility } from '@/lib/ops/portal-visibility';
+import { filterProposalCanvases, getPortalVisibility, PORTAL_QUOTE_STATUSES } from '@/lib/ops/portal-visibility';
 import { portalCanvasPath } from '@/lib/ops/architecture';
 
 export default async function PortalProposalPage({
@@ -32,7 +32,7 @@ export default async function PortalProposalPage({
           .select('id, title, total_amount, currency, status, valid_until, version')
           .eq('project_id', project.id)
           .eq('visible_to_client', true)
-          .in('status', ['sent', 'accepted', 'rejected', 'expired'])
+          .in('status', [...PORTAL_QUOTE_STATUSES])
           .order('version', { ascending: false })
           .limit(1)
       : Promise.resolve({

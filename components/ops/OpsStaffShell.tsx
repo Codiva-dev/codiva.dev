@@ -26,7 +26,12 @@ export default function OpsStaffShell({
   const { t } = useTranslation();
   const [desktopOpen, setDesktopOpen] = useState(initialSidebarOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [embedded, setEmbedded] = useState(false);
   const mobileOpenBtnRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    setEmbedded(window.self !== window.top);
+  }, []);
 
   const toggleDesktop = useCallback(() => {
     setDesktopOpen((prev) => {
@@ -52,6 +57,10 @@ export default function OpsStaffShell({
   useEffect(() => {
     document.body.style.removeProperty('touch-action');
   }, []);
+
+  if (embedded) {
+    return <div className="min-h-dvh overflow-auto bg-codiva-background">{children}</div>;
+  }
 
   return (
     <div className="flex h-dvh overflow-hidden">

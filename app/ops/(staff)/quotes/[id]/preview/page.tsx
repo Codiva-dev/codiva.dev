@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import HideWhenEmbedded from '@/components/ops/HideWhenEmbedded';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
 import StatusBadge from '@/components/ops/StatusBadge';
 import { requireStaff } from '@/lib/ops/auth';
 import { buildQuoteDocumentHtml } from '@/lib/ops/quote-preview';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
+import { portalQuotePdfPath } from '@/lib/ops/quotes';
 
 export default async function QuotePreviewPage({
   params,
@@ -24,6 +26,7 @@ export default async function QuotePreviewPage({
   let backLabel = t('ops.quotePage.backLeads');
   let lead = null;
   let project = null;
+  let projectSlug: string | null = null;
 
   if (quote.lead_id) {
     const { data } = await supabase.from('leads').select('*').eq('id', quote.lead_id).single();
@@ -38,6 +41,7 @@ export default async function QuotePreviewPage({
       .single();
     if (data) {
       const org = data.organizations as { name?: string; contact_email?: string } | { name?: string; contact_email?: string }[] | null;
+      projectSlug = data.slug;
       project = {
         name: data.name,
         organizations: Array.isArray(org) ? org[0] ?? null : org,
@@ -54,24 +58,35 @@ export default async function QuotePreviewPage({
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col">
-      <OpsPageHeader
-        title={t('ops.quotePage.previewTitle', { title: quote.title })}
-        description={t('ops.quotePage.version', { version: quote.version })}
-        actions={
-          <div className="flex items-center gap-3">
-            <StatusBadge
-              label={QUOTE_STATUS_LABELS[quote.status] || quote.status}
-              tone={quote.status === 'accepted' ? 'success' : isDraft ? 'warning' : 'info'}
-            />
-            <Link
-              href={backHref}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
-            >
-              {backLabel}
-            </Link>
-          </div>
-        }
-      />
+      <HideWhenEmbedded>
+        <OpsPageHeader
+          title={t('ops.quotePage.previewTitle', { title: quote.title })}
+          description={t('ops.quotePage.version', { version: quote.version })}
+          actions={
+            <div className="flex items-center gap-3">
+              <StatusBadge
+                label={QUOTE_STATUS_LABELS[quote.status] || quote.status}
+                tone={quote.status === 'accepted' ? 'success' : isDraft ? 'warning' : 'info'}
+              />
+              {projectSlug && (
+                <a
+                  href={portalQuotePdfPath(projectSlug, id)}
+                  download
+                  className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
+                >
+                  {t('portal.quote.downloadPdf')}
+                </a>
+              )}
+              <Link
+                href={backHref}
+                className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
+              >
+                {backLabel}
+              </Link>
+            </div>
+          }
+        />
+      </HideWhenEmbedded>
 
       {isDraft && (
         <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">

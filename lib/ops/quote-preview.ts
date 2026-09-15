@@ -84,7 +84,8 @@ export function buildQuoteDocumentData(
 export function buildQuoteDocumentHtml(
   quote: QuoteRow,
   context: { lead?: LeadContext; project?: ProjectContext },
-  locale?: 'es' | 'en'
+  locale?: 'es' | 'en',
+  options?: { showHourlyBreakdown?: boolean }
 ): string {
-  return renderQuoteDocumentHtml(buildQuoteDocumentData(quote, context), locale);
+  return renderQuoteDocumentHtml(buildQuoteDocumentData(quote, context), locale, options);
 }

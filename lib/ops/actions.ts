@@ -43,6 +43,11 @@ import { ensureQuoteAccessToken, publicQuoteUrl } from '@/lib/ops/quote-tokens';
 import { invitePortalUserCore } from '@/lib/ops/portal-invite';
 import { findUserIdByEmail } from '@/lib/ops/auth-users';
 import {
+  associatePartnerPortalUsers,
+  syncHubUserPartnerProjects,
+  upsertPortalHubProfile,
+} from '@/lib/ops/portal-hub';
+import {
   architectureStarterHtml,
   isCanvasKind,
   MAX_ARCHITECTURE_HTML_CHARS,
@@ -493,6 +498,8 @@ export async function convertLeadToProject(leadId: string) {
     role_on_project: staff.role === 'dev' ? 'dev' : 'pm',
   });
 
+  await associatePartnerPortalUsers({ projectId: project.id, lead });
+
   await logActivity({
     entityType: 'project',
     entityId: project.id,
@@ -751,6 +758,51 @@ export async function updateQuote(quoteId: string, formData: FormData) {
   revalidatePath('/p', 'layout');
 }
 
+export async function deleteDraftQuote(quoteId: string) {
+  const access = await assertCapability('quotes');
+  const { supabase, user } = access;
+  const t = await getT();
+
+  const { data: existing } = await supabase
+    .from('quotes')
+    .select('id, status, project_id, lead_id, title, version')
+    .eq('id', quoteId)
+    .maybeSingle();
+  if (!existing) throw new Error(t('ops.quoteEditor.notFound'));
+  if (existing.project_id) {
+    await assertProjectAccessOrThrow(access, existing.project_id);
+  }
+  if (existing.status !== 'draft') throw new Error(t('ops.quoteEditor.deleteOnlyDraft'));
+
+  const { error } = await supabase.from('quotes').delete().eq('id', quoteId).eq('status', 'draft');
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'quote',
+    entityId: quoteId,
+    action: 'deleted',
+    metadata: { title: existing.title, version: existing.version },
+    actorId: user.id,
+  });
+
+  if (existing.project_id) {
+    revalidatePath(`/projects/${existing.project_id}`);
+    revalidatePath('/p', 'layout');
+  }
+  if (existing.lead_id) revalidatePath(`/leads/${existing.lead_id}`);
+  revalidatePath('/leads');
+
+  const { redirectWithToast } = await import('@/lib/ops/toast');
+  if (existing.project_id) {
+    const dest = await opsProjectPathById(supabase, existing.project_id, '?tab=cotizaciones');
+    redirectWithToast(dest, t('ops.quoteEditor.deleted'));
+  }
+  if (existing.lead_id) {
+    redirectWithToast(`/leads/${existing.lead_id}?tab=cotizaciones`, t('ops.quoteEditor.deleted'));
+  }
+  redirectWithToast('/leads', t('ops.quoteEditor.deleted'));
+}
+
 export async function sendQuote(quoteId: string, projectId: string) {
   const access = await assertCapability('quotes');
   await assertProjectAccessOrThrow(access, projectId);
@@ -936,6 +988,25 @@ export async function addPortalUserProjects(userId: string, formData: FormData) 
   revalidatePath('/users');
   revalidatePath(`/users/${userId}`);
   for (const id of projectIds) revalidatePath(`/projects/${id}`);
+}
+
+export async function setPortalUserHub(userId: string, formData: FormData) {
+  await assertCapability('portal_users');
+  const isHub = formData.get('isHub') === 'on';
+  const displayName = String(formData.get('displayName') || '').trim() || null;
+  await upsertPortalHubProfile(userId, { isHub, displayName });
+  const ids = isHub ? await syncHubUserPartnerProjects(userId) : [];
+  revalidatePath('/users');
+  revalidatePath(`/users/${userId}`);
+  for (const id of ids) revalidatePath(`/projects/${id}`);
+}
+
+export async function syncPortalHubProjects(userId: string) {
+  await assertCapability('portal_users');
+  const ids = await syncHubUserPartnerProjects(userId);
+  revalidatePath('/users');
+  revalidatePath(`/users/${userId}`);
+  for (const id of ids) revalidatePath(`/projects/${id}`);
 }
 
 export async function removePortalUserProject(userId: string, projectId: string) {

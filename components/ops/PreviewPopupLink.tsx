@@ -1,34 +1,63 @@
 'use client';
 
 import type { AnchorHTMLAttributes, MouseEvent } from 'react';
-import {
-  PREVIEW_POPUP_NAME,
-  openPreviewPopup,
-  shouldHandlePreviewPopupClick,
-} from '@/lib/ops/preview-popup';
+import { useId, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import Button from '@/components/ui/Button';
+import Modal, { ModalHeader } from '@/components/ui/Modal';
+import { previewEmbedHref, shouldHandlePreviewPopupClick } from '@/lib/ops/preview-popup';
 
 export default function PreviewPopupLink({
   href,
-  name = PREVIEW_POPUP_NAME,
+  title,
   onClick,
   children,
   ...rest
-}: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; name?: string }) {
+}: AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) {
+  const { t } = useTranslation();
+  const titleId = useId();
+  const [open, setOpen] = useState(false);
+  const closeLabel = t('common.buttons.close');
+  const iframeTitle =
+    title?.trim() || (typeof children === 'string' ? children : t('ops.preview.popupTitle'));
+
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     onClick?.(event);
     if (!shouldHandlePreviewPopupClick(event)) return;
-    const popup = openPreviewPopup(href, {
-      open: (url, name, features) => window.open(url, name, features),
-      availWidth: window.screen.availWidth,
-      availHeight: window.screen.availHeight,
-      name,
-    });
-    if (popup) event.preventDefault();
+    event.preventDefault();
+    setOpen(true);
   }
 
   return (
-    <a {...rest} href={href} target={name} rel="noopener noreferrer" onClick={handleClick}>
-      {children}
-    </a>
+    <>
+      <a {...rest} href={href} onClick={handleClick}>
+        {children}
+      </a>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={iframeTitle}
+        titleId={titleId}
+        size="frame"
+        closeLabel={closeLabel}
+        backdrop="dark"
+        layer="raised"
+        header={
+          <ModalHeader
+            title={iframeTitle}
+            titleId={titleId}
+            actions={
+              <Button type="button" variant="secondary" size="xs" onClick={() => setOpen(false)}>
+                {closeLabel}
+              </Button>
+            }
+          />
+        }
+      >
+        {open ? (
+          <iframe title={iframeTitle} src={previewEmbedHref(href)} className="min-h-0 w-full flex-1 bg-white" />
+        ) : null}
+      </Modal>
+    </>
   );
 }

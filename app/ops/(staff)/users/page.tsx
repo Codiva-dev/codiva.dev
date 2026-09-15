@@ -76,6 +76,12 @@ export default async function PortalUsersPage() {
     })
   );
 
+  const { data: hubProfiles } = await admin
+    .from('portal_user_profiles')
+    .select('user_id, is_hub')
+    .eq('is_hub', true);
+  const hubIds = new Set((hubProfiles ?? []).map((row) => row.user_id));
+
   async function onInvite(formData: FormData) {
     'use server';
     await invitePortalUser(formData);
@@ -147,6 +153,9 @@ export default async function PortalUsersPage() {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
+                      {hubIds.has(userId) ? (
+                        <StatusBadge label={t('ops.portalUsers.hubBadge')} tone="info" />
+                      ) : null}
                       <StatusBadge label={[...info.roles].join(', ')} />
                       <StatusBadge
                         label={info.allComplete ? t('ops.portalUsers.legalOk') : t('ops.portalUsers.legalPending')}

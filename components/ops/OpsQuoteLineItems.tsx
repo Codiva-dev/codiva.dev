@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { QuoteLineItem } from '@/lib/ops/quote-document';
+import type { QuoteLineItem, QuotePhase } from '@/lib/ops/quote-document';
+import OpsQuotePhases from '@/components/ops/OpsQuotePhases';
 import {
   DEFAULT_RATE_LABEL,
-  applyHourlyRateToLineItems,
+  applyQuoteHourlyRate,
+  inferredQuoteHourlyRate,
   parseHourlyRate,
   roundMoney,
   sumLineItemTotals,
@@ -29,17 +31,21 @@ function itemTotal(item: QuoteLineItem, hourlyRate: number | null): number | nul
 export default function OpsQuoteLineItems({
   name = 'lineItems',
   initialItems,
+  initialPhases = [],
   initialHourlyRate = null,
   initialTotal = null,
 }: {
   name?: string;
   initialItems: QuoteLineItem[];
+  initialPhases?: QuotePhase[];
   initialHourlyRate?: number | null;
   initialTotal?: number | null;
 }) {
   const { t } = useTranslation();
   const [hourlyRate, setHourlyRate] = useState<number | null>(initialHourlyRate);
+  const [rateText, setRateText] = useState(initialHourlyRate != null ? String(initialHourlyRate) : '');
   const [items, setItems] = useState<QuoteLineItem[]>(initialItems.length ? initialItems : [{ ...EMPTY_ITEM }]);
+  const [phases, setPhases] = useState<QuotePhase[]>(initialPhases);
   const [manualTotal, setManualTotal] = useState<number | null>(initialTotal);
 
   const pricedItems = useMemo(
@@ -60,26 +66,43 @@ export default function OpsQuoteLineItems({
     [pricedItems]
   );
 
-  function update(index: number, patch: Partial<QuoteLineItem>) {
-    setItems((current) =>
-      current.map((item, i) => {
-        if (i !== index) return item;
-        const next = { ...item, ...patch };
-        const rate = hourlyRate ?? next.rate ?? null;
-        if (next.hours != null && rate != null) {
-          next.rate = rate;
-          next.total = roundMoney(next.hours * rate);
-        }
-        return next;
-      })
-    );
+  function reprice(nextItems: QuoteLineItem[], nextPhases: QuotePhase[], rate: number | null, previousRate: number | null) {
+    if (rate == null) {
+      setItems(nextItems);
+      setPhases(nextPhases);
+      return;
+    }
+    const priced = applyQuoteHourlyRate({
+      items: nextItems,
+      phases: nextPhases,
+      rate,
+      previousRate,
+    });
+    setItems(priced.items);
+    setPhases(priced.phases);
   }
 
-  function onHourlyRateChange(raw: string) {
-    const next = raw === '' ? null : parseHourlyRate(raw);
+  function update(index: number, patch: Partial<QuoteLineItem>) {
+    const nextItems = items.map((item, i) => {
+      if (i !== index) return item;
+      const next = { ...item, ...patch };
+      const rate = hourlyRate ?? next.rate ?? null;
+      if (next.hours != null && rate != null) {
+        next.rate = rate;
+        next.total = roundMoney(next.hours * rate);
+      }
+      return next;
+    });
+    reprice(nextItems, phases, hourlyRate, hourlyRate);
+  }
+
+  function commitHourlyRate(raw: string) {
+    const next = raw.trim() === '' ? null : parseHourlyRate(raw);
+    setRateText(next == null ? '' : String(next));
+    const previous = inferredQuoteHourlyRate(items) ?? hourlyRate;
     setHourlyRate(next);
     if (next == null) return;
-    setItems((current) => applyHourlyRateToLineItems(current, next, hourlyRate));
+    reprice(items, phases, next, previous);
   }
 
   return (
@@ -111,8 +134,19 @@ export default function OpsQuoteLineItems({
           type="number"
           min={0}
           step="0.01"
-          value={hourlyRate ?? ''}
-          onChange={(event) => onHourlyRateChange(event.target.value)}
+          value={rateText}
+          onChange={(event) => {
+            const raw = event.target.value;
+            setRateText(raw);
+            setHourlyRate(raw.trim() === '' ? null : parseHourlyRate(raw));
+          }}
+          onBlur={(event) => commitHourlyRate(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              commitHourlyRate(event.currentTarget.value);
+            }
+          }}
           placeholder={t('ops.quoteLines.rate')}
           className="w-full max-w-xs rounded-lg border border-zinc-300 px-3 py-2 text-sm"
         />
@@ -181,7 +215,7 @@ export default function OpsQuoteLineItems({
                 <button
                   type="button"
                   className="ml-auto text-zinc-500 hover:text-red-700"
-                  onClick={() => setItems((current) => current.filter((_, i) => i !== index))}
+                  onClick={() => reprice(items.filter((_, i) => i !== index), phases, hourlyRate, hourlyRate)}
                 >
                   {t('ops.quoteLines.remove')}
                 </button>
@@ -206,6 +240,7 @@ export default function OpsQuoteLineItems({
           className="w-full max-w-xs rounded-lg border border-zinc-300 px-3 py-2 text-sm"
         />
       )}
+      <OpsQuotePhases value={phases} onChange={setPhases} />
     </div>
   );
 }

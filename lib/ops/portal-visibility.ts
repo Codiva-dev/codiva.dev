@@ -54,3 +54,10 @@ export function withQuoteNav(
     showQuoteNav: visibility.showQuote || (visibility.showCosts && hasQuoteCanvas),
   };
 }
+
+/** Statuses shown in the client portal when the quote is marked visible. */
+export const PORTAL_QUOTE_STATUSES = ['draft', 'sent', 'accepted', 'rejected', 'expired'] as const;
+
+export function isPortalQuoteStatus(status: string): boolean {
+  return (PORTAL_QUOTE_STATUSES as readonly string[]).includes(status);
+}

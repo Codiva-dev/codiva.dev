@@ -9,12 +9,22 @@ const EMPTY_PHASE: QuotePhase = { name: '', weeks: '', deliverable: '' };
 export default function OpsQuotePhases({
   name = 'phases',
   initialPhases,
+  value,
+  onChange,
 }: {
   name?: string;
-  initialPhases: QuotePhase[];
+  initialPhases?: QuotePhase[];
+  value?: QuotePhase[];
+  onChange?: (phases: QuotePhase[]) => void;
 }) {
   const { t } = useTranslation();
-  const [phases, setPhases] = useState<QuotePhase[]>(initialPhases.length ? initialPhases : []);
+  const [internal, setInternal] = useState<QuotePhase[]>(initialPhases?.length ? initialPhases : []);
+  const phases = value ?? internal;
+
+  function setPhases(next: QuotePhase[]) {
+    if (onChange) onChange(next);
+    else setInternal(next);
+  }
 
   const serialized = useMemo(
     () =>
@@ -31,7 +41,7 @@ export default function OpsQuotePhases({
   );
 
   function update(index: number, patch: Partial<QuotePhase>) {
-    setPhases((current) => current.map((phase, i) => (i === index ? { ...phase, ...patch } : phase)));
+    setPhases(phases.map((phase, i) => (i === index ? { ...phase, ...patch } : phase)));
   }
 
   return (
@@ -42,7 +52,7 @@ export default function OpsQuotePhases({
         <button
           type="button"
           className="text-sm font-medium text-codiva-primary hover:underline"
-          onClick={() => setPhases((current) => [...current, { ...EMPTY_PHASE }])}
+          onClick={() => setPhases([...phases, { ...EMPTY_PHASE }])}
         >
           {t('ops.quotePhases.add')}
         </button>
@@ -68,7 +78,7 @@ export default function OpsQuotePhases({
             <button
               type="button"
               className="text-sm text-zinc-500 hover:text-red-700"
-              onClick={() => setPhases((current) => current.filter((_, i) => i !== index))}
+              onClick={() => setPhases(phases.filter((_, i) => i !== index))}
             >
               {t('ops.quotePhases.remove')}
             </button>

@@ -14,22 +14,23 @@ export function parseHourlyRate(raw: unknown): number | null {
   return n;
 }
 
-export function inferredQuoteHourlyRate(items: QuoteLineItem[]): number | null {
-  const rates = [
-    ...new Set(
-      items
-        .map((item) => item.rate)
-        .filter((rate): rate is number => rate != null && Number.isFinite(rate))
-    ),
-  ];
-  if (rates.length === 1 && items.some((item) => item.hours != null)) return rates[0];
-  return null;
-}
-
 function looksHourly(item: QuoteLineItem): boolean {
   const label = (item.rateLabel ?? '').trim().toLowerCase();
   if (!label) return true;
   return label.includes('hora') || label.includes('hour');
+}
+
+export function inferredQuoteHourlyRate(items: QuoteLineItem[]): number | null {
+  const rates = [
+    ...new Set(
+      items
+        .filter((item) => looksHourly(item))
+        .map((item) => item.rate)
+        .filter((rate): rate is number => rate != null && Number.isFinite(rate))
+    ),
+  ];
+  if (rates.length === 1) return rates[0];
+  return null;
 }
 
 function wholeIfClose(value: number): number {

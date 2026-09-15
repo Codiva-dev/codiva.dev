@@ -4,6 +4,11 @@ import { getAcceptanceStatus } from '@/lib/ops/legal/acceptances';
 import { buildQuoteDocumentHtml } from '@/lib/ops/quote-preview';
 import { getT } from '@/i18n/locale';
 import { isPortalQuoteStatus } from '@/lib/ops/portal-visibility';
+import { htmlToPdf } from '@/lib/ops/html-to-pdf';
+import { quotePdfFilename } from '@/lib/ops/quotes';
+
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 type RouteContext = { params: Promise<{ slug: string; quoteId: string }> };
 
@@ -70,14 +75,21 @@ export async function GET(_request: Request, context: RouteContext) {
     t.locale
   );
 
-  return new NextResponse(html, {
-    status: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'private, no-store',
-      'X-Content-Type-Options': 'nosniff',
-      'Referrer-Policy': 'no-referrer',
-      'X-Frame-Options': 'SAMEORIGIN',
-    },
-  });
+  try {
+    const pdf = await htmlToPdf(html);
+    const body = new Uint8Array(pdf.byteLength);
+    body.set(pdf);
+    return new NextResponse(body, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${quotePdfFilename(quote.title)}"`,
+        'Cache-Control': 'private, no-store',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    });
+  } catch (err) {
+    console.error('[quote-pdf] PDF generation failed', err);
+    return new NextResponse('No se pudo generar el PDF.', { status: 500 });
+  }
 }

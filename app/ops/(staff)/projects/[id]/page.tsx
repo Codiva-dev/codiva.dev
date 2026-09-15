@@ -23,6 +23,7 @@ import {
   updateDocumentRequestStatus,
   setDeliverableVisibility,
   setQuoteVisibility,
+  deleteDraftQuote,
   createProjectCharge,
   updateProjectCharge,
   deleteProjectCharge,
@@ -274,13 +275,13 @@ export default async function ProjectDetailPage({
             >
               {t('ops.project.exportCompliance')}
             </a>
-            <a
+            <PreviewPopupLink
               href={staffPortalPreviewPath(project.slug)}
               className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
               title={t('ops.project.previewTitle')}
             >
               {t('ops.project.preview')}
-            </a>
+            </PreviewPopupLink>
             <a
               href={projectPortalUrl(project.slug)}
               className="rounded-lg bg-codiva-primary px-4 py-2 text-sm font-medium text-white hover:bg-codiva-primary-dark"
@@ -488,7 +489,15 @@ export default async function ProjectDetailPage({
                 <StatusBadge label={QUOTE_STATUS_LABELS[q.status]} tone={q.status === 'accepted' ? 'success' : 'info'} />
               </div>
               <p className="text-sm text-zinc-600 whitespace-pre-wrap">{q.scope}</p>
-              <p className="mt-2 text-sm font-medium">{formatCurrency(q.total_amount, q.currency)}</p>
+              <p className="mt-2 text-sm font-medium">
+                {formatCurrency(q.total_amount, q.currency)}
+                {q.hourly_rate != null && Number.isFinite(Number(q.hourly_rate)) ? (
+                  <span className="font-normal text-zinc-500">
+                    {' '}
+                    · {t('ops.project.hourlyRateValue', { amount: formatCurrency(Number(q.hourly_rate), q.currency) })}
+                  </span>
+                ) : null}
+              </p>
               <p className="mt-2 text-xs text-zinc-500">
                 {t('ops.project.portal')}{' '}
                 {q.visible_to_client !== false ? t('ops.project.visibleClient') : t('ops.project.hiddenClient')}
@@ -524,6 +533,23 @@ export default async function ProjectDetailPage({
                     {q.visible_to_client === false ? t('ops.project.showInPortal') : t('ops.project.hideInPortal')}
                   </button>
                 </ToastForm>
+                {q.status === 'draft' && (
+                  <ToastForm
+                    success={t('ops.quoteEditor.deleted')}
+                    confirmTitle={t('ops.quoteEditor.deleteConfirmTitle')}
+                    confirmMessage={t('ops.quoteEditor.deleteConfirm')}
+                    confirmLabel={t('ops.quoteEditor.delete')}
+                    confirmTone="danger"
+                    action={async () => {
+                      'use server';
+                      await deleteDraftQuote(q.id);
+                    }}
+                  >
+                    <button type="submit" className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">
+                      {t('ops.quoteEditor.delete')}
+                    </button>
+                  </ToastForm>
+                )}
               </div>
             </article>
           ))}
@@ -1156,9 +1182,9 @@ export default async function ProjectDetailPage({
                 {t('ops.project.clientLogin')}
                 <PortalClientUrl slug={project.slug} path="/login" />
               </span>
-              <Link href={staffPortalPreviewPath(project.slug)} className="text-codiva-primary hover:underline">
+              <PreviewPopupLink href={staffPortalPreviewPath(project.slug)} className="text-codiva-primary hover:underline">
                 {t('ops.project.previewOps')}
-              </Link>
+              </PreviewPopupLink>
             </div>
             <ul className="space-y-2 text-sm">
               {(members ?? []).map((m) => {

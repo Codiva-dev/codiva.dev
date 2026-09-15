@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import ToastForm from '@/components/ops/ToastForm';
 import PortalClientUrl from '@/components/ops/PortalClientUrl';
 import StatusBadge, { projectTone } from '@/components/ops/StatusBadge';
@@ -105,9 +106,9 @@ export default async function ProjectsPage() {
               </Td>
               <Td>
                 <div className="flex flex-col items-start gap-1.5">
-                  <Link href={staffPortalPreviewPath(p.slug)} className="text-codiva-primary hover:underline">
+                  <PreviewPopupLink href={staffPortalPreviewPath(p.slug)} className="text-codiva-primary hover:underline">
                     {t('ops.projectsPage.preview')}
-                  </Link>
+                  </PreviewPopupLink>
                   <PortalClientUrl slug={p.slug} />
                   {!p.client_visible && (
                     <span className="text-[11px] text-amber-700">{t('ops.projectsPage.hidden')}</span>

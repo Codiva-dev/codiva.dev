@@ -200,6 +200,12 @@
     "intermediary": "Intermediary",
     "titleSuffix": "Codiva quote",
     "plan": "Delivery plan",
-    "weeks": "Wk. {{weeks}}"
+    "weeks": "Wk. {{weeks}}",
+    "estimate": "Cost estimate",
+    "module": "Module",
+    "hours": "Hours",
+    "rate": "Rate",
+    "total": "Total",
+    "estimatedTotal": "Estimated project total"
   }
 }

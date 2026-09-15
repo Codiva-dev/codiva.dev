@@ -7,6 +7,8 @@ import {
   addPortalUserProjects,
   removePortalUserProject,
   resendPortalInvite,
+  setPortalUserHub,
+  syncPortalHubProjects,
 } from '@/lib/ops/actions';
 import { getAcceptanceStatus } from '@/lib/ops/legal/acceptances';
 import { labelsFor } from '@/lib/ops/labels';
@@ -51,6 +53,11 @@ export default async function PortalUserDetailPage({
   const assignedIds = new Set((memberships ?? []).map((m) => m.project_id));
   const available = (allProjects ?? []).filter((p) => !assignedIds.has(p.id));
   const email = authUser.user.email ?? userId;
+  const { data: hubProfile } = await admin
+    .from('portal_user_profiles')
+    .select('is_hub, display_name')
+    .eq('user_id', userId)
+    .maybeSingle();
 
   async function onResend() {
     'use server';
@@ -60,6 +67,16 @@ export default async function PortalUserDetailPage({
   async function onAdd(formData: FormData) {
     'use server';
     await addPortalUserProjects(userId, formData);
+  }
+
+  async function onHub(formData: FormData) {
+    'use server';
+    await setPortalUserHub(userId, formData);
+  }
+
+  async function onHubSync() {
+    'use server';
+    await syncPortalHubProjects(userId);
   }
 
   return (
@@ -83,6 +100,39 @@ export default async function PortalUserDetailPage({
             {t('ops.portalUsers.back')}
           </Link>
         </div>
+
+        <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5">
+          <ToastForm success={t('ops.portalUsers.hubSaved')} action={onHub} className="space-y-3">
+            <h2 className="font-semibold">{t('ops.portalUsers.hubTitle')}</h2>
+            <p className="text-sm text-zinc-500">{t('ops.portalUsers.hubDesc')}</p>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" name="isHub" defaultChecked={Boolean(hubProfile?.is_hub)} />
+              {t('ops.portalUsers.hubToggle')}
+            </label>
+            <label className="block space-y-1 text-sm">
+              <span className="text-zinc-600">{t('ops.portalUsers.hubName')}</span>
+              <input
+                name="displayName"
+                defaultValue={hubProfile?.display_name ?? ''}
+                placeholder={t('ops.portalUsers.hubNamePlaceholder')}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+              />
+            </label>
+            <button type="submit" className="rounded-lg bg-codiva-primary px-4 py-2 text-sm text-white">
+              {t('ops.portalUsers.hubSave')}
+            </button>
+          </ToastForm>
+          {hubProfile?.is_hub ? (
+            <ToastForm action={onHubSync} success={t('ops.portalUsers.hubSynced')}>
+              <button
+                type="submit"
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm hover:bg-zinc-50"
+              >
+                {t('ops.portalUsers.hubSync')}
+              </button>
+            </ToastForm>
+          ) : null}
+        </section>
 
         <section className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5">
           <h2 className="font-semibold">{t('ops.portalUsers.assigned')}</h2>

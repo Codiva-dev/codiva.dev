@@ -14,6 +14,7 @@ import {
   convertLeadToProject,
   createLeadQuote,
   sendLeadQuote,
+  deleteDraftQuote,
 } from '@/lib/ops/actions';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
@@ -58,7 +59,7 @@ export default async function LeadDetailPage({
   const { data: quotes } = canQuotes
     ? await supabase
         .from('quotes')
-        .select('id, title, version, status, total_amount, currency, sent_at, created_at')
+        .select('id, title, version, status, total_amount, currency, hourly_rate, sent_at, created_at')
         .eq('lead_id', id)
         .order('version', { ascending: false })
     : { data: [] as never[] };
@@ -248,7 +249,15 @@ export default async function LeadDetailPage({
                 <h3 className="font-semibold">{q.title} · v{q.version}</h3>
                 <StatusBadge label={QUOTE_STATUS_LABELS[q.status]} tone={q.status === 'accepted' ? 'success' : 'info'} />
               </div>
-              <p className="text-sm font-medium">{formatCurrency(q.total_amount, q.currency)}</p>
+              <p className="text-sm font-medium">
+                {formatCurrency(q.total_amount, q.currency)}
+                {q.hourly_rate != null && Number.isFinite(Number(q.hourly_rate)) ? (
+                  <span className="font-normal text-zinc-500">
+                    {' '}
+                    · {t('ops.leadDetail.hourlyRateValue', { amount: formatCurrency(Number(q.hourly_rate), q.currency) })}
+                  </span>
+                ) : null}
+              </p>
               {q.sent_at && <p className="mt-1 text-xs text-zinc-500">{t('ops.leadDetail.sentOn', { date: formatDate(q.sent_at) })}</p>}
               {publicLinks[q.id] && (
                 <div className="mt-2">
@@ -272,6 +281,23 @@ export default async function LeadDetailPage({
                   <ToastForm success={t('ops.leadDetail.quoteSent')} action={async () => { 'use server'; await sendLeadQuote(q.id, id); }}>
                     <button type="submit" className="rounded-lg bg-codiva-primary px-3 py-1.5 text-sm text-white">
                       {t('ops.leadDetail.sendQuote')}
+                    </button>
+                  </ToastForm>
+                )}
+                {q.status === 'draft' && (
+                  <ToastForm
+                    success={t('ops.quoteEditor.deleted')}
+                    confirmTitle={t('ops.quoteEditor.deleteConfirmTitle')}
+                    confirmMessage={t('ops.quoteEditor.deleteConfirm')}
+                    confirmLabel={t('ops.quoteEditor.delete')}
+                    confirmTone="danger"
+                    action={async () => {
+                      'use server';
+                      await deleteDraftQuote(q.id);
+                    }}
+                  >
+                    <button type="submit" className="rounded-lg border border-red-200 px-3 py-1.5 text-sm text-red-700 hover:bg-red-50">
+                      {t('ops.quoteEditor.delete')}
                     </button>
                   </ToastForm>
                 )}

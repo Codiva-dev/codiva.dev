@@ -3,6 +3,8 @@ import {
   filterProposalCanvases,
   filterQuoteCanvases,
   getPortalVisibility,
+  isPortalQuoteStatus,
+  PORTAL_QUOTE_STATUSES,
   withQuoteNav,
 } from './portal-visibility';
 
@@ -35,5 +37,12 @@ describe('portal canvas split', () => {
     expect(visibility.showQuote).toBe(false);
     expect(withQuoteNav(visibility, true).showQuoteNav).toBe(true);
     expect(withQuoteNav(visibility, false).showQuoteNav).toBe(false);
+  });
+
+  it('lets a visible draft appear in the portal before it is sent', () => {
+    expect(PORTAL_QUOTE_STATUSES).toContain('draft');
+    expect(isPortalQuoteStatus('draft')).toBe(true);
+    expect(isPortalQuoteStatus('sent')).toBe(true);
+    expect(isPortalQuoteStatus('archived')).toBe(false);
   });
 });

@@ -351,8 +351,9 @@
       "acceptShort": "Accept",
       "reject": "Decline",
       "other": "Other proposals",
-      "hint": "This is the document Ops generates. If there is more than one version, choose it above.",
+      "hint": "This is the commercial document Ops generates. You can open it fullscreen or download it as PDF.",
       "fullscreen": "Full screen",
+      "downloadPdf": "Download PDF",
       "interactive": "Quote"
     },
     "site": {
@@ -591,13 +592,19 @@
         "evolution": "Evolution",
         "people": "People"
       },
-      "workProcess": {
+        "workProcess": {
         "none": "No link",
         "internal": "Internal structure",
         "lead": "Lead",
         "project": "Project",
         "quote": "Quote",
         "ticket": "Ticket"
+      },
+      "workUrgency": {
+        "critical": "Critical",
+        "high": "High",
+        "normal": "Normal",
+        "low": "Low"
       }
     },
     "login": {
@@ -762,7 +769,8 @@
       "staff": "Staff preview",
       "body": "This is how the client sees the portal for",
       "noLegal": "Legal acceptances are not recorded in this mode.",
-      "back": "Back to project"
+      "back": "Back to project",
+      "popupTitle": "Preview"
     },
     "modality": {
       "remote": "Remote",
@@ -1323,7 +1331,17 @@
       "roleViewerShort": "Viewer",
       "roleApproverShort": "Approver",
       "sendEmail": "Send notification email",
-      "add": "Add"
+      "add": "Add",
+      "hubTitle": "Universal user",
+      "hubDesc": "Attach this login to every intermediary project whose partner name matches. No email is sent.",
+      "hubToggle": "Universal user (partner hub)",
+      "hubName": "Intermediary name",
+      "hubNamePlaceholder": "e.g. Miguel Alonso",
+      "hubSave": "Save and associate projects",
+      "hubSaved": "Universal profile updated",
+      "hubSync": "Sync intermediary projects",
+      "hubSynced": "Intermediary projects associated",
+      "hubBadge": "Universal"
     },
     "ticketsPage": {
       "colTicket": "Ticket",
@@ -1508,7 +1526,7 @@
       "noMilestones": "No milestones.",
       "quotesHintPrefix": "This is where the document is built. The client sees the same thing in the",
       "quotesHintStrong": "Quote",
-      "quotesHintSuffix": "tab of the portal (not as a loose PDF in Documents).",
+      "quotesHintSuffix": "tab of the portal. If it is visible to the client, drafts show there too (sending is still required to accept).",
       "newQuote": "New quote",
       "proposalTitle": "Proposal - {{name}}",
       "portal": "Portal:",
@@ -1521,6 +1539,7 @@
       "visibilityUpdated": "Visibility updated",
       "showInPortal": "Show in portal",
       "hideInPortal": "Hide in portal",
+      "hourlyRateValue": "{{amount}} / hour",
       "newCharge": "New charge",
       "chargeHint": "Development (Codiva fees) or pass-through: hosting/domain are always client-borne when they apply. Empty amount = “To confirm” (e.g. annual renewal at actual cost).",
       "chargeCreated": "Charge created",
@@ -1645,7 +1664,13 @@
       "extras": "Optional extras (not included)",
       "total": "Total amount",
       "save": "Save in Ops",
-      "platform": "Platform / Ops"
+      "platform": "Platform / Ops",
+      "delete": "Delete draft",
+      "deleted": "Draft deleted",
+      "deleteConfirmTitle": "Delete quote",
+      "deleteConfirm": "Delete this draft? This cannot be undone.",
+      "deleteOnlyDraft": "Only draft quotes can be deleted.",
+      "notFound": "Quote not found"
     },
     "quoteForm": {
       "created": "Quote created",
@@ -1901,15 +1926,18 @@
       "preview": "Preview",
       "quoteSent": "Quote sent",
       "sendQuote": "Send to intermediary / contact",
-      "noQuotes": "No quotes. Create the first one above."
+      "noQuotes": "No quotes. Create the first one above.",
+      "hourlyRateValue": "{{amount}} / hour"
     },
     "quotePage": {
       "backLeads": "Back to leads",
       "backLead": "Back to lead",
       "backProject": "Back to project",
       "versionClient": "Version {{version}} · the client sees this document in Quote",
+      "versionRate": "Version {{version}} · {{rate}} / hour in Ops. The client does not see the rate.",
       "viewAsClient": "View as the client",
       "clientDoc": "Document the client sees",
+      "internalDoc": "Internal view (hours and rate). The client does not see the hourly rate.",
       "iframeTitle": "Quote preview",
       "previewTitle": "Preview · {{title}}",
       "version": "Version {{version}}",
@@ -1936,6 +1964,8 @@
       "commentRequired": "Write a comment.",
       "allStreams": "All processes",
       "allPeople": "Everyone",
+      "urgency": "Urgency",
+      "allUrgencies": "All urgencies",
       "viewBoard": "Board",
       "viewList": "List",
       "cardsCompact": "Compact",

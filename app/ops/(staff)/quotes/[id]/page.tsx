@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
+import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import OpsQuoteEditor from '@/components/ops/OpsQuoteEditor';
 import StatusBadge from '@/components/ops/StatusBadge';
+import ToastForm from '@/components/ops/ToastForm';
 import { requireStaff } from '@/lib/ops/auth';
 import { can } from '@/lib/ops/permissions';
-import { updateQuote } from '@/lib/ops/actions';
+import { updateQuote, deleteDraftQuote } from '@/lib/ops/actions';
 import { buildQuoteDocumentHtml } from '@/lib/ops/quote-preview';
 import { parseLineItemsJson, parsePhasesJson } from '@/lib/ops/quote-document';
 import { applyQuoteHourlyRate, inferredQuoteHourlyRate, parseHourlyRate } from '@/lib/ops/quote-rate';
@@ -21,7 +23,7 @@ export default async function QuoteEditorPage({
   const { id } = await params;
   const { supabase, staff } = await requireStaff();
   const t = await getT();
-  const { QUOTE_STATUS_LABELS } = labelsFor(t.locale);
+  const { QUOTE_STATUS_LABELS, formatCurrency } = labelsFor(t.locale);
 
   if (!can(staff, 'quotes')) notFound();
 
@@ -60,7 +62,9 @@ export default async function QuoteEditorPage({
     }
   }
 
-  const html = buildQuoteDocumentHtml(quote, { lead, project }, t.locale);
+  const html = buildQuoteDocumentHtml(quote, { lead, project }, t.locale, {
+    showHourlyBreakdown: true,
+  });
   const isDraft = quote.status === 'draft';
   const lineItems = parseLineItemsJson(quote.line_items);
   const hourlyRate = parseHourlyRate(quote.hourly_rate) ?? inferredQuoteHourlyRate(lineItems);
@@ -76,7 +80,14 @@ export default async function QuoteEditorPage({
     <div className="space-y-6">
       <OpsPageHeader
         title={quote.title}
-        description={t('ops.quotePage.versionClient', { version: quote.version })}
+        description={
+          hourlyRate != null
+            ? t('ops.quotePage.versionRate', {
+                version: quote.version,
+                rate: formatCurrency(hourlyRate, quote.currency || 'MXN'),
+              })
+            : t('ops.quotePage.versionClient', { version: quote.version })
+        }
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
@@ -90,12 +101,29 @@ export default async function QuoteEditorPage({
               {backLabel}
             </Link>
             {projectSlug && (
-              <Link
+              <PreviewPopupLink
                 href={staffPortalPreviewPath(projectSlug, '/cotizacion')}
                 className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium hover:bg-zinc-50"
               >
                 {t('ops.quotePage.viewAsClient')}
-              </Link>
+              </PreviewPopupLink>
+            )}
+            {isDraft && (
+              <ToastForm
+                success={t('ops.quoteEditor.deleted')}
+                confirmTitle={t('ops.quoteEditor.deleteConfirmTitle')}
+                confirmMessage={t('ops.quoteEditor.deleteConfirm')}
+                confirmLabel={t('ops.quoteEditor.delete')}
+                confirmTone="danger"
+                action={async () => {
+                  'use server';
+                  await deleteDraftQuote(id);
+                }}
+              >
+                <button type="submit" className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
+                  {t('ops.quoteEditor.delete')}
+                </button>
+              </ToastForm>
             )}
           </div>
         }
@@ -125,7 +153,7 @@ export default async function QuoteEditorPage({
       />
 
       <div>
-        <p className="mb-2 text-sm font-medium text-zinc-700">{t('ops.quotePage.clientDoc')}</p>
+        <p className="mb-2 text-sm font-medium text-zinc-700">{t('ops.quotePage.internalDoc')}</p>
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-100">
           <iframe
             title={t('ops.quotePage.iframeTitle')}

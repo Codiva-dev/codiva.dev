@@ -120,6 +120,7 @@ export function labelsFor(locale: Locale = DEFAULT_LOCALE) {
       'quote',
       'ticket',
     ]),
+    WORK_URGENCY_LABELS: group(locale, 'workUrgency', ['critical', 'high', 'normal', 'low']),
     EMPTY_LABEL: tSync(locale, 'ops.labels.empty'),
     DEFAULT_PROJECT_STATE: tSync(locale, 'ops.labels.defaultProjectState'),
     formatDate: (date: string | null | undefined) => formatDate(date, locale),

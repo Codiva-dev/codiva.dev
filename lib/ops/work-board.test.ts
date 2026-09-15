@@ -11,6 +11,9 @@ import {
   mentionedStaffIds,
   mentionPlainText,
   workAssigneeInitials,
+  asWorkUrgency,
+  sortWorkCardsByUrgency,
+  isWorkUrgency,
   isOpenWorkStatus,
   isPendingMentionStatus,
   keepPendingMentions,
@@ -215,6 +218,7 @@ describe('work-board pending status', () => {
           title: 't',
           description: '',
           stream: 'delivery',
+          urgency: 'normal',
           status: 'backlog',
           assignee_id: null,
           assignee_name: '',
@@ -247,6 +251,7 @@ describe('work-board pending status', () => {
         title: 't',
         description: '',
         stream: 'delivery' as const,
+        urgency: 'normal' as const,
         status: 'backlog' as const,
         assignee_id: null,
         assignee_name: '',
@@ -320,6 +325,20 @@ describe('work-board mentions', () => {
   });
 });
 
+describe('work-board urgency', () => {
+  it('defaults unknown values to normal and ranks critical first', () => {
+    expect(isWorkUrgency('high')).toBe(true);
+    expect(isWorkUrgency('asap')).toBe(false);
+    expect(asWorkUrgency('')).toBe('normal');
+    expect(asWorkUrgency('CRITICAL')).toBe('critical');
+    expect(sortWorkCardsByUrgency([{ urgency: 'low' }, { urgency: 'critical' }, { urgency: 'high' }])).toEqual([
+      { urgency: 'critical' },
+      { urgency: 'high' },
+      { urgency: 'low' },
+    ]);
+  });
+});
+
 describe('work-board process links', () => {
   it('builds ops hrefs', () => {
     expect(processHref('project', 'abc', { projectSlug: 'nirc' })).toBe('/projects/nirc');
@@ -336,6 +355,7 @@ describe('work-board process links', () => {
           title: 't',
           description: '',
           stream: 'delivery',
+          urgency: 'normal',
           status: 'backlog',
           assignee_id: null,
           assignee_name: '',
@@ -372,6 +392,7 @@ describe('work-board process links', () => {
           title: 't',
           description: '',
           stream: 'delivery',
+          urgency: 'normal',
           status: 'backlog',
           assignee_id: null,
           assignee_name: '',
