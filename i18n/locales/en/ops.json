@@ -351,8 +351,9 @@
       "acceptShort": "Accept",
       "reject": "Decline",
       "other": "Other proposals",
-      "hint": "This is the document Ops generates. If there is more than one version, choose it above.",
+      "hint": "This is the commercial document Ops generates. You can open it fullscreen or download it as PDF.",
       "fullscreen": "Full screen",
+      "downloadPdf": "Download PDF",
       "interactive": "Quote"
     },
     "site": {

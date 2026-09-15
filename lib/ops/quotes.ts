@@ -1,7 +1,17 @@
 import { parseLineItemsJson, parsePhasesJson } from '@/lib/ops/quote-document';
+import { slugify } from '@/lib/ops/slug';
 
 export function portalQuoteDocumentPath(slug: string, quoteId: string): string {
   return `/p/${slug}/cotizacion/${quoteId}`;
+}
+
+export function portalQuotePdfPath(slug: string, quoteId: string): string {
+  return `${portalQuoteDocumentPath(slug, quoteId)}/pdf`;
+}
+
+export function quotePdfFilename(title: string): string {
+  const base = slugify(title) || 'cotizacion';
+  return `${base}.pdf`;
 }
 
 export function isLegacyQuotePackDocument(doc: {

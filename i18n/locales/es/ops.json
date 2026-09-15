@@ -351,8 +351,9 @@
       "acceptShort": "Aceptar",
       "reject": "Rechazar",
       "other": "Otras propuestas",
-      "hint": "Este es el documento que Ops genera. Si hay más de una versión, elige arriba.",
+      "hint": "Este es el documento comercial que genera Ops. Puedes verlo en pantalla completa o descargarlo en PDF.",
       "fullscreen": "Pantalla completa",
+      "downloadPdf": "Descargar PDF",
       "interactive": "Cotización"
     },
     "site": {

@@ -11,7 +11,7 @@ import { getT } from '@/i18n/locale';
 import { filterQuoteCanvases, getPortalVisibility, PORTAL_QUOTE_STATUSES } from '@/lib/ops/portal-visibility';
 import { portalCanvasPath } from '@/lib/ops/architecture';
 import { buildQuoteDocumentHtml } from '@/lib/ops/quote-preview';
-import { portalQuoteDocumentPath } from '@/lib/ops/quotes';
+import { portalQuoteDocumentPath, portalQuotePdfPath } from '@/lib/ops/quotes';
 
 export default async function PortalQuotePage({
   params,
@@ -130,7 +130,7 @@ export default async function PortalQuotePage({
         .
       </p>
 
-      {quoteCanvases.length > 0 && (
+      {quoteCanvases.length > 0 && !preferred && (
         <PortalCanvasViewer
           items={quoteCanvases.map((item) => ({
             ...item,
@@ -181,13 +181,23 @@ export default async function PortalQuotePage({
               <p className="mt-1 text-sm font-medium text-codiva-primary">
                 {formatCurrency(preferred.total_amount, preferred.currency)}
               </p>
+              <p className="mt-1 text-xs text-zinc-500">{t('portal.quote.hint')}</p>
             </div>
-            <PreviewPopupLink
-              href={src}
-              className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
-            >
-              {t('portal.quote.fullscreen')}
-            </PreviewPopupLink>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href={portalQuotePdfPath(slug, preferred.id)}
+                download
+                className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
+              >
+                {t('portal.quote.downloadPdf')}
+              </a>
+              <PreviewPopupLink
+                href={src}
+                className="shrink-0 rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-50"
+              >
+                {t('portal.quote.fullscreen')}
+              </PreviewPopupLink>
+            </div>
           </div>
           <iframe
             title={preferred.title}
