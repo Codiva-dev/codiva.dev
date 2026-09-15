@@ -26,10 +26,22 @@ describe('quote hourly rate', () => {
     ).toBe(450);
     expect(
       inferredQuoteHourlyRate([
+        { title: 'A', rate: 200, rateLabel: 'MXN/hora', total: 8000 },
+        { title: 'B', rate: 200, rateLabel: 'MXN/hora', total: 16000 },
+      ])
+    ).toBe(200);
+    expect(
+      inferredQuoteHourlyRate([
         { title: 'A', hours: 10, rate: 450, total: 4500 },
         { title: 'B', hours: 4, rate: 200, total: 800 },
       ])
     ).toBeNull();
+    expect(
+      inferredQuoteHourlyRate([
+        { title: 'A', hours: 10, rate: 200, rateLabel: 'MXN/hora', total: 2000 },
+        { title: 'Hito 1', rate: null, rateLabel: '25%', total: 245000 },
+      ])
+    ).toBe(200);
   });
 
   it('reprices modules with hours and leaves percentage milestones alone', () => {
@@ -90,5 +102,26 @@ describe('quote hourly rate', () => {
     expect(priced.total).toBe(20800);
     expect(priced.phases[0].deliverable).toContain('$20,800');
     expect(sumLineItemTotals(priced.items)).toBe(roundMoney(20800));
+  });
+
+  it('keeps hours when the rate changes and only rewrites cobro totals', () => {
+    const priced = applyQuoteHourlyRate({
+      rate: 200,
+      previousRate: 400,
+      items: [
+        { title: 'F0 · Marca', hours: 40, rate: 400, rateLabel: 'MXN/hora', total: 16000 },
+        { title: 'F0 · Motion', hours: 40, rate: 400, rateLabel: 'MXN/hora', total: 16000 },
+      ],
+      phases: [
+        {
+          name: '0. Identidad y dirección',
+          deliverable: 'Brand web + storyboard · cobro $32,000 al certificar',
+        },
+      ],
+    });
+    expect(priced.items.map((item) => item.hours)).toEqual([40, 40]);
+    expect(priced.items.map((item) => item.total)).toEqual([8000, 8000]);
+    expect(priced.total).toBe(16000);
+    expect(priced.phases[0].deliverable).toBe('Brand web + storyboard · cobro $16,000 al certificar');
   });
 });

@@ -1,6 +1,5 @@
 import ToastForm from '@/components/ops/ToastForm';
 import OpsQuoteLineItems from '@/components/ops/OpsQuoteLineItems';
-import OpsQuotePhases from '@/components/ops/OpsQuotePhases';
 import { DEFAULT_PROJECT_STATE } from '@/lib/ops/labels';
 import type { QuoteLineItem, QuotePhase } from '@/lib/ops/quote-document';
 import { getT } from '@/i18n/locale';
@@ -93,13 +92,12 @@ export default async function OpsQuoteEditor({
         />
         <div className="md:col-span-2">
           <OpsQuoteLineItems
+            key={`${values.hourlyRate ?? 'n'}-${values.totalAmount ?? 'n'}`}
             initialItems={values.lineItems}
+            initialPhases={values.phases}
             initialHourlyRate={values.hourlyRate}
             initialTotal={values.totalAmount}
           />
-        </div>
-        <div className="md:col-span-2">
-          <OpsQuotePhases initialPhases={values.phases} />
         </div>
         <select
           name="currency"
