@@ -1538,6 +1538,7 @@
       "visibilityUpdated": "Visibility updated",
       "showInPortal": "Show in portal",
       "hideInPortal": "Hide in portal",
+      "hourlyRateValue": "{{amount}} / hour",
       "newCharge": "New charge",
       "chargeHint": "Development (Codiva fees) or pass-through: hosting/domain are always client-borne when they apply. Empty amount = “To confirm” (e.g. annual renewal at actual cost).",
       "chargeCreated": "Charge created",
@@ -1662,7 +1663,13 @@
       "extras": "Optional extras (not included)",
       "total": "Total amount",
       "save": "Save in Ops",
-      "platform": "Platform / Ops"
+      "platform": "Platform / Ops",
+      "delete": "Delete draft",
+      "deleted": "Draft deleted",
+      "deleteConfirmTitle": "Delete quote",
+      "deleteConfirm": "Delete this draft? This cannot be undone.",
+      "deleteOnlyDraft": "Only draft quotes can be deleted.",
+      "notFound": "Quote not found"
     },
     "quoteForm": {
       "created": "Quote created",
@@ -1918,15 +1925,18 @@
       "preview": "Preview",
       "quoteSent": "Quote sent",
       "sendQuote": "Send to intermediary / contact",
-      "noQuotes": "No quotes. Create the first one above."
+      "noQuotes": "No quotes. Create the first one above.",
+      "hourlyRateValue": "{{amount}} / hour"
     },
     "quotePage": {
       "backLeads": "Back to leads",
       "backLead": "Back to lead",
       "backProject": "Back to project",
       "versionClient": "Version {{version}} · the client sees this document in Quote",
+      "versionRate": "Version {{version}} · {{rate}} / hour in Ops. The client does not see the rate.",
       "viewAsClient": "View as the client",
       "clientDoc": "Document the client sees",
+      "internalDoc": "Internal view (hours and rate). The client does not see the hourly rate.",
       "iframeTitle": "Quote preview",
       "previewTitle": "Preview · {{title}}",
       "version": "Version {{version}}",

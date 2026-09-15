@@ -758,6 +758,51 @@ export async function updateQuote(quoteId: string, formData: FormData) {
   revalidatePath('/p', 'layout');
 }
 
+export async function deleteDraftQuote(quoteId: string) {
+  const access = await assertCapability('quotes');
+  const { supabase, user } = access;
+  const t = await getT();
+
+  const { data: existing } = await supabase
+    .from('quotes')
+    .select('id, status, project_id, lead_id, title, version')
+    .eq('id', quoteId)
+    .maybeSingle();
+  if (!existing) throw new Error(t('ops.quoteEditor.notFound'));
+  if (existing.project_id) {
+    await assertProjectAccessOrThrow(access, existing.project_id);
+  }
+  if (existing.status !== 'draft') throw new Error(t('ops.quoteEditor.deleteOnlyDraft'));
+
+  const { error } = await supabase.from('quotes').delete().eq('id', quoteId).eq('status', 'draft');
+  if (error) throw await throwDb(error);
+
+  await logActivity({
+    entityType: 'quote',
+    entityId: quoteId,
+    action: 'deleted',
+    metadata: { title: existing.title, version: existing.version },
+    actorId: user.id,
+  });
+
+  if (existing.project_id) {
+    revalidatePath(`/projects/${existing.project_id}`);
+    revalidatePath('/p', 'layout');
+  }
+  if (existing.lead_id) revalidatePath(`/leads/${existing.lead_id}`);
+  revalidatePath('/leads');
+
+  const { redirectWithToast } = await import('@/lib/ops/toast');
+  if (existing.project_id) {
+    const dest = await opsProjectPathById(supabase, existing.project_id, '?tab=cotizaciones');
+    redirectWithToast(dest, t('ops.quoteEditor.deleted'));
+  }
+  if (existing.lead_id) {
+    redirectWithToast(`/leads/${existing.lead_id}?tab=cotizaciones`, t('ops.quoteEditor.deleted'));
+  }
+  redirectWithToast('/leads', t('ops.quoteEditor.deleted'));
+}
+
 export async function sendQuote(quoteId: string, projectId: string) {
   const access = await assertCapability('quotes');
   await assertProjectAccessOrThrow(access, projectId);

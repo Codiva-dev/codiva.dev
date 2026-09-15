@@ -1538,6 +1538,7 @@
       "visibilityUpdated": "Visibilidad actualizada",
       "showInPortal": "Mostrar en portal",
       "hideInPortal": "Ocultar en portal",
+      "hourlyRateValue": "{{amount}} / hora",
       "newCharge": "Nuevo cargo",
       "chargeHint": "Desarrollo (honorarios Codiva) o pass-through: hosting/dominio siempre a cargo del cliente cuando aplican. Vacío en monto = “Por confirmar” (p. ej. renovación anual al costo real).",
       "chargeCreated": "Cargo creado",
@@ -1662,7 +1663,13 @@
       "extras": "Extras opcionales (no incluidos)",
       "total": "Monto total",
       "save": "Guardar en Ops",
-      "platform": "Platform / Ops"
+      "platform": "Platform / Ops",
+      "delete": "Eliminar borrador",
+      "deleted": "Borrador eliminado",
+      "deleteConfirmTitle": "Eliminar cotización",
+      "deleteConfirm": "¿Eliminar este borrador? No se puede deshacer.",
+      "deleteOnlyDraft": "Solo se pueden eliminar cotizaciones en borrador.",
+      "notFound": "Cotización no encontrada"
     },
     "quoteForm": {
       "created": "Cotización creada",
@@ -1914,15 +1921,18 @@
       "preview": "Vista previa",
       "quoteSent": "Cotización enviada",
       "sendQuote": "Enviar al intermediario / contacto",
-      "noQuotes": "Sin cotizaciones. Crea la primera arriba."
+      "noQuotes": "Sin cotizaciones. Crea la primera arriba.",
+      "hourlyRateValue": "{{amount}} / hora"
     },
     "quotePage": {
       "backLeads": "Volver a leads",
       "backLead": "Volver al lead",
       "backProject": "Volver al proyecto",
       "versionClient": "Versión {{version}} · el cliente ve este documento en Cotización",
+      "versionRate": "Versión {{version}} · {{rate}} / hora en Ops. El cliente no ve la tarifa.",
       "viewAsClient": "Ver como el cliente",
       "clientDoc": "Documento que ve el cliente",
+      "internalDoc": "Vista interna (horas y tarifa). El cliente no ve el costo por hora.",
       "iframeTitle": "Vista previa cotización",
       "previewTitle": "Vista previa · {{title}}",
       "version": "Versión {{version}}",
