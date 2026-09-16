@@ -7,6 +7,7 @@ import { reviewRowsForAttempt, scoreAnswers } from '@/lib/careers/assessments/en
 import { matchedSeedCountsForDiscipline } from '@/lib/careers/hunt/match';
 import {
   huntConsiderationLabel,
+  huntCoverageLabel,
   huntDifficultyLabel,
   scoreHuntReports,
   type HuntConsideration,
@@ -434,6 +435,11 @@ function craftLabel(discipline: string | null | undefined): string | null {
   return CAREER_DISCIPLINE_LABELS[discipline as CareerDiscipline];
 }
 
+function huntSignalLabel(score: HuntScore, huntNeeded: number): string {
+  if (huntNeeded > 1) return huntCoverageLabel(score.craftHits, huntNeeded, 'es');
+  return huntConsiderationLabel(score.consideration, 'es');
+}
+
 function postingTitleOf(
   value: { title?: string | null } | { title?: string | null }[] | null | undefined
 ): string | null {
@@ -572,6 +578,7 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     : { byQuestion: {} as Record<string, boolean> };
   const review = catalog ? reviewRowsForAttempt(catalog, questionIds, answers, scored.byQuestion) : [];
 
+  const huntNeeded = huntNeededCount(coverAllCrafts);
   const findings = huntReports.map((row) => toRecruitingFinding(row, coverAllCrafts ? null : discipline));
   const trail = summarizeHuntTrail({
     passedAt: attempt.completed_at,
@@ -587,7 +594,7 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     craftHits: score.craftHits,
     applicationStatus: application?.status ?? null,
     leftActiveQueueEmails,
-    huntNeeded: huntNeededCount(coverAllCrafts),
+    huntNeeded,
   });
 
   return {
@@ -614,7 +621,7 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     interviews,
     appliedAt: application?.created_at ?? null,
     consideration: score.consideration,
-    considerationLabel: huntConsiderationLabel(score.consideration, 'es'),
+    considerationLabel: huntSignalLabel(score, huntNeeded),
     craftHits: score.craftHits,
     findingsTotal: huntReports.length,
     difficultyMix: difficultyMixLabel(score),
@@ -803,7 +810,7 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       passed: row.passed,
       scorePct: row.score_pct,
       consideration: hunt.score.consideration,
-      considerationLabel: huntConsiderationLabel(hunt.score.consideration, 'es'),
+      considerationLabel: huntSignalLabel(hunt.score, hunt.huntNeeded),
       craftHits: hunt.score.craftHits,
       findingsTotal: hunt.findingsTotal,
       difficultyMix: hunt.difficultyMix,
@@ -854,7 +861,7 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       passed: row.passed,
       scorePct: row.score_pct,
       consideration: hunt.score.consideration,
-      considerationLabel: huntConsiderationLabel(hunt.score.consideration, 'es'),
+      considerationLabel: huntSignalLabel(hunt.score, hunt.huntNeeded),
       craftHits: hunt.score.craftHits,
       findingsTotal: hunt.findingsTotal,
       difficultyMix: hunt.difficultyMix,
@@ -905,7 +912,7 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       passed: attempt?.passed ?? null,
       scorePct: attempt?.score_pct ?? null,
       consideration: hunt.score.consideration,
-      considerationLabel: huntConsiderationLabel(hunt.score.consideration, 'es'),
+      considerationLabel: huntSignalLabel(hunt.score, hunt.huntNeeded),
       craftHits: hunt.score.craftHits,
       findingsTotal: hunt.findingsTotal,
       difficultyMix: hunt.difficultyMix,
@@ -1066,8 +1073,8 @@ export function renderRecruitingDossierHtml(
     )
     .join('');
   const huntBits = [
-    `${d.craftHits} hallazgo(s) del oficio`,
-    `señal ${d.considerationLabel}`,
+    `${d.craftHits} tipo(s) de prueba`,
+    d.considerationLabel,
     `${d.findingsTotal} reporte(s)`,
   ];
   if (d.difficultyMix) huntBits.push(d.difficultyMix);

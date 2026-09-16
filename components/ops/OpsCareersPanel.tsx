@@ -51,7 +51,9 @@ import {
 } from '@/lib/careers/recruiting-stage';
 import {
   huntConsiderationLabel,
+  huntCoverageLabel,
   huntDifficultyLabel,
+  huntTypeFilterLabel,
   type HuntConsideration,
 } from '@/lib/careers/hunt/score';
 import { disciplineFromCatalogKey } from '@/lib/ops/career-disciplines';
@@ -192,6 +194,13 @@ function considerationHint(value: string, t: Translator) {
   if (value === 'minimum') return t('ops.careers.signalHintMinimum');
   if (value === 'none') return t('ops.careers.signalHintNone');
   return t('ops.careers.signalHintAll');
+}
+
+function huntSignalTag(hunt: { coverAllCrafts: boolean; craftHits: number; huntNeeded: number; score: { consideration: HuntConsideration } }, locale: Locale) {
+  if (hunt.coverAllCrafts) {
+    return huntCoverageLabel(hunt.craftHits, hunt.huntNeeded, locale);
+  }
+  return huntConsiderationLabel(hunt.score.consideration, locale);
 }
 
 function HoverTip({ text, children }: { text?: string; children: React.ReactNode }) {
@@ -649,9 +658,7 @@ function ApplicationCard({
           />
         ))}
         <CareersTag
-          label={t('ops.careers.tagSignal', {
-            label: huntConsiderationLabel(hunt.score.consideration, locale),
-          })}
+          label={hunt.coverAllCrafts ? huntSignalTag(hunt, locale) : t('ops.careers.tagSignal', { label: huntSignalTag(hunt, locale) })}
           tone={considerationTone(hunt.score.consideration)}
           href={bolsaHref({
             signalValue: signalFilter === hunt.score.consideration ? '' : hunt.score.consideration,
@@ -1277,11 +1284,11 @@ export default async function OpsCareersPanel({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-zinc-500">{t('ops.careers.signalGroup')}</span>
           {[
-            ['', t('ops.careers.signalAll')],
-            ['strong', huntConsiderationLabel('strong', locale)],
-            ['solid', huntConsiderationLabel('solid', locale)],
-            ['minimum', huntConsiderationLabel('minimum', locale)],
-            ['none', huntConsiderationLabel('none', locale)],
+            ['', huntTypeFilterLabel('', locale)],
+            ['strong', huntTypeFilterLabel('strong', locale)],
+            ['solid', huntTypeFilterLabel('solid', locale)],
+            ['minimum', huntTypeFilterLabel('minimum', locale)],
+            ['none', huntTypeFilterLabel('none', locale)],
           ].map(([value, label]) => (
             <HoverTip key={value || 'all'} text={considerationHint(value, t)}>
               <Link
@@ -1411,9 +1418,11 @@ export default async function OpsCareersPanel({
                             />
                           )}
                           <CareersTag
-                            label={t('ops.careers.tagSignal', {
-                              label: huntConsiderationLabel(hunt.score.consideration, locale),
-                            })}
+                            label={
+                              hunt.coverAllCrafts
+                                ? huntSignalTag(hunt, locale)
+                                : t('ops.careers.tagSignal', { label: huntSignalTag(hunt, locale) })
+                            }
                             tone={considerationTone(hunt.score.consideration)}
                             href={bolsaHref({
                               signalValue:
@@ -1605,9 +1614,11 @@ export default async function OpsCareersPanel({
                             />
                           ))}
                           <CareersTag
-                            label={t('ops.careers.tagSignal', {
-                              label: huntConsiderationLabel(hunt.score.consideration, locale),
-                            })}
+                            label={
+                              hunt.coverAllCrafts
+                                ? huntSignalTag(hunt, locale)
+                                : t('ops.careers.tagSignal', { label: huntSignalTag(hunt, locale) })
+                            }
                             tone={considerationTone(hunt.score.consideration)}
                             href={bolsaHref({
                               signalValue:

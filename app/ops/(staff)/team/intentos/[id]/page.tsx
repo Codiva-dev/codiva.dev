@@ -5,7 +5,7 @@ import { parseAnswers } from '@/lib/careers/assessments/server';
 import { reviewRowsForAttempt, scoreAnswers } from '@/lib/careers/assessments/engine';
 import { huntCoversAllCrafts, huntProgressFromReports } from '@/lib/careers/hunt/progress';
 import { splitHuntReports } from '@/lib/careers/hunt/review';
-import { huntConsiderationLabel } from '@/lib/careers/hunt/score';
+import { huntConsiderationLabel, huntCoverageLabel } from '@/lib/careers/hunt/score';
 import { summarizeHuntTrail, buildHuntTrailSteps } from '@/lib/careers/hunt/trail';
 import HuntTrailMap from '@/components/ops/HuntTrailMap';
 import { HuntFindingsBlock, type OpsHuntReportRow } from '@/components/ops/OpsCareersPanel';
@@ -277,11 +277,13 @@ export default async function AssessmentAttemptPage({
                   craftHits ? ` ${t('ops.careers.craftHits', { count: craftHits })}` : ''
                 }`
               : ''}
-            {huntScore.consideration !== 'none'
-              ? ` · ${t('ops.careers.consideration', {
-                  label: huntConsiderationLabel(huntScore.consideration, locale),
-                })}`
-              : ''}
+            {coverAllCrafts
+              ? ` · ${huntCoverageLabel(craftHits, huntProgress.needed, locale)}`
+              : huntScore.consideration !== 'none'
+                ? ` · ${t('ops.careers.consideration', {
+                    label: huntConsiderationLabel(huntScore.consideration, locale),
+                  })}`
+                : ''}
           </p>
         </div>
       </section>
