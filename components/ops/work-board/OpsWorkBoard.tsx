@@ -311,7 +311,7 @@ export default function OpsWorkBoard({
       {view === 'board' ? (
         <div
           ref={scrollerRef}
-          className="-mx-4 flex min-h-[28rem] min-w-0 gap-2 overflow-x-auto overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+          className="-mx-4 flex min-h-[28rem] min-w-0 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
         >
           {WORK_BOARD_COLUMNS.map((status) => {
             const cards = visible.filter((row) => row.status === status);
@@ -330,7 +330,7 @@ export default function OpsWorkBoard({
                     <span className="text-xs text-zinc-500">{cards.length}</span>
                   )}
                 </header>
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-y-auto p-1">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto p-1">
                   {cards.map((row) => (
                     <WorkCard
                       key={`${row.id}-${density}`}
@@ -592,7 +592,7 @@ function WorkCard({
         title={`${urgencyLabel} · ${streamLabel} · ${assigneeName}`}
         onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
         onClick={open}
-        className={`min-w-0 max-w-full overflow-hidden rounded-lg border border-l-[3px] px-2.5 py-2 ${tone.card} ${urgencyTone.bar} ${
+        className={`h-auto w-full min-w-0 shrink-0 overflow-hidden rounded-lg border border-l-[3px] px-2.5 py-2 ${tone.card} ${urgencyTone.bar} ${
           draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
         } ${isDragging ? 'opacity-40 ring-2 ring-inset ring-zinc-400/70' : isMine ? `ring-2 ring-inset ${tone.ring}` : ''}`}
       >
@@ -604,7 +604,7 @@ function WorkCard({
           {expandToggle}
         </div>
         {assignment.process_label ? (
-          <p className="mt-0.5 truncate text-[11px] text-zinc-500">{assignment.process_label}</p>
+          <p className="mt-0.5 break-words text-[11px] leading-snug text-zinc-500">{assignment.process_label}</p>
         ) : null}
         <div className="mt-1.5 flex min-w-0 items-center gap-1.5">
           <span
@@ -636,7 +636,7 @@ function WorkCard({
     <article
       onPointerDown={draggable ? (event) => onPointerDownCard?.(event, assignment) : undefined}
       onClick={open}
-      className={`min-w-0 max-w-full overflow-hidden rounded-xl border border-l-[3px] p-3 ${tone.card} ${urgencyTone.bar} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
+      className={`h-auto w-full min-w-0 max-w-full shrink-0 overflow-hidden rounded-xl border border-l-[3px] p-3 ${tone.card} ${urgencyTone.bar} ${draggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${
         isDragging ? 'opacity-40 ring-2 ring-inset ring-zinc-400/70' : isMine ? `ring-2 ring-inset ${tone.ring}` : ''
       }`}
     >
