@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   DISCIPLINE_FINDING_TYPE,
   HUNT_COVER_CRAFTS,
+  applicationRoleLabel,
+  careerSpecialtyLabel,
   huntFindingHintKey,
   huntFindingTypeForDiscipline,
   isCareersPipelinePosting,
@@ -55,6 +57,15 @@ describe('postingHireOpsRole', () => {
     expect(postingHireOpsRole({ hire_ops_role: 'pm' })).toBe('pm');
     expect(postingHireOpsRole('project-manager')).toBe('dev');
     expect(postingHireOpsRole('tester')).toBe('dev');
+  });
+});
+
+describe('applicationRoleLabel', () => {
+  it('does not treat the unified tester catalog as “otro oficio”', () => {
+    expect(careerSpecialtyLabel('other')).toBeNull();
+    expect(applicationRoleLabel({ postingTitle: 'Tester', discipline: 'other' })).toBe('Tester');
+    expect(applicationRoleLabel({ postingTitle: 'Tester', discipline: null })).toBe('Tester');
+    expect(applicationRoleLabel({ postingTitle: 'Tester', discipline: 'frontend' })).toBe('Tester frontend');
   });
 });
 

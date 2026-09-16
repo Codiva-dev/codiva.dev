@@ -89,12 +89,12 @@ export default async function TeamPage({
       .order('created_at', { ascending: false }),
     supabase
       .from('ops_job_postings')
-      .select('id, slug, title, location, employment_type, status, updated_at, careers_pipeline, requires_hunt')
+      .select('id, slug, title, location, employment_type, status, updated_at, careers_pipeline, requires_hunt, asks_discipline')
       .order('updated_at', { ascending: false }),
     supabase
       .from('ops_job_applications')
       .select(
-        'id, job_posting_id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline)'
+        'id, job_posting_id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline, asks_discipline)'
       )
       .order('created_at', { ascending: false }),
     supabase

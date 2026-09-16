@@ -279,6 +279,7 @@ export {
   disciplineFromCatalogKey,
   careerDisciplineLabel,
   careerDisciplineLabels,
+  careerSpecialtyLabel,
   huntFindingHintKey,
   huntFindingTypeForDiscipline,
   huntFindingTypeLabel,

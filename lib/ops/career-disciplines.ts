@@ -86,19 +86,28 @@ export function careerDisciplineLabel(
   return tSync(locale, `career.tester.${discipline}`);
 }
 
+/** Oficio visible. El catálogo unificado (`other` / tester-general) ya no es una especialidad. */
+export function careerSpecialtyLabel(
+  discipline: string | null | undefined,
+  locale: Locale = DEFAULT_LOCALE
+): string | null {
+  if (!discipline || discipline === 'other') return null;
+  return careerDisciplineLabel(discipline, locale);
+}
+
 export function careerDisciplineLabels(locale: Locale = DEFAULT_LOCALE): Record<CareerDiscipline, string> {
   return Object.fromEntries(
     CAREER_DISCIPLINES.map((key) => [key, tSync(locale, `career.tester.${key}`)])
   ) as Record<CareerDiscipline, string>;
 }
 
-/** Rol visible en Ops y correos: oficio de tester si existe, si no el título de la vacante. */
+/** Rol visible en Ops y correos: especialidad de tester si existe, si no el título de la vacante. */
 export function applicationRoleLabel(input: {
   postingTitle?: string | null;
   discipline?: string | null;
   locale?: Locale;
 }): string {
-  const craft = careerDisciplineLabel(input.discipline, input.locale);
+  const craft = careerSpecialtyLabel(input.discipline, input.locale);
   if (craft) return craft;
   return String(input.postingTitle || '').trim();
 }
