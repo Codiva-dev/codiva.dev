@@ -35,6 +35,8 @@ describe('security headers', () => {
     expect(sources).toContain('/api/ops/careers/cv');
     expect(sources).toContain('/api/ops/careers/recruiting-report');
     expect(sources).toContain('/api/entrevistas/recruiting-report');
+    expect(sources).toContain('/api/ops/assignment-file');
+    expect(sources[0]).toContain('api/ops/assignment-file$');
   });
 
   it('allows same-origin iframes for portal quote documents', () => {
