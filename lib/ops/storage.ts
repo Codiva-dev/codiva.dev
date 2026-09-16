@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { slugify } from '@/lib/ops/slug';
 
 /** TTL corto para URLs firmadas (segundos). */
 export const OPS_SIGNED_URL_TTL_SECONDS = 60 * 5; // 5 minutos
@@ -60,6 +61,17 @@ export function sha256Hex(buffer: Buffer): string {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
+/** Object key fragment safe for Supabase Storage (no accents or punctuation). */
+export function opsStorageFileName(originalName: string, now = Date.now()): string {
+  const base = String(originalName || '').split(/[/\\]/).pop()?.trim() || 'file';
+  const dot = base.lastIndexOf('.');
+  const extRaw = dot > 0 ? base.slice(dot + 1) : '';
+  const stem = (dot > 0 ? base.slice(0, dot) : base) || 'file';
+  const ext = extRaw.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12);
+  const slug = slugify(stem) || 'file';
+  return `${now}-${slug}${ext ? `.${ext}` : ''}`;
+}
+
 export async function createOpsSignedUrl(
   path: string,
   expiresIn = OPS_SIGNED_URL_TTL_SECONDS
@@ -83,8 +95,7 @@ export async function uploadOpsFile(
 ): Promise<{ path: string; url: string | null; sha256: string; buffer: Buffer }> {
   const admin = createAdminClient();
   const name = file instanceof File ? file.name : 'file';
-  const safeName = `${Date.now()}-${name.replace(/\s+/g, '-')}`;
-  const path = `${folder}/${safeName}`;
+  const path = `${folder.replace(/\/+$/, '')}/${opsStorageFileName(name)}`;
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const sha256 = sha256Hex(buffer);
