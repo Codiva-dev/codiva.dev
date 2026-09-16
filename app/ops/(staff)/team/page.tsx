@@ -49,15 +49,16 @@ export default async function TeamPage({
     redirect('/dashboard?error=forbidden');
   }
   const canManageTeam = can(staff, 'team');
-  const tab = !canManageTeam
-    ? 'bolsa'
-    : tabParam === 'ofertas'
-      ? 'ofertas'
-      : tabParam === 'bolsa'
-        ? 'bolsa'
-        : tabParam === 'entrevistadores'
-          ? 'entrevistadores'
-          : 'miembros';
+  const tab =
+    tabParam === 'bolsa'
+      ? 'bolsa'
+      : tabParam === 'entrevistadores'
+        ? 'entrevistadores'
+        : canManageTeam
+          ? tabParam === 'ofertas'
+            ? 'ofertas'
+            : 'miembros'
+          : 'bolsa';
   const t = await getT();
   const { EMPTY_LABEL, formatCurrency, formatDate } = labelsFor(t.locale);
   const { OPS_ROLE_LABELS, WORK_MODALITY_LABELS, OFFER_STATUS_LABELS } = offerLabelsFor(t.locale);
@@ -267,11 +268,9 @@ export default async function TeamPage({
             </TabLink>
           </>
         ) : null}
-        {canManageTeam ? (
-          <TabLink href="/team?tab=entrevistadores" active={tab === 'entrevistadores'}>
-            {t('ops.team.tabInterviewers')}
-          </TabLink>
-        ) : null}
+        <TabLink href="/team?tab=entrevistadores" active={tab === 'entrevistadores'}>
+          {t('ops.team.tabInterviewers')}
+        </TabLink>
         <TabLink href="/team?tab=bolsa" active={tab === 'bolsa'}>
           {t('ops.team.tabJobs')}
           {(visibleApplications ?? []).filter((row) => row.status === 'new').length > 0 ? (
@@ -506,7 +505,7 @@ export default async function TeamPage({
             </ul>
           </section>
         </div>
-      ) : tab === 'entrevistadores' && canManageTeam ? (
+      ) : tab === 'entrevistadores' ? (
         <OpsInterviewPartnersPanel
           partners={recruitingPartners ?? []}
           members={(recruitingMembers ?? []).map((row) => ({
@@ -518,6 +517,7 @@ export default async function TeamPage({
           applications={(visibleApplications ?? [])
             .filter((row) => row.status === 'interview')
             .map((row) => ({ id: row.id, full_name: row.full_name }))}
+          canManage={canManageTeam}
           t={t}
         />
       ) : tab === 'bolsa' ? (

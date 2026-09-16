@@ -850,6 +850,7 @@
       "projectsAllAssigned": "Already assigned to every project.",
       "interviewersTitle": "External interviewers",
       "interviewersHint": "Invite a third party. They do not get Ops access. Login goes to interviews.codiva.dev.",
+      "interviewersHintView": "Review external interviewers and open their view. Inviting or revoking access stays with team managers.",
       "assignJobWarning": "“Assign opening” includes every candidate on that opening. If you also assign people one by one, removing a person will not hide them while the opening assignment remains.",
       "assignJobScope": "Entire opening · {{job}}",
       "assignCandidateScope": "Candidate · {{name}}",

@@ -35,6 +35,7 @@ export default function OpsInterviewPartnersPanel({
   assignments,
   jobs,
   applications,
+  canManage = false,
   t,
 }: {
   partners: InterviewPartnerOrgRow[];
@@ -42,6 +43,7 @@ export default function OpsInterviewPartnersPanel({
   assignments: InterviewAssignmentRow[];
   jobs: InterviewJobOption[];
   applications: InterviewApplicationOption[];
+  canManage?: boolean;
   t: Translator;
 }) {
   const membersByPartner = new Map<string, InterviewPartnerMemberRow[]>();
@@ -61,60 +63,67 @@ export default function OpsInterviewPartnersPanel({
 
   return (
     <div className="max-w-3xl space-y-8">
-      <ToastForm
-        success={t('ops.team.inviteInterviewerSent')}
-        action={inviteInterviewPartner}
-        className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5"
-      >
-        <h2 className="font-semibold">{t('ops.team.interviewersTitle')}</h2>
-        <p className="text-sm text-zinc-500">{t('ops.team.interviewersHint')}</p>
-        <label className="block text-sm font-medium">
-          {t('ops.team.inviteEmail')}
-          <input
-            name="email"
-            type="email"
-            required
-            className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-normal"
-          />
-        </label>
-        <label className="block text-sm font-medium">
-          {t('ops.team.fullName')}
-          <input
-            name="fullName"
-            required
-            className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-normal"
-          />
-        </label>
-        <label className="block text-sm font-medium">
-          {t('ops.team.partnerOrgExisting')}
-          <select name="partnerId" className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
-            <option value="">{t('ops.team.partnerOrgNew')}</option>
-            {partners.map((row) => (
-              <option key={row.id} value={row.id}>
-                {row.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm font-medium">
-          {t('ops.team.partnerOrg')}
-          <input
-            name="partnerName"
-            placeholder={t('ops.team.partnerOrgNew')}
-            className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-normal"
-          />
-        </label>
-        <label className="block text-sm font-medium">
-          {t('ops.team.permissionsTitle')}
-          <select name="role" defaultValue="interviewer" className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
-            <option value="interviewer">{t('ops.team.roleInterviewer')}</option>
-            <option value="coordinator">{t('ops.team.roleCoordinator')}</option>
-          </select>
-        </label>
-        <button type="submit" className="rounded-lg bg-codiva-primary px-3 py-2 text-sm text-white">
-          {t('ops.team.inviteInterviewer')}
-        </button>
-      </ToastForm>
+      {canManage ? (
+        <ToastForm
+          success={t('ops.team.inviteInterviewerSent')}
+          action={inviteInterviewPartner}
+          className="space-y-3 rounded-xl border border-zinc-200 bg-white p-5"
+        >
+          <h2 className="font-semibold">{t('ops.team.interviewersTitle')}</h2>
+          <p className="text-sm text-zinc-500">{t('ops.team.interviewersHint')}</p>
+          <label className="block text-sm font-medium">
+            {t('ops.team.inviteEmail')}
+            <input
+              name="email"
+              type="email"
+              required
+              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            {t('ops.team.fullName')}
+            <input
+              name="fullName"
+              required
+              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            {t('ops.team.partnerOrgExisting')}
+            <select name="partnerId" className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+              <option value="">{t('ops.team.partnerOrgNew')}</option>
+              {partners.map((row) => (
+                <option key={row.id} value={row.id}>
+                  {row.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block text-sm font-medium">
+            {t('ops.team.partnerOrg')}
+            <input
+              name="partnerName"
+              placeholder={t('ops.team.partnerOrgNew')}
+              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm font-normal"
+            />
+          </label>
+          <label className="block text-sm font-medium">
+            {t('ops.team.permissionsTitle')}
+            <select name="role" defaultValue="interviewer" className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+              <option value="interviewer">{t('ops.team.roleInterviewer')}</option>
+              <option value="coordinator">{t('ops.team.roleCoordinator')}</option>
+            </select>
+          </label>
+          <button type="submit" className="rounded-lg bg-codiva-primary px-3 py-2 text-sm text-white">
+            {t('ops.team.inviteInterviewer')}
+          </button>
+        </ToastForm>
+      ) : (
+        <div className="space-y-1">
+          <h2 className="font-semibold">{t('ops.team.interviewersTitle')}</h2>
+          <p className="text-sm text-zinc-500">{t('ops.team.interviewersHintView')}</p>
+        </div>
+      )}
 
       {partners.length === 0 ? (
         <p className="text-sm text-zinc-500">{t('ops.team.interviewersEmpty')}</p>
@@ -144,33 +153,37 @@ export default function OpsInterviewPartnersPanel({
                       </button>
                     </ToastForm>
                   ) : null}
-                  <ToastForm
-                    success={member.active ? t('ops.team.memberRevoked') : t('ops.team.memberActivated')}
-                    action={async (fd) => {
-                      'use server';
-                      await setInterviewPartnerMemberActive(member.id, fd);
-                    }}
-                    className="mt-2"
-                  >
-                    <input type="hidden" name="active" value={member.active ? '0' : '1'} />
-                    <button type="submit" className="text-sm text-codiva-primary hover:underline">
-                      {member.active ? t('ops.team.revoke') : t('ops.team.activate')}
-                    </button>
-                  </ToastForm>
-                  <ToastForm
-                    success={t('ops.team.interviewerDeleted')}
-                    confirmMessage={t('ops.team.deleteInterviewerConfirm')}
-                    confirmLabel={t('ops.team.deleteInterviewer')}
-                    action={async () => {
-                      'use server';
-                      await deleteInterviewPartnerMember(member.id);
-                    }}
-                    className="mt-2"
-                  >
-                    <button type="submit" className="text-sm text-red-700 hover:underline">
-                      {t('ops.team.deleteInterviewer')}
-                    </button>
-                  </ToastForm>
+                  {canManage ? (
+                    <>
+                      <ToastForm
+                        success={member.active ? t('ops.team.memberRevoked') : t('ops.team.memberActivated')}
+                        action={async (fd) => {
+                          'use server';
+                          await setInterviewPartnerMemberActive(member.id, fd);
+                        }}
+                        className="mt-2"
+                      >
+                        <input type="hidden" name="active" value={member.active ? '0' : '1'} />
+                        <button type="submit" className="text-sm text-codiva-primary hover:underline">
+                          {member.active ? t('ops.team.revoke') : t('ops.team.activate')}
+                        </button>
+                      </ToastForm>
+                      <ToastForm
+                        success={t('ops.team.interviewerDeleted')}
+                        confirmMessage={t('ops.team.deleteInterviewerConfirm')}
+                        confirmLabel={t('ops.team.deleteInterviewer')}
+                        action={async () => {
+                          'use server';
+                          await deleteInterviewPartnerMember(member.id);
+                        }}
+                        className="mt-2"
+                      >
+                        <button type="submit" className="text-sm text-red-700 hover:underline">
+                          {t('ops.team.deleteInterviewer')}
+                        </button>
+                      </ToastForm>
+                    </>
+                  ) : null}
                   {member.active ? (
                     <div className="mt-3 space-y-2">
                       <p className="text-xs text-amber-800">{t('ops.team.assignJobWarning')}</p>

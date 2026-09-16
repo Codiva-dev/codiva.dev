@@ -850,6 +850,7 @@
       "projectsAllAssigned": "Ya está en todos los proyectos.",
       "interviewersTitle": "Entrevistadores externos",
       "interviewersHint": "Invita a un tercero. No recibe acceso a Ops. El login llega a interviews.codiva.dev.",
+      "interviewersHintView": "Consulta entrevistadores externos y abre su vista. Invitar o revocar accesos queda en quien gestiona el equipo.",
       "assignJobWarning": "«Asignar vacante» incluye a todos los candidatos de esa vacante. Si también asignas personas sueltas, quitar una persona no las oculta mientras siga la vacante.",
       "assignJobScope": "Toda la vacante · {{job}}",
       "assignCandidateScope": "Candidato · {{name}}",
