@@ -5,6 +5,7 @@ describe('opsProjectPath', () => {
   it('builds staff URLs with the project slug', () => {
     expect(opsProjectPath('nirc')).toBe('/projects/nirc');
     expect(opsProjectPath('nirc', '?tab=sprints')).toBe('/projects/nirc?tab=sprints');
+    expect(opsProjectPath('nirc', '?tab=sprints&sprint=b1')).toBe('/projects/nirc?tab=sprints&sprint=b1');
     expect(opsProjectPath('nirc', '/arquitectura/abc')).toBe('/projects/nirc/arquitectura/abc');
   });
 

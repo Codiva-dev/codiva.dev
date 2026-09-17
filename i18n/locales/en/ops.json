@@ -582,7 +582,8 @@
         "build": "Build",
         "review": "Review",
         "blocked": "Blocked",
-        "done": "Done"
+        "done": "Done",
+        "archived": "Archived"
       },
       "workStream": {
         "internal": "Internal structure",
@@ -1444,7 +1445,13 @@
       "newItem": "New item",
       "details": "Details",
       "addItem": "Add item",
-      "empty": "No sprints in this project yet."
+      "empty": "No sprints in this project yet.",
+      "filterAll": "All",
+      "searchLabel": "Search items",
+      "searchPlaceholder": "Search items or sprints",
+      "searchCount": "{{count}} matches",
+      "emptySearch": "No matches for “{{query}}”.",
+      "emptyFilter": "No sprints with that status."
     },
     "hours": {
       "title": "Log hours",
@@ -2039,7 +2046,15 @@
       "delete": "Delete",
       "deleted": "Assignment deleted",
       "deleteConfirmTitle": "Delete assignment",
-      "deleteConfirm": "Delete this assignment from the board? This cannot be undone."
+      "deleteConfirm": "Delete this assignment from the board? This cannot be undone.",
+      "archive": "Archive",
+      "archivedToast": "Assignment archived",
+      "restore": "Restore",
+      "restored": "Assignment restored to Done",
+      "viewArchive": "Archive",
+      "emptyArchive": "No archived assignments.",
+      "archiveOnlyDone": "Only done assignments can be archived.",
+      "restoreOnlyDone": "Archived assignments can only be restored to Done."
     },
     "pendientes": {
       "title": "Pending",

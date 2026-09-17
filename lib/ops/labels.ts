@@ -103,6 +103,7 @@ export function labelsFor(locale: Locale = DEFAULT_LOCALE) {
       'review',
       'blocked',
       'done',
+      'archived',
     ]),
     WORK_STREAM_LABELS: group(locale, 'workStream', [
       'internal',

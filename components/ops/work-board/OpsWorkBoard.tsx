@@ -32,11 +32,15 @@ import {
   WORK_STATUSES,
   WORK_STREAMS,
   WORK_URGENCIES,
+  canArchiveWorkStatus,
   canMutateWorkAssignment,
+  canRestoreWorkStatus,
+  canTransitionWorkStatus,
   clampWorkProgress,
   clearWorkAssignmentUnreadMentions,
   dwellMsSince,
   formatDwellDuration,
+  isWorkBoardColumn,
   isWorkStatus,
   patchWorkAssignmentStatus,
   patchWorkSubtaskStatus,
@@ -99,7 +103,11 @@ export default function OpsWorkBoard({
   const [stream, setStream] = useState('');
   const [person, setPerson] = useState('');
   const [urgency, setUrgency] = useState('');
-  const [view, setView] = useState<'board' | 'list'>('board');
+  const [view, setView] = useState<'board' | 'list' | 'archive'>(() =>
+    initialAssignments.some((row) => row.id === (initialAssignmentId || '') && row.status === 'archived')
+      ? 'archive'
+      : 'board'
+  );
   const [density, setDensity] = useState<'compact' | 'expanded'>('compact');
   const [createOpen, setCreateOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<WorkAssignment | null>(null);
@@ -164,27 +172,34 @@ export default function OpsWorkBoard({
   const people = useMemo(() => {
     const map = new Map<string, string>();
     for (const row of assignments) {
+      if (view === 'archive' ? row.status !== 'archived' : row.status === 'archived') continue;
       if (row.assignee_id) map.set(row.assignee_id, row.assignee_name);
     }
     return [...map.entries()]
       .map(([id, label]) => ({ id, label }))
       .sort((a, b) => a.label.localeCompare(b.label, locale));
-  }, [assignments, locale]);
+  }, [assignments, locale, view]);
 
   const visible = useMemo(() => {
     return sortWorkCardsByUrgency(
       assignments.filter((row) => {
+        if (view === 'archive' ? row.status !== 'archived' : row.status === 'archived') return false;
         if (stream && row.stream !== stream) return false;
         if (person && row.assignee_id !== person) return false;
         if (urgency && row.urgency !== urgency) return false;
         return true;
       })
     );
-  }, [assignments, stream, person, urgency]);
+  }, [assignments, stream, person, urgency, view]);
 
   const selected = visible.find((row) => row.id === selectedId) ?? assignments.find((row) => row.id === selectedId);
 
-  async function onDropStatus(assignmentId: string, status: string) {
+  async function changeStatus(
+    assignmentId: string,
+    status: string,
+    source: 'kanban' | 'detail',
+    successKey?: 'ops.asignaciones.archivedToast' | 'ops.asignaciones.restored'
+  ) {
     if (!isWorkStatus(status)) return;
     const current = assignments.find((row) => row.id === assignmentId);
     if (!current || current.status === status) return;
@@ -192,13 +207,29 @@ export default function OpsWorkBoard({
       toast.error(t('ops.asignaciones.forbiddenEdit'));
       return;
     }
+    if (!canTransitionWorkStatus(current.status, status)) {
+      toast.error(
+        status === 'archived'
+          ? t('ops.asignaciones.archiveOnlyDone')
+          : current.status === 'archived'
+            ? t('ops.asignaciones.restoreOnlyDone')
+            : t('ops.asignaciones.statusFailed')
+      );
+      return;
+    }
     setAssignments((prev) => patchWorkAssignmentStatus(prev, assignmentId, status));
     try {
-      await updateWorkAssignmentStatus(assignmentId, status, 'kanban');
+      await updateWorkAssignmentStatus(assignmentId, status, source);
+      if (successKey) toast.success(t(successKey));
     } catch (err) {
       router.refresh();
       toast.error(toUserErrorMessage(err, t('ops.asignaciones.statusFailed')));
     }
+  }
+
+  async function onDropStatus(assignmentId: string, status: string) {
+    if (!isWorkBoardColumn(status)) return;
+    await changeStatus(assignmentId, status, 'kanban');
   }
 
   const { draggingId, dropStatus, onCardPointerDown, consumeClickIfDragged, ghost, scrollerRef } =
@@ -282,6 +313,13 @@ export default function OpsWorkBoard({
           >
             {t('ops.asignaciones.viewList')}
           </button>
+          <button
+            type="button"
+            className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'archive' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+            onClick={() => setView('archive')}
+          >
+            {t('ops.asignaciones.viewArchive')}
+          </button>
         </div>
         {view === 'board' ? (
           <div className="flex rounded-lg border border-zinc-200 p-0.5">
@@ -351,6 +389,11 @@ export default function OpsWorkBoard({
                       onRefresh={() => router.refresh()}
                       onPointerDownCard={onCardPointerDown}
                       consumeClickIfDragged={consumeClickIfDragged}
+                      onArchive={
+                        canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)
+                          ? () => void changeStatus(row.id, 'archived', 'detail', 'ops.asignaciones.archivedToast')
+                          : undefined
+                      }
                     />
                   ))}
                   {!cards.length ? (
@@ -361,10 +404,13 @@ export default function OpsWorkBoard({
             );
           })}
         </div>
+      ) : view === 'archive' && !visible.length ? (
+        <EmptyState>{t('ops.asignaciones.emptyArchive')}</EmptyState>
       ) : (
         <div className="space-y-6">
           {WORK_STREAMS.map((streamId) => {
             const rows = visible.filter((row) => row.stream === streamId);
+            if (view === 'archive' && !rows.length) return null;
             return (
               <section key={streamId}>
                 <h2 className="mb-2 text-sm font-semibold text-zinc-800">{streamLabels[streamId]}</h2>
@@ -376,7 +422,7 @@ export default function OpsWorkBoard({
                         assignment={row}
                         locale={locale}
                         streamLabel={streamLabels[row.stream]}
-                      urgencyLabel={urgencyLabels[row.urgency]}
+                        urgencyLabel={urgencyLabels[row.urgency]}
                         showStatus
                         canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
                         canManage={canManage}
@@ -387,6 +433,16 @@ export default function OpsWorkBoard({
                         onToggleSubtask={onToggleSub}
                         onRefresh={() => router.refresh()}
                         onDelete={canManage ? () => setPendingDelete(row) : undefined}
+                        onArchive={
+                          canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)
+                            ? () => void changeStatus(row.id, 'archived', 'detail', 'ops.asignaciones.archivedToast')
+                            : undefined
+                        }
+                        onRestore={
+                          canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)
+                            ? () => void changeStatus(row.id, 'done', 'detail', 'ops.asignaciones.restored')
+                            : undefined
+                        }
                       />
                     ))}
                   </div>
@@ -425,6 +481,16 @@ export default function OpsWorkBoard({
           onRefresh={() => router.refresh()}
           onToggleSubtask={onToggleSub}
           onDelete={canManage ? () => setPendingDelete(selected) : undefined}
+          onArchive={
+            canMutateWorkAssignment(currentUserId, selected.assignee_id, canManage)
+              ? () => void changeStatus(selected.id, 'archived', 'detail', 'ops.asignaciones.archivedToast')
+              : undefined
+          }
+          onRestore={
+            canMutateWorkAssignment(currentUserId, selected.assignee_id, canManage)
+              ? () => void changeStatus(selected.id, 'done', 'detail', 'ops.asignaciones.restored')
+              : undefined
+          }
         />
       ) : null}
 
@@ -509,6 +575,42 @@ function WorkUrgencyBadge({
   );
 }
 
+function WorkLifecycleButton({
+  assignment,
+  onArchive,
+  onRestore,
+  compact = false,
+}: {
+  assignment: WorkAssignment;
+  onArchive?: () => void;
+  onRestore?: () => void;
+  compact?: boolean;
+}) {
+  const { t } = useTranslation();
+  const action =
+    onArchive && canArchiveWorkStatus(assignment.status)
+      ? { label: t('ops.asignaciones.archive'), run: onArchive }
+      : onRestore && canRestoreWorkStatus(assignment.status)
+        ? { label: t('ops.asignaciones.restore'), run: onRestore }
+        : null;
+  if (!action) return null;
+  return (
+    <button
+      type="button"
+      className={`shrink-0 rounded-md font-semibold text-zinc-700 hover:bg-white/80 ${
+        compact ? 'px-1 py-0.5 text-[10px]' : 'px-1.5 py-0.5 text-[11px]'
+      }`}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation();
+        action.run();
+      }}
+    >
+      {action.label}
+    </button>
+  );
+}
+
 function WorkCard({
   assignment,
   locale,
@@ -530,6 +632,8 @@ function WorkCard({
   onPointerDownCard,
   consumeClickIfDragged,
   onDelete,
+  onArchive,
+  onRestore,
 }: {
   assignment: WorkAssignment;
   locale: 'es' | 'en';
@@ -551,6 +655,8 @@ function WorkCard({
   onPointerDownCard?: (event: React.PointerEvent<HTMLElement>, assignment: WorkAssignment) => void;
   consumeClickIfDragged?: () => boolean;
   onDelete?: () => void;
+  onArchive?: () => void;
+  onRestore?: () => void;
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(!compact);
@@ -577,6 +683,9 @@ function WorkCard({
       onToggle={() => setExpanded((prev) => !prev)}
     />
   ) : null;
+  const lifecycleButton = (
+    <WorkLifecycleButton assignment={assignment} onArchive={onArchive} onRestore={onRestore} compact={!expanded} />
+  );
 
   function open(event: React.MouseEvent) {
     if (isWorkCardInteractiveTarget(event.target)) return;
@@ -601,6 +710,7 @@ function WorkCard({
             {assignment.title}
           </h3>
           <PendingNotificationBadge count={pendingCount} />
+          {lifecycleButton}
           {expandToggle}
         </div>
         {assignment.process_label ? (
@@ -662,6 +772,7 @@ function WorkCard({
           </span>
         ) : null}
         {expandToggle}
+        {lifecycleButton}
         {onDelete ? (
           <button
             type="button"
@@ -985,6 +1096,8 @@ function DetailModal({
   onRefresh,
   onToggleSubtask,
   onDelete,
+  onArchive,
+  onRestore,
 }: {
   assignment: WorkAssignment;
   onClose: () => void;
@@ -1000,6 +1113,8 @@ function DetailModal({
   onRefresh: () => void;
   onToggleSubtask: (id: string) => void;
   onDelete?: () => void;
+  onArchive?: () => void;
+  onRestore?: () => void;
 }) {
   const { t } = useTranslation();
   const titleId = useId();
@@ -1011,7 +1126,8 @@ function DetailModal({
   );
 
   async function onStatusChange(next: string) {
-    if (!isWorkStatus(next) || next === assignment.status) return;
+    if (!isWorkBoardColumn(next) || next === assignment.status) return;
+    if (!canTransitionWorkStatus(assignment.status, next)) return;
     try {
       await updateWorkAssignmentStatus(assignment.id, next, 'detail');
       onRefresh();
@@ -1020,7 +1136,8 @@ function DetailModal({
     }
   }
 
-  const statusSelect = canAct ? (
+  const statusSelect =
+    canAct && assignment.status !== 'archived' ? (
     <Field label={t('ops.labels.workStatus.' + assignment.status)}>
       <Select
         size="sm"
@@ -1028,7 +1145,7 @@ function DetailModal({
         defaultValue={assignment.status}
         onChange={(event) => void onStatusChange(event.target.value)}
       >
-        {WORK_STATUSES.map((id) => (
+        {WORK_BOARD_COLUMNS.map((id) => (
           <option key={id} value={id}>
             {statusLabels[id]}
           </option>
@@ -1051,11 +1168,23 @@ function DetailModal({
       header={
         <div className="flex items-start justify-between gap-3">
           <p id={titleId} className="text-base font-semibold text-zinc-900">{assignment.title}</p>
-          {onDelete ? (
-            <Button type="button" size="xs" variant="danger" onClick={onDelete}>
-              {t('ops.asignaciones.delete')}
-            </Button>
-          ) : null}
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            {onArchive && canArchiveWorkStatus(assignment.status) ? (
+              <Button type="button" size="xs" variant="secondary" onClick={onArchive}>
+                {t('ops.asignaciones.archive')}
+              </Button>
+            ) : null}
+            {onRestore && canRestoreWorkStatus(assignment.status) ? (
+              <Button type="button" size="xs" variant="secondary" onClick={onRestore}>
+                {t('ops.asignaciones.restore')}
+              </Button>
+            ) : null}
+            {onDelete ? (
+              <Button type="button" size="xs" variant="danger" onClick={onDelete}>
+                {t('ops.asignaciones.delete')}
+              </Button>
+            ) : null}
+          </div>
         </div>
       }
     >

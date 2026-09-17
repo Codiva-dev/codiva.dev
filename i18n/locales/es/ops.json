@@ -582,7 +582,8 @@
         "build": "Desarrollo",
         "review": "Revisión",
         "blocked": "Bloqueado",
-        "done": "Hecho"
+        "done": "Hecho",
+        "archived": "Archivado"
       },
       "workStream": {
         "internal": "Estructura interna",
@@ -1444,7 +1445,13 @@
       "newItem": "Nuevo ítem",
       "details": "Detalle",
       "addItem": "Agregar ítem",
-      "empty": "Aún no hay sprints en este proyecto."
+      "empty": "Aún no hay sprints en este proyecto.",
+      "filterAll": "Todos",
+      "searchLabel": "Buscar ítems",
+      "searchPlaceholder": "Buscar ítems o sprints",
+      "searchCount": "{{count}} coincidencias",
+      "emptySearch": "Sin coincidencias para «{{query}}».",
+      "emptyFilter": "No hay sprints con ese estado."
     },
     "hours": {
       "title": "Registrar horas",
@@ -2035,7 +2042,15 @@
       "delete": "Eliminar",
       "deleted": "Asignación eliminada",
       "deleteConfirmTitle": "Eliminar asignación",
-      "deleteConfirm": "¿Eliminar esta asignación del tablero? No se puede deshacer."
+      "deleteConfirm": "¿Eliminar esta asignación del tablero? No se puede deshacer.",
+      "archive": "Archivar",
+      "archivedToast": "Asignación archivada",
+      "restore": "Restaurar",
+      "restored": "Asignación restaurada a Hecho",
+      "viewArchive": "Archivo",
+      "emptyArchive": "No hay asignaciones archivadas.",
+      "archiveOnlyDone": "Solo se pueden archivar asignaciones hechas.",
+      "restoreOnlyDone": "Las archivadas solo se restauran a Hecho."
     },
     "pendientes": {
       "title": "Pendientes",

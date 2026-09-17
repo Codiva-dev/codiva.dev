@@ -16,6 +16,10 @@ import {
   isWorkUrgency,
   isOpenWorkStatus,
   isPendingMentionStatus,
+  canArchiveWorkStatus,
+  canRestoreWorkStatus,
+  canTransitionWorkStatus,
+  isWorkBoardColumn,
   keepPendingMentions,
   unreadMentionCountByAssignmentId,
   workCardPendingCount,
@@ -143,12 +147,27 @@ describe('work-board pending status', () => {
     expect(isOpenWorkStatus('backlog')).toBe(true);
     expect(isOpenWorkStatus('blocked')).toBe(false);
     expect(isOpenWorkStatus('done')).toBe(false);
+    expect(isOpenWorkStatus('archived')).toBe(false);
   });
 
-  it('keeps mentions on blocked work and drops them once the assignment is done', () => {
+  it('archives from done and restores only to done', () => {
+    expect(canArchiveWorkStatus('done')).toBe(true);
+    expect(canArchiveWorkStatus('review')).toBe(false);
+    expect(canRestoreWorkStatus('archived')).toBe(true);
+    expect(canTransitionWorkStatus('done', 'archived')).toBe(true);
+    expect(canTransitionWorkStatus('review', 'archived')).toBe(false);
+    expect(canTransitionWorkStatus('archived', 'done')).toBe(true);
+    expect(canTransitionWorkStatus('archived', 'review')).toBe(false);
+    expect(canTransitionWorkStatus('done', 'review')).toBe(true);
+    expect(isWorkBoardColumn('done')).toBe(true);
+    expect(isWorkBoardColumn('archived')).toBe(false);
+  });
+
+  it('keeps mentions on blocked work and drops them once the assignment is done or archived', () => {
     expect(isPendingMentionStatus('blocked')).toBe(true);
     expect(isPendingMentionStatus('review')).toBe(true);
     expect(isPendingMentionStatus('done')).toBe(false);
+    expect(isPendingMentionStatus('archived')).toBe(false);
     expect(isPendingMentionStatus(undefined)).toBe(false);
   });
 
@@ -156,17 +175,20 @@ describe('work-board pending status', () => {
     const deskspace = '724f0924-db0b-4fbd-85f3-2753d448656c';
     const doneCriteria = '8b5e56ad-7062-47ef-8528-2edd558c0ccf';
     const openBacklog = '66ec24d5-6c66-4051-8730-649c18bbd34b';
+    const archivedId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
     const kept = keepPendingMentions(
       [
         { id: 'mention-done', assignment_id: doneCriteria },
         { id: 'mention-blocked', assignment_id: deskspace },
         { id: 'mention-open', assignment_id: openBacklog },
+        { id: 'mention-archived', assignment_id: archivedId },
         { id: 'mention-orphan', assignment_id: 'missing' },
       ],
       new Map([
         [deskspace, 'blocked'],
         [doneCriteria, 'done'],
         [openBacklog, 'backlog'],
+        [archivedId, 'archived'],
       ])
     );
     expect(kept.map((row) => row.id)).toEqual(['mention-blocked', 'mention-open']);
@@ -196,6 +218,14 @@ describe('work-board pending status', () => {
       workCardPendingCount({
         unreadMentionCount: 2,
         status: 'done',
+        hasOpenEditRequest: true,
+        canManage: true,
+      })
+    ).toBe(1);
+    expect(
+      workCardPendingCount({
+        unreadMentionCount: 2,
+        status: 'archived',
         hasOpenEditRequest: true,
         canManage: true,
       })

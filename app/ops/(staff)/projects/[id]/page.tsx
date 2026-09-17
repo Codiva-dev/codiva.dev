@@ -39,6 +39,7 @@ import { labelsFor, isClientBorneChargeKind } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
 import { projectPortalUrl, staffPortalPreviewPath } from '@/lib/ops/host';
 import { opsProjectPath, resolveOpsProject } from '@/lib/ops/project-path';
+import { querySuffix, sortSprintsBySchedule } from '@/lib/ops/project-sprints';
 import OpsQuoteForm from '@/components/ops/OpsQuoteForm';
 import OpsProjectArchitecture from '@/components/ops/OpsProjectArchitecture';
 import { isCanvasKind } from '@/lib/ops/architecture';
@@ -55,7 +56,7 @@ export default async function ProjectDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; sprint?: string; sprintStatus?: string; q?: string }>;
 }) {
   const { id: idOrSlug } = await params;
   const search = await searchParams;
@@ -65,7 +66,17 @@ export default async function ProjectDetailPage({
   const resolved = await resolveOpsProject(supabase, idOrSlug);
   if (!resolved) redirect('/projects');
   if (idOrSlug !== resolved.slug) {
-    redirect(opsProjectPath(resolved.slug, search.tab ? `?tab=${encodeURIComponent(search.tab)}` : ''));
+    redirect(
+      opsProjectPath(
+        resolved.slug,
+        querySuffix({
+          tab: search.tab,
+          sprint: search.sprint,
+          sprintStatus: search.sprintStatus,
+          q: search.q,
+        })
+      )
+    );
   }
   await assertProjectAccess(access, resolved.id);
   const id = resolved.id;
@@ -164,7 +175,7 @@ export default async function ProjectDetailPage({
       .from('project_sprints')
       .select('id, name, goal, starts_on, ends_on, status')
       .eq('project_id', id)
-      .order('created_at', { ascending: false }),
+      .order('starts_on', { ascending: true, nullsFirst: false }),
     supabase
       .from('staff_profiles')
       .select('id, full_name, role')
@@ -403,6 +414,7 @@ export default async function ProjectDetailPage({
       {tab === 'sprints' && (
         <OpsProjectSprints
           projectId={id}
+          projectSlug={projectSlug}
           permissions={staff}
           currentUserId={user.id}
           allStaff={(allStaffRows ?? []).map((s) => ({
@@ -410,8 +422,11 @@ export default async function ProjectDetailPage({
             full_name: s.full_name || '',
             role: s.role,
           }))}
-          sprints={sprints ?? []}
+          sprints={sortSprintsBySchedule(sprints ?? [])}
           items={sprintItems ?? []}
+          selectedSprintId={search.sprint}
+          sprintStatus={search.sprintStatus}
+          searchQuery={search.q}
         />
       )}
 
