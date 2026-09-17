@@ -26,12 +26,13 @@ import {
   parseHireCurrency,
   parseInterviewPlan,
   postingHireOpsRole,
+  seedInterviewKinds,
   uniqueJobSlugCandidate,
 } from '@/lib/ops/careers';
 import { isAssessmentCatalogKey } from '@/lib/careers/assessments/catalog';
 import { notifyCandidateApplicationStatus } from '@/lib/careers/notify-application-status';
-import { syncRoundAssignee } from '@/lib/ops/interview-actions';
-import { INTERVIEW_REPORT_BUCKET } from '@/lib/ops/interview-partner';
+import { notifyInterviewAssigned, syncRoundAssignee } from '@/lib/ops/interview-actions';
+import { encodeInterviewAssignee, INTERVIEW_REPORT_BUCKET } from '@/lib/ops/interview-partner';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 function revalidateCareerPaths(slug?: string) {
@@ -85,40 +86,123 @@ async function requireApplicationForReview(
   return application;
 }
 
+async function partnerMemberIdsForApplication(
+  supabase: Awaited<ReturnType<typeof requireCareersReview>>['supabase'],
+  applicationId: string,
+  jobPostingId: string | null
+) {
+  const [{ data: byApplication }, { data: byJob }] = await Promise.all([
+    supabase.from('ops_interview_assignments').select('member_id').eq('application_id', applicationId),
+    jobPostingId
+      ? supabase.from('ops_interview_assignments').select('member_id').eq('job_posting_id', jobPostingId)
+      : Promise.resolve({ data: [] as { member_id: string }[] }),
+  ]);
+  const ids = [
+    ...new Set([...(byApplication ?? []), ...(byJob ?? [])].map((row) => row.member_id).filter(Boolean)),
+  ];
+  if (!ids.length) return [];
+  const { data: members } = await supabase
+    .from('ops_recruiting_partner_members')
+    .select('id')
+    .in('id', ids)
+    .eq('active', true);
+  return (members ?? []).map((row) => row.id);
+}
+
+async function assignSeededScreeningToPartners(opts: {
+  supabase: Awaited<ReturnType<typeof requireCareersReview>>['supabase'];
+  applicationId: string;
+  jobPostingId: string | null;
+  screeningRoundId: string;
+  actorId: string;
+}) {
+  const memberIds = await partnerMemberIdsForApplication(
+    opts.supabase,
+    opts.applicationId,
+    opts.jobPostingId
+  );
+  if (!memberIds.length) return;
+  if (memberIds.length === 1) {
+    await syncRoundAssignee({
+      roundId: opts.screeningRoundId,
+      applicationId: opts.applicationId,
+      assigneeRaw: encodeInterviewAssignee({ kind: 'partner', id: memberIds[0] }),
+      actorId: opts.actorId,
+    });
+    return;
+  }
+  after(() => Promise.all(memberIds.map((memberId) => notifyInterviewAssigned(memberId, opts.applicationId))));
+}
+
 async function seedInterviewRoundsFromPosting(
   supabase: Awaited<ReturnType<typeof requireCareersReview>>['supabase'],
   applicationId: string,
   actorId: string
 ) {
-  const { count } = await supabase
-    .from('ops_job_interview_rounds')
-    .select('id', { count: 'exact', head: true })
-    .eq('application_id', applicationId);
+  const [{ data: existing }, { data: application }] = await Promise.all([
+    supabase
+      .from('ops_job_interview_rounds')
+      .select('id, kind, sort_order')
+      .eq('application_id', applicationId),
+    supabase
+      .from('ops_job_applications')
+      .select('job_posting_id, ops_job_postings(interview_plan)')
+      .eq('id', applicationId)
+      .maybeSingle(),
+  ]);
 
-  if ((count ?? 0) > 0) return false;
-
-  const { data: application } = await supabase
-    .from('ops_job_applications')
-    .select('ops_job_postings(interview_plan)')
-    .eq('id', applicationId)
-    .maybeSingle();
   const nested = application?.ops_job_postings;
   const posting = Array.isArray(nested) ? nested[0] : nested;
-  const plan = parseInterviewPlan(posting?.interview_plan);
-  if (!plan.length) return false;
-
   const t = await getT();
-  const { error } = await supabase.from('ops_job_interview_rounds').insert(
-    plan.map((kind, index) => ({
-      application_id: applicationId,
-      sort_order: index,
-      kind,
-      title: t(`ops.careers.interviewKind.${kind}`),
-      status: 'planned',
-      created_by: actorId,
-    }))
-  );
-  if (error) throw await throwDb(error);
+  const screeningTitle = t('ops.careers.interviewKind.screening');
+  let screeningId = (existing ?? []).find((row) => row.kind === 'screening')?.id ?? null;
+
+  if (!(existing ?? []).length) {
+    const plan = seedInterviewKinds(parseInterviewPlan(posting?.interview_plan));
+    const { data: inserted, error } = await supabase
+      .from('ops_job_interview_rounds')
+      .insert(
+        plan.map((kind, index) => ({
+          application_id: applicationId,
+          sort_order: index,
+          kind,
+          title: t(`ops.careers.interviewKind.${kind}`),
+          status: 'planned',
+          created_by: actorId,
+        }))
+      )
+      .select('id, kind');
+    if (error) throw await throwDb(error);
+    screeningId = (inserted ?? []).find((row) => row.kind === 'screening')?.id ?? null;
+  } else if (!screeningId) {
+    const minOrder = Math.min(0, ...(existing ?? []).map((row) => row.sort_order));
+    const { data: inserted, error } = await supabase
+      .from('ops_job_interview_rounds')
+      .insert({
+        application_id: applicationId,
+        sort_order: minOrder - 1,
+        kind: 'screening',
+        title: screeningTitle,
+        status: 'planned',
+        created_by: actorId,
+      })
+      .select('id')
+      .single();
+    if (error || !inserted) throw await throwDb(error);
+    screeningId = inserted.id;
+  } else {
+    return false;
+  }
+
+  if (screeningId) {
+    await assignSeededScreeningToPartners({
+      supabase,
+      applicationId,
+      jobPostingId: application?.job_posting_id ?? null,
+      screeningRoundId: screeningId,
+      actorId,
+    });
+  }
   return true;
 }
 
@@ -464,7 +548,7 @@ export async function updateJobApplicationStatus(applicationId: string, formData
     actorId: user.id,
   });
 
-  if (status === 'interview' && application.status !== 'interview') {
+  if (status === 'interview') {
     await seedInterviewRoundsFromPosting(supabase, applicationId, user.id);
   }
 
@@ -514,6 +598,7 @@ export async function addJobInterviewRound(applicationId: string, formData: Form
     actorId: user.id,
   });
   await maybePromoteToInterview(supabase, application, user.id);
+  await seedInterviewRoundsFromPosting(supabase, applicationId, user.id);
   await logActivity({
     entityType: 'job_application',
     entityId: applicationId,

@@ -1,6 +1,7 @@
 import { assessmentCatalogChoices } from '@/lib/careers/assessments/catalog';
 import { JOB_HIRE_OPS_ROLES } from '@/lib/ops/career-disciplines';
 import {
+  AUTO_SEEDED_INTERVIEW_KIND,
   JOB_HIRE_WORK_MODALITIES,
   JOB_INTERVIEW_KINDS,
   isJobInterviewKind,
@@ -100,7 +101,11 @@ export default function JobPostingProcessFields({
         <legend className="text-sm text-zinc-600">{t('ops.careers.interviewPlan')}</legend>
         <p className="text-xs text-zinc-500">{t('ops.careers.interviewPlanHint')}</p>
         <div className="flex flex-wrap gap-2">
-          {JOB_INTERVIEW_KINDS.map((kind) => (
+          <label className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-zinc-50 px-2.5 py-1 text-xs text-zinc-700">
+            <input type="checkbox" checked readOnly disabled />
+            {t(`ops.careers.interviewKind.${AUTO_SEEDED_INTERVIEW_KIND}`)}
+          </label>
+          {JOB_INTERVIEW_KINDS.filter((kind) => kind !== AUTO_SEEDED_INTERVIEW_KIND).map((kind) => (
             <label
               key={kind}
               className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-700"

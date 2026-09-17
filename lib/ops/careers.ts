@@ -51,6 +51,14 @@ export function parseInterviewPlan(values: unknown): JobInterviewKind[] {
   return out;
 }
 
+/** Screening is always first so external recruiters get a filter round to operate. */
+export const AUTO_SEEDED_INTERVIEW_KIND: JobInterviewKind = 'screening';
+
+export function seedInterviewKinds(plan: JobInterviewKind[]): JobInterviewKind[] {
+  const rest = plan.filter((kind) => kind !== AUTO_SEEDED_INTERVIEW_KIND);
+  return [AUTO_SEEDED_INTERVIEW_KIND, ...rest];
+}
+
 export function parseHireCompensation(value: unknown): number | null {
   const raw = String(value ?? '').trim();
   if (!raw) return null;

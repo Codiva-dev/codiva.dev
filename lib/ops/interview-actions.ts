@@ -20,6 +20,7 @@ import {
   buildInterviewReportPath,
   isInterviewUuid,
   parseInterviewAssignee,
+  partnerMayOperateRound,
   resolveInterviewReportMime,
 } from '@/lib/ops/interview-partner';
 import {
@@ -271,9 +272,44 @@ export async function acceptInterviewLegalDocuments(formData: FormData) {
   revalidatePath('/aceptar');
 }
 
+async function requirePartnerOperableRound(
+  memberId: string,
+  roundId: string
+) {
+  const admin = createAdminClient();
+  const { data: round } = await admin
+    .from('ops_job_interview_rounds')
+    .select('id, application_id, kind, partner_member_id')
+    .eq('id', roundId)
+    .maybeSingle();
+  if (!round) throw new Error('Fase no encontrada');
+  const { data: application } = await admin
+    .from('ops_job_applications')
+    .select('id, job_posting_id')
+    .eq('id', round.application_id)
+    .maybeSingle();
+  if (!application) throw new Error('Postulación no encontrada');
+  const { data: assignments } = await admin
+    .from('ops_interview_assignments')
+    .select('round_id, application_id, job_posting_id')
+    .eq('member_id', memberId);
+  if (
+    !partnerMayOperateRound(round, {
+      memberId,
+      assignments: assignments ?? [],
+      application,
+    })
+  ) {
+    throw new Error('Esta fase no es para tu equipo');
+  }
+  return round;
+}
+
 export async function partnerUpdateInterviewRound(roundId: string, formData: FormData) {
-  const { user, supabase } = await requireInterviewPartnerWithAcceptances();
+  const { user, supabase, member } = await requireInterviewPartnerWithAcceptances();
+  if (!member) throw new Error('Esta acción es para el portal de entrevistas');
   if (!isInterviewUuid(roundId)) throw new Error('Fase inválida');
+  await requirePartnerOperableRound(member.id, roundId);
   const status = String(formData.get('status') || '').trim();
   if (!isJobInterviewRoundStatus(status)) throw new Error('Estado de fase inválido');
   const outcomeRaw = String(formData.get('outcome') || '').trim();
@@ -307,8 +343,10 @@ export async function partnerUpdateInterviewRound(roundId: string, formData: For
 }
 
 export async function partnerAddInterviewComment(roundId: string, formData: FormData) {
-  const { user, supabase } = await requireInterviewPartnerWithAcceptances();
+  const { user, supabase, member } = await requireInterviewPartnerWithAcceptances();
+  if (!member) throw new Error('Esta acción es para el portal de entrevistas');
   if (!isInterviewUuid(roundId)) throw new Error('Fase inválida');
+  await requirePartnerOperableRound(member.id, roundId);
   const body = String(formData.get('body') || '').trim().slice(0, 4000);
   if (body.length < 1) throw new Error('Escribe un comentario');
 
@@ -336,8 +374,10 @@ export async function partnerAddInterviewComment(roundId: string, formData: Form
 }
 
 export async function partnerUploadInterviewReport(roundId: string, formData: FormData) {
-  const { user, supabase } = await requireInterviewPartnerWithAcceptances();
+  const { user, supabase, member } = await requireInterviewPartnerWithAcceptances();
+  if (!member) throw new Error('Esta acción es para el portal de entrevistas');
   if (!isInterviewUuid(roundId)) throw new Error('Fase inválida');
+  await requirePartnerOperableRound(member.id, roundId);
   const { data: round } = await supabase
     .from('ops_job_interview_rounds')
     .select('id, application_id')
@@ -405,6 +445,10 @@ async function resolveAssignmentApplicationId(
     return data?.id ?? null;
   }
   return null;
+}
+
+export async function notifyInterviewAssigned(memberId: string, applicationId: string | null) {
+  await notifyAssignment(memberId, applicationId);
 }
 
 async function notifyAssignment(memberId: string, applicationId: string | null) {

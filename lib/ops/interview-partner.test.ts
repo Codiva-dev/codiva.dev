@@ -7,7 +7,9 @@ import {
   interviewFollowUp,
   parseInterviewAssignee,
   parseInterviewViewAsCookie,
+  partnerMayOperateRound,
   partnerMaySetApplicationStatus,
+  partnerOperableRounds,
   resolveInterviewReportMime,
   visibleApplicationIds,
 } from './interview-partner';
@@ -56,6 +58,47 @@ describe('assignment visibility', () => {
         { job_posting_id: app.job_posting_id },
       ])
     ).toEqual([app.job_posting_id]);
+  });
+});
+
+describe('partner operable rounds', () => {
+  const screening = { id: round.id, kind: 'screening', partner_member_id: null, application_id: app.id };
+  const technical = {
+    id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+    kind: 'technical',
+    partner_member_id: null,
+    application_id: app.id,
+  };
+  const memberId = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+
+  it('lets vacancy assignees operate only the filter round', () => {
+    const opts = {
+      memberId,
+      assignments: [{ job_posting_id: app.job_posting_id }],
+      application: app,
+    };
+    expect(partnerOperableRounds([screening, technical], opts).map((row) => row.kind)).toEqual(['screening']);
+    expect(partnerMayOperateRound(technical, opts)).toBe(false);
+  });
+
+  it('does not treat another vacancy assignment as a filter round on this candidate', () => {
+    expect(
+      partnerMayOperateRound(screening, {
+        memberId,
+        assignments: [{ job_posting_id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd' }],
+        application: app,
+      })
+    ).toBe(false);
+  });
+
+  it('keeps an explicitly assigned technical round', () => {
+    expect(
+      partnerMayOperateRound(technical, {
+        memberId,
+        assignments: [{ round_id: technical.id }],
+        application: app,
+      })
+    ).toBe(true);
   });
 });
 
