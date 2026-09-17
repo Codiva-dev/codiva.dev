@@ -7,6 +7,7 @@ const SAME_ORIGIN_EMBED_PATHS = [
   '/api/ops/careers/cv',
   '/api/ops/careers/recruiting-report',
   '/api/entrevistas/recruiting-report',
+  '/api/ops/assignment-file',
 ] as const;
 
 /** Portal / staff preview iframe for deliverables.body_html (Mermaid on jsDelivr). */

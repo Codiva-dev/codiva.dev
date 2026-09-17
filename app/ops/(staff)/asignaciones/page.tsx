@@ -48,8 +48,11 @@ export default async function AsignacionesPage({
   const { id: initialAssignmentId } = await searchParams;
   const canManage = can(staff, 'assignments_manage');
 
+  const assignmentSelect =
+    'id, title, description, stream, status, urgency, assignee_id, due_at, progress_pct, process_kind, process_id, status_entered_at, created_at, created_by';
   const [
-    assignmentsRes,
+    boardRes,
+    archivedRes,
     { data: subtaskRows },
     { data: eventRows },
     { data: commentRows },
@@ -65,9 +68,13 @@ export default async function AsignacionesPage({
   ] = await Promise.all([
     supabase
       .from('work_assignments')
-      .select(
-        'id, title, description, stream, status, urgency, assignee_id, due_at, progress_pct, process_kind, process_id, status_entered_at, created_at, created_by'
-      )
+      .select(assignmentSelect)
+      .neq('status', 'archived')
+      .order('status_entered_at', { ascending: false }),
+    supabase
+      .from('work_assignments')
+      .select(assignmentSelect)
+      .eq('status', 'archived')
       .order('status_entered_at', { ascending: false }),
     supabase
       .from('work_assignment_subtasks')
@@ -102,8 +109,9 @@ export default async function AsignacionesPage({
       .is('read_at', null),
   ]);
 
-  if (assignmentsRes.error) throw await throwDb(assignmentsRes.error);
-  const assignmentRows = assignmentsRes.data;
+  if (boardRes.error) throw await throwDb(boardRes.error);
+  if (archivedRes.error) throw await throwDb(archivedRes.error);
+  const assignmentRows = [...(boardRes.data ?? []), ...(archivedRes.data ?? [])];
 
   const staffName = new Map((staffRows ?? []).map((row) => [row.id, row.full_name || 'Staff']));
   const processMeta = new Map<string, ProcessMeta>();
@@ -268,13 +276,11 @@ export default async function AsignacionesPage({
   }));
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col lg:h-full">
-      <div className="shrink-0">
-        <OpsPageHeader
-          title={t('ops.asignaciones.title')}
-          description={t('ops.asignaciones.description')}
-        />
-      </div>
+    <div>
+      <OpsPageHeader
+        title={t('ops.asignaciones.title')}
+        description={t('ops.asignaciones.description')}
+      />
       <OpsWorkBoard
         assignments={assignments}
         staff={staffOptions}

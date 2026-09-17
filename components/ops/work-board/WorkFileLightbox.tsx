@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useId } from 'react';
+import { useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
 import Modal, { ModalHeader } from '@/components/ui/Modal';
@@ -10,6 +10,53 @@ import {
   type WorkFile,
 } from '@/lib/ops/work-board';
 import WorkOfficePreview from './WorkOfficePreview';
+
+function WorkEmbedPreview({ href, title }: { href: string; title: string }) {
+  const { t } = useTranslation();
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState(false);
+
+  useEffect(() => {
+    const ac = new AbortController();
+    let objectUrl: string | null = null;
+    setBlobUrl(null);
+    setLoadError(false);
+
+    void (async () => {
+      try {
+        const res = await fetch(href, { credentials: 'same-origin', cache: 'no-store', signal: ac.signal });
+        if (!res.ok) throw new Error(`embed ${res.status}`);
+        const blob = await res.blob();
+        const mime = (res.headers.get('content-type') || blob.type || '').split(';')[0].trim();
+        const preview = mime && mime !== blob.type ? new Blob([blob], { type: mime }) : blob;
+        objectUrl = URL.createObjectURL(preview);
+        if (ac.signal.aborted) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        setBlobUrl(objectUrl);
+      } catch {
+        if (ac.signal.aborted) return;
+        setLoadError(true);
+      }
+    })();
+
+    return () => {
+      ac.abort();
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [href]);
+
+  if (blobUrl) {
+    return <iframe title={title} src={blobUrl} className="min-h-0 w-full flex-1 bg-zinc-100" />;
+  }
+
+  return (
+    <p className="m-auto max-w-md px-6 py-10 text-center text-sm text-zinc-600">
+      {loadError ? t('ops.asignaciones.previewFailed') : t('ops.asignaciones.previewLoading')}
+    </p>
+  );
+}
 
 export default function WorkFileLightbox({
   files,
@@ -112,7 +159,7 @@ export default function WorkFileLightbox({
           />
         </div>
       ) : file && mode === 'embed' ? (
-        <iframe title={title} src={href} className="min-h-0 w-full flex-1 bg-zinc-100" />
+        <WorkEmbedPreview href={href} title={title} />
       ) : file && mode === 'office' ? (
         <WorkOfficePreview href={href} fileName={file.file_name} contentType={file.content_type} />
       ) : (

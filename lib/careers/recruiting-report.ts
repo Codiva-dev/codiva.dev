@@ -7,6 +7,7 @@ import { reviewRowsForAttempt, scoreAnswers } from '@/lib/careers/assessments/en
 import { matchedSeedCountsForDiscipline } from '@/lib/careers/hunt/match';
 import {
   huntConsiderationLabel,
+  huntCoverageLabel,
   huntDifficultyLabel,
   scoreHuntReports,
   type HuntConsideration,
@@ -430,8 +431,13 @@ function compactTrailLabel(trail: HuntTrailQuality): string {
 }
 
 function craftLabel(discipline: string | null | undefined): string | null {
-  if (!discipline || !(discipline in CAREER_DISCIPLINE_LABELS)) return null;
+  if (!discipline || discipline === 'other' || !(discipline in CAREER_DISCIPLINE_LABELS)) return null;
   return CAREER_DISCIPLINE_LABELS[discipline as CareerDiscipline];
+}
+
+function huntSignalLabel(score: HuntScore, huntNeeded: number): string {
+  if (huntNeeded > 1) return huntCoverageLabel(score.craftHits, huntNeeded, 'es');
+  return huntConsiderationLabel(score.consideration, 'es');
 }
 
 function postingTitleOf(
@@ -463,11 +469,12 @@ function huntBundle(
   discipline: CareerDiscipline | null,
   events: HuntTrailEvent[],
   passedAt: string | null,
-  catalogKey?: string | null
+  catalogKey?: string | null,
+  asksDiscipline?: boolean | null
 ) {
   const forEmail = reports.filter((item) => careerEmailKey(item.email) === careerEmailKey(email));
   const { active } = splitHuntReports(forEmail);
-  const coverAllCrafts = huntCoversAllCrafts({ catalogKey });
+  const coverAllCrafts = huntCoversAllCrafts({ catalogKey, asksDiscipline });
   const score = scoreHuntReports(active, coverAllCrafts ? null : discipline, { coverAllCrafts });
   const huntNeeded = huntNeededCount(coverAllCrafts);
   const trailReports: HuntTrailReport[] = forEmail.map((row) => ({
@@ -511,7 +518,7 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     { data: huntByEmail },
     { data: huntTrail },
   ] = await Promise.all([
-    admin.from('ops_job_postings').select('title').eq('id', attempt.job_posting_id).maybeSingle(),
+    admin.from('ops_job_postings').select('title, asks_discipline').eq('id', attempt.job_posting_id).maybeSingle(),
     admin
       .from('ops_job_applications')
       .select('id, status, created_at, assessment_attempt_id, job_posting_id')
@@ -558,7 +565,10 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
   const { active: huntScoring } = splitHuntReports(huntReports);
-  const coverAllCrafts = huntCoversAllCrafts({ catalogKey: attempt.catalog_key });
+  const coverAllCrafts = huntCoversAllCrafts({
+    catalogKey: attempt.catalog_key,
+    asksDiscipline: posting?.asks_discipline,
+  });
   const score = scoreHuntReports(huntScoring, coverAllCrafts ? null : discipline, { coverAllCrafts });
   const catalog = getAssessmentCatalog(attempt.catalog_key);
   const answers = parseAnswers(attempt.answers);
@@ -568,7 +578,8 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     : { byQuestion: {} as Record<string, boolean> };
   const review = catalog ? reviewRowsForAttempt(catalog, questionIds, answers, scored.byQuestion) : [];
 
-  const findings = huntReports.map((row) => toRecruitingFinding(row, discipline));
+  const huntNeeded = huntNeededCount(coverAllCrafts);
+  const findings = huntReports.map((row) => toRecruitingFinding(row, coverAllCrafts ? null : discipline));
   const trail = summarizeHuntTrail({
     passedAt: attempt.completed_at,
     discipline,
@@ -583,7 +594,7 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     craftHits: score.craftHits,
     applicationStatus: application?.status ?? null,
     leftActiveQueueEmails,
-    huntNeeded: huntNeededCount(coverAllCrafts),
+    huntNeeded,
   });
 
   return {
@@ -591,7 +602,7 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     fullName: attempt.full_name,
     email: attempt.email,
     vacancy: posting?.title || 'Vacante',
-    craft: discipline ? CAREER_DISCIPLINE_LABELS[discipline as CareerDiscipline] : null,
+    craft: craftLabel(discipline),
     status: attempt.status,
     stage,
     stageLabel: recruitingStageLabel(stage),
@@ -610,7 +621,7 @@ export async function loadRecruitingDossier(attemptId: string): Promise<Recruiti
     interviews,
     appliedAt: application?.created_at ?? null,
     consideration: score.consideration,
-    considerationLabel: huntConsiderationLabel(score.consideration, 'es'),
+    considerationLabel: huntSignalLabel(score, huntNeeded),
     craftHits: score.craftHits,
     findingsTotal: huntReports.length,
     difficultyMix: difficultyMixLabel(score),
@@ -685,8 +696,8 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
     { data: linkedAttempts },
   ] = await Promise.all([
     postingIds.length
-      ? admin.from('ops_job_postings').select('id, title').in('id', postingIds)
-      : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+      ? admin.from('ops_job_postings').select('id, title, asks_discipline').in('id', postingIds)
+      : Promise.resolve({ data: [] as { id: string; title: string; asks_discipline?: boolean | null }[] }),
     emailVariants.length
       ? admin
           .from('ops_hunt_reports')
@@ -737,6 +748,7 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
   );
 
   const postingTitle = new Map((postings ?? []).map((row) => [row.id, row.title]));
+  const postingAsks = new Map((postings ?? []).map((row) => [row.id, row.asks_discipline]));
   const eventsByAttempt = new Map<string, HuntTrailEvent[]>();
   for (const event of huntEvents ?? []) {
     const list = eventsByAttempt.get(event.assessment_attempt_id) ?? [];
@@ -771,7 +783,8 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       discipline,
       eventsByAttempt.get(row.id) ?? [],
       row.completed_at ?? null,
-      row.catalog_key
+      row.catalog_key,
+      postingAsks.get(row.job_posting_id || '') ?? null
     );
     if (
       !isCandidateReadyForCv({
@@ -797,7 +810,7 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       passed: row.passed,
       scorePct: row.score_pct,
       consideration: hunt.score.consideration,
-      considerationLabel: huntConsiderationLabel(hunt.score.consideration, 'es'),
+      considerationLabel: huntSignalLabel(hunt.score, hunt.huntNeeded),
       craftHits: hunt.score.craftHits,
       findingsTotal: hunt.findingsTotal,
       difficultyMix: hunt.difficultyMix,
@@ -834,7 +847,8 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       discipline,
       eventsByAttempt.get(row.id) ?? [],
       row.completed_at,
-      row.catalog_key
+      row.catalog_key,
+      postingAsks.get(row.job_posting_id) ?? null
     );
     test.push({
       attemptId: row.id,
@@ -847,7 +861,7 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       passed: row.passed,
       scorePct: row.score_pct,
       consideration: hunt.score.consideration,
-      considerationLabel: huntConsiderationLabel(hunt.score.consideration, 'es'),
+      considerationLabel: huntSignalLabel(hunt.score, hunt.huntNeeded),
       craftHits: hunt.score.craftHits,
       findingsTotal: hunt.findingsTotal,
       difficultyMix: hunt.difficultyMix,
@@ -879,10 +893,11 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
     const hunt = huntBundle(
       reports,
       row.email,
-      discipline || disciplineFromCatalogKey(attempt?.catalog_key),
+      discipline && discipline !== 'other' ? discipline : disciplineFromCatalogKey(attempt?.catalog_key),
       attempt ? eventsByAttempt.get(attempt.id) ?? [] : [],
       attempt?.completed_at ?? null,
-      attempt?.catalog_key
+      attempt?.catalog_key,
+      postingAsks.get(row.job_posting_id) ?? null
     );
     const stage: RecruitingStage =
       row.status === 'rejected' ? 'discarded' : row.status === 'hired' ? 'hired' : 'applied';
@@ -897,7 +912,7 @@ export async function loadRecruitingPipeline(jobPostingId?: string): Promise<Rec
       passed: attempt?.passed ?? null,
       scorePct: attempt?.score_pct ?? null,
       consideration: hunt.score.consideration,
-      considerationLabel: huntConsiderationLabel(hunt.score.consideration, 'es'),
+      considerationLabel: huntSignalLabel(hunt.score, hunt.huntNeeded),
       craftHits: hunt.score.craftHits,
       findingsTotal: hunt.findingsTotal,
       difficultyMix: hunt.difficultyMix,
@@ -1058,8 +1073,8 @@ export function renderRecruitingDossierHtml(
     )
     .join('');
   const huntBits = [
-    `${d.craftHits} hallazgo(s) del oficio`,
-    `señal ${d.considerationLabel}`,
+    `${d.craftHits} tipo(s) de prueba`,
+    d.considerationLabel,
     `${d.findingsTotal} reporte(s)`,
   ];
   if (d.difficultyMix) huntBits.push(d.difficultyMix);

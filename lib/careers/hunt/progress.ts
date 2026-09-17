@@ -46,8 +46,10 @@ export function huntCoversAllCrafts(input: {
   catalogKey?: string | null;
 }): boolean {
   if (input.asksDiscipline === true) return false;
-  if (input.asksDiscipline === false) return huntRequiredForCatalog(input.catalogKey);
   const key = String(input.catalogKey || '').trim().toLowerCase();
+  if (input.asksDiscipline === false) {
+    return !key || huntRequiredForCatalog(key);
+  }
   return key === 'tester-general' || key === 'tester';
 }
 
@@ -201,11 +203,7 @@ export async function huntProgressForAttempt(input: {
     asksDiscipline,
     catalogKey: input.catalogKey,
   });
-  const discipline = coverAllCrafts
-    ? null
-    : asksDiscipline === false
-      ? 'other'
-      : disciplineFromCatalogKey(input.catalogKey);
+  const discipline = coverAllCrafts ? null : disciplineFromCatalogKey(input.catalogKey);
 
   if (!required) {
     return { ...EMPTY_HUNT_PROGRESS, discipline };

@@ -6,6 +6,7 @@ export const WORK_STATUSES = [
   'review',
   'blocked',
   'done',
+  'archived',
 ] as const;
 export const WORK_PROCESS_KINDS = ['none', 'internal', 'project', 'lead', 'quote', 'ticket'] as const;
 export const WORK_URGENCIES = ['critical', 'high', 'normal', 'low'] as const;
@@ -194,18 +195,42 @@ export function isWorkStatus(value: string): value is WorkStatus {
   return (WORK_STATUSES as readonly string[]).includes(value);
 }
 
-export type OpenWorkStatus = Exclude<WorkStatus, 'done' | 'blocked'>;
+export type OpenWorkStatus = Exclude<WorkStatus, 'done' | 'blocked' | 'archived'>;
 
 export const OPEN_WORK_STATUSES = WORK_STATUSES.filter(
-  (status): status is OpenWorkStatus => status !== 'done' && status !== 'blocked'
+  (status): status is OpenWorkStatus =>
+    status !== 'done' && status !== 'blocked' && status !== 'archived'
 );
 
 export function isOpenWorkStatus(value: string): value is OpenWorkStatus {
   return (OPEN_WORK_STATUSES as readonly string[]).includes(value);
 }
 
+export function isArchivedWorkStatus(value: string | null | undefined) {
+  return value === 'archived';
+}
+
+export function isWorkBoardColumn(value: string): value is WorkStatus {
+  return (WORK_BOARD_COLUMNS as readonly string[]).includes(value);
+}
+
+export function canArchiveWorkStatus(status: string | null | undefined) {
+  return status === 'done';
+}
+
+export function canRestoreWorkStatus(status: string | null | undefined) {
+  return status === 'archived';
+}
+
+export function canTransitionWorkStatus(from: string, to: string) {
+  if (!isWorkStatus(from) || !isWorkStatus(to) || from === to) return false;
+  if (to === 'archived') return from === 'done';
+  if (from === 'archived') return to === 'done';
+  return true;
+}
+
 export function isPendingMentionStatus(value: string | null | undefined) {
-  return Boolean(value) && value !== 'done';
+  return Boolean(value) && value !== 'done' && value !== 'archived';
 }
 
 export function keepPendingMentions<T extends { assignment_id: string }>(

@@ -5,12 +5,12 @@ import { parseAnswers } from '@/lib/careers/assessments/server';
 import { reviewRowsForAttempt, scoreAnswers } from '@/lib/careers/assessments/engine';
 import { huntCoversAllCrafts, huntProgressFromReports } from '@/lib/careers/hunt/progress';
 import { splitHuntReports } from '@/lib/careers/hunt/review';
-import { huntConsiderationLabel } from '@/lib/careers/hunt/score';
+import { huntConsiderationLabel, huntCoverageLabel } from '@/lib/careers/hunt/score';
 import { summarizeHuntTrail, buildHuntTrailSteps } from '@/lib/careers/hunt/trail';
 import HuntTrailMap from '@/components/ops/HuntTrailMap';
 import { HuntFindingsBlock, type OpsHuntReportRow } from '@/components/ops/OpsCareersPanel';
 import OpsReportLightbox from '@/components/ops/OpsReportLightbox';
-import { careerDisciplineLabels, disciplineFromCatalogKey, isTesterPipelineItem } from '@/lib/ops/career-disciplines';
+import { careerDisciplineLabels, careerSpecialtyLabel, disciplineFromCatalogKey, isTesterPipelineItem } from '@/lib/ops/career-disciplines';
 import {
   deviceLabelFromUserAgent,
   distinctOriginEmails,
@@ -66,7 +66,7 @@ export default async function AssessmentAttemptPage({
 
   const [{ data: posting }, { data: events }, { data: application }, { data: huntByAttempt }, { data: huntByEmail }, { data: huntTrail }, { data: sameOrigin }] =
     await Promise.all([
-    supabase.from('ops_job_postings').select('id, title, slug, careers_pipeline').eq('id', attempt.job_posting_id).maybeSingle(),
+    supabase.from('ops_job_postings').select('id, title, slug, careers_pipeline, asks_discipline').eq('id', attempt.job_posting_id).maybeSingle(),
     supabase
       .from('ops_job_assessment_events')
       .select('id, event_type, question_id, payload, created_at')
@@ -151,7 +151,10 @@ export default async function AssessmentAttemptPage({
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   );
   const { active: huntScoring } = splitHuntReports(huntReports);
-  const coverAllCrafts = huntCoversAllCrafts({ catalogKey: attempt.catalog_key });
+  const coverAllCrafts = huntCoversAllCrafts({
+    catalogKey: attempt.catalog_key,
+    asksDiscipline: posting?.asks_discipline,
+  });
   const huntProgress = huntProgressFromReports(huntScoring, {
     required: true,
     coverAllCrafts,
@@ -159,6 +162,7 @@ export default async function AssessmentAttemptPage({
   });
   const craftHits = huntProgress.matched;
   const huntScore = huntProgress.score;
+  const specialty = careerSpecialtyLabel(discipline, t.locale);
   const locale = t.locale === 'en' ? 'en' : 'es';
   const trail = summarizeHuntTrail({
     passedAt: attempt.completed_at,
@@ -273,11 +277,13 @@ export default async function AssessmentAttemptPage({
                   craftHits ? ` ${t('ops.careers.craftHits', { count: craftHits })}` : ''
                 }`
               : ''}
-            {huntScore.consideration !== 'none'
-              ? ` · ${t('ops.careers.consideration', {
-                  label: huntConsiderationLabel(huntScore.consideration, locale),
-                })}`
-              : ''}
+            {coverAllCrafts
+              ? ` · ${huntCoverageLabel(craftHits, huntProgress.needed, locale)}`
+              : huntScore.consideration !== 'none'
+                ? ` · ${t('ops.careers.consideration', {
+                    label: huntConsiderationLabel(huntScore.consideration, locale),
+                  })}`
+                : ''}
           </p>
         </div>
       </section>
@@ -314,7 +320,7 @@ export default async function AssessmentAttemptPage({
                         <p className="font-medium">{row.full_name}</p>
                         <p className="text-sm text-zinc-500">{row.email}</p>
                         <p className="mt-1 text-xs text-zinc-400">
-                          {craft ? DISCIPLINE_LABELS[craft] : row.catalog_key}
+                          {careerSpecialtyLabel(craft, t.locale) || row.catalog_key}
                           {' · '}
                           {formatDate(row.started_at)}
                           {row.timezone ? ` · ${row.timezone}` : ''}
@@ -348,7 +354,7 @@ export default async function AssessmentAttemptPage({
         <h2 className="font-semibold">{t('ops.attempt.findingsTitle')}</h2>
         <p className="text-sm text-zinc-500">
           {t('ops.attempt.findingsHint', {
-            craft: discipline ? t('ops.attempt.findingsHintCraft', { craft: DISCIPLINE_LABELS[discipline] }) : '',
+            craft: specialty ? t('ops.attempt.findingsHintCraft', { craft: specialty }) : '',
           })}{' '}
           {t('ops.attempt.findingsHintRest')}
         </p>
@@ -366,6 +372,7 @@ export default async function AssessmentAttemptPage({
             disciplineLabels={DISCIPLINE_LABELS}
             heading={false}
             reviewAttemptId={attempt.id}
+            coverAllCrafts={coverAllCrafts}
           />
         )}
       </section>

@@ -16,6 +16,7 @@ import {
   canMutateWorkAssignment,
   canRequestWorkSubtaskEdit,
   isWorkProcessKind,
+  canTransitionWorkStatus,
   isWorkStatus,
   isWorkStream,
   isWorkUrgency,
@@ -429,8 +430,17 @@ export async function updateWorkAssignmentStatus(
   if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
   await assertCanMutate(current, access.staff.id, manage);
   if (current.status === nextStatus) return;
+  if (!canTransitionWorkStatus(current.status, nextStatus)) {
+    throw new Error(
+      nextStatus === 'archived'
+        ? t('ops.asignaciones.archiveOnlyDone')
+        : current.status === 'archived'
+          ? t('ops.asignaciones.restoreOnlyDone')
+          : t('ops.asignaciones.statusFailed')
+    );
+  }
 
-  if (nextStatus === 'done') {
+  if (nextStatus === 'done' && current.status !== 'archived') {
     const { data: subs, error: subErr } = await access.supabase
       .from('work_assignment_subtasks')
       .select('status')
@@ -463,7 +473,8 @@ export async function updateWorkAssignmentStatus(
     metadata: { from: current.status, to: nextStatus, source },
     actorId: access.staff.id,
   });
-  revalidateWorkLists();
+  if (nextStatus === 'archived' || current.status === 'archived') revalidateBoard();
+  else revalidateWorkLists();
 }
 
 export async function createWorkSubtask(assignmentId: string, title: string) {

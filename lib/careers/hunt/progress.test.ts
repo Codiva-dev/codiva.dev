@@ -5,6 +5,8 @@ import { huntCoversAllCrafts, huntProgressFromReports } from './progress';
 describe('huntCoversAllCrafts', () => {
   it('covers every craft when the posting does not ask for one', () => {
     expect(huntCoversAllCrafts({ asksDiscipline: false, catalogKey: 'tester-general' })).toBe(true);
+    expect(huntCoversAllCrafts({ asksDiscipline: false, catalogKey: 'tester-frontend' })).toBe(true);
+    expect(huntCoversAllCrafts({ asksDiscipline: false, catalogKey: null })).toBe(true);
     expect(huntCoversAllCrafts({ asksDiscipline: true, catalogKey: 'tester-frontend' })).toBe(false);
     expect(huntCoversAllCrafts({ catalogKey: 'tester-general' })).toBe(true);
     expect(huntCoversAllCrafts({ catalogKey: 'tester-frontend' })).toBe(false);
@@ -57,6 +59,16 @@ describe('huntProgressFromReports', () => {
     expect(progress.ready).toBe(true);
     expect(progress.matched).toBe(3);
     expect(progress.readyAt).toBe('2026-09-01T10:05:00.000Z');
+    expect(progress.score.consideration).toBe('strong');
+  });
+
+  it('scores a single finding type as minimum under the unified hunt', () => {
+    const progress = huntProgressFromReports(
+      [{ matched_seed_id: 'career-copyright-year', created_at: '2026-09-01T10:00:00.000Z' }],
+      { required: true, coverAllCrafts: true, discipline: 'other' }
+    );
+    expect(progress.score.consideration).toBe('minimum');
+    expect(progress.matched).toBe(1);
   });
 
   it('still closes a single-craft hunt with one matching seed', () => {

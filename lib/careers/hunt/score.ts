@@ -80,7 +80,7 @@ export function scoreHuntReports(
   let consideration: HuntConsideration = 'none';
   if (coverAllCrafts) {
     if (craftHits >= HUNT_COVER_CRAFTS.length) consideration = 'strong';
-    else if (craftHits >= 2 || hardest === 'hard' || points >= 6) consideration = 'solid';
+    else if (craftHits >= 2) consideration = 'solid';
     else if (craftHits >= 1) consideration = 'minimum';
   } else if (craftHits >= 1) {
     if (hardest === 'hard' || points >= 6) {
@@ -108,12 +108,32 @@ export function huntConsiderationLabel(value: HuntConsideration, locale: 'es' | 
     if (value === 'strong') return 'Strong';
     if (value === 'solid') return 'Solid';
     if (value === 'minimum') return 'Minimum';
-    return 'None';
+    return 'No types';
   }
   if (value === 'strong') return 'Fuerte';
   if (value === 'solid') return 'Sólido';
   if (value === 'minimum') return 'Mínimo';
-  return 'Sin señal';
+  return 'Sin tipos';
+}
+
+/** Cobertura de tipos de prueba (funcional, API, seguridad). */
+export function huntCoverageLabel(
+  found: number,
+  needed: number,
+  locale: 'es' | 'en' = 'es'
+): string {
+  if (found < 1) {
+    return locale === 'en' ? 'No test types yet' : 'Sin tipos de prueba';
+  }
+  return locale === 'en' ? `${found} of ${needed} types` : `${found} de ${needed} tipos`;
+}
+
+export function huntTypeFilterLabel(value: HuntConsideration | '', locale: 'es' | 'en' = 'es'): string {
+  if (!value) return locale === 'en' ? 'All types' : 'Todos los tipos';
+  if (value === 'strong') return locale === 'en' ? '3 types' : '3 tipos';
+  if (value === 'solid') return locale === 'en' ? '2 types' : '2 tipos';
+  if (value === 'minimum') return locale === 'en' ? '1 type' : '1 tipo';
+  return locale === 'en' ? 'No types' : 'Sin tipos';
 }
 
 export function huntDifficultyLabel(value: HuntDifficulty, locale: 'es' | 'en' = 'es'): string {

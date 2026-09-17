@@ -51,7 +51,9 @@ import {
 } from '@/lib/careers/recruiting-stage';
 import {
   huntConsiderationLabel,
+  huntCoverageLabel,
   huntDifficultyLabel,
+  huntTypeFilterLabel,
   type HuntConsideration,
 } from '@/lib/careers/hunt/score';
 import { disciplineFromCatalogKey } from '@/lib/ops/career-disciplines';
@@ -75,6 +77,7 @@ export type OpsJobPostingRow = {
   updated_at: string;
   careers_pipeline?: boolean | null;
   requires_hunt?: boolean | null;
+  asks_discipline?: boolean | null;
 };
 
 export type OpsJobApplicationRow = {
@@ -91,8 +94,8 @@ export type OpsJobApplicationRow = {
   assessment_attempt_id?: string | null;
   cover_letter?: string | null;
   ops_job_postings:
-    | { title: string; slug: string; careers_pipeline?: boolean | null }
-    | { title: string; slug: string; careers_pipeline?: boolean | null }[]
+    | { title: string; slug: string; careers_pipeline?: boolean | null; asks_discipline?: boolean | null }
+    | { title: string; slug: string; careers_pipeline?: boolean | null; asks_discipline?: boolean | null }[]
     | null;
 };
 
@@ -193,6 +196,13 @@ function considerationHint(value: string, t: Translator) {
   return t('ops.careers.signalHintAll');
 }
 
+function huntSignalTag(hunt: { coverAllCrafts: boolean; craftHits: number; huntNeeded: number; score: { consideration: HuntConsideration } }, locale: Locale) {
+  if (hunt.coverAllCrafts) {
+    return huntCoverageLabel(hunt.craftHits, hunt.huntNeeded, locale);
+  }
+  return huntConsiderationLabel(hunt.score.consideration, locale);
+}
+
 function HoverTip({ text, children }: { text?: string; children: React.ReactNode }) {
   if (!text) return children;
   return (
@@ -264,11 +274,12 @@ function huntForCandidate(
   reports: OpsHuntReportRow[],
   email: string,
   discipline?: string | null,
-  catalogKey?: string | null
+  catalogKey?: string | null,
+  asksDiscipline?: boolean | null
 ) {
   const rows = reports.filter((row) => emailKey(row.email) === emailKey(email));
   const { active } = splitHuntReports(rows);
-  const coverAllCrafts = huntCoversAllCrafts({ catalogKey });
+  const coverAllCrafts = huntCoversAllCrafts({ catalogKey, asksDiscipline });
   const craft = discipline && isCareerDiscipline(discipline) ? discipline : null;
   const progress = huntProgressFromReports(active, {
     required: true,
@@ -281,7 +292,16 @@ function huntForCandidate(
     craftHits: progress.matched,
     huntNeeded: progress.needed,
     score: progress.score,
+    coverAllCrafts,
   };
+}
+
+function relatedApplicationPosting(row: OpsJobApplicationRow) {
+  return Array.isArray(row.ops_job_postings) ? row.ops_job_postings[0] : row.ops_job_postings;
+}
+
+function postingAsksDisciplineFlag(posting?: { asks_discipline?: boolean | null } | null): boolean | null {
+  return typeof posting?.asks_discipline === 'boolean' ? posting.asks_discipline : null;
 }
 
 function HuntFindingEmbed({
@@ -294,6 +314,7 @@ function HuntFindingEmbed({
   showAttemptLink = false,
   reviewAttemptId,
   reviewOfferId,
+  coverAllCrafts = false,
 }: {
   row: OpsHuntReportRow;
   discipline?: string | null;
@@ -304,11 +325,13 @@ function HuntFindingEmbed({
   showAttemptLink?: boolean;
   reviewAttemptId?: string;
   reviewOfferId?: string;
+  coverAllCrafts?: boolean;
 }) {
   const seed = row.matched_seed_id ? huntSeedById(row.matched_seed_id) : null;
   const craftDiscipline = discipline && isCareerDiscipline(discipline) ? discipline : null;
+  const tagByFindingType = coverAllCrafts || !craftDiscipline || craftDiscipline === 'other';
   const countsForCraft = Boolean(
-    seed && craftDiscipline && matchedSeedCountsForDiscipline(seed.id, craftDiscipline)
+    seed && !tagByFindingType && craftDiscipline && matchedSeedCountsForDiscipline(seed.id, craftDiscipline)
   );
   const reviewStatus = row.review_status || 'open';
   const reviewLabel =
@@ -436,6 +459,7 @@ export function HuntFindingsBlock({
   showAttemptLink = false,
   reviewAttemptId,
   reviewOfferId,
+  coverAllCrafts = false,
 }: {
   rows: OpsHuntReportRow[];
   discipline?: string | null;
@@ -447,6 +471,7 @@ export function HuntFindingsBlock({
   showAttemptLink?: boolean;
   reviewAttemptId?: string;
   reviewOfferId?: string;
+  coverAllCrafts?: boolean;
 }) {
   if (!rows.length) return null;
   return (
@@ -468,6 +493,7 @@ export function HuntFindingsBlock({
           showAttemptLink={showAttemptLink}
           reviewAttemptId={reviewAttemptId}
           reviewOfferId={reviewOfferId}
+          coverAllCrafts={coverAllCrafts}
         />
       ))}
     </div>
@@ -632,9 +658,7 @@ function ApplicationCard({
           />
         ))}
         <CareersTag
-          label={t('ops.careers.tagSignal', {
-            label: huntConsiderationLabel(hunt.score.consideration, locale),
-          })}
+          label={hunt.coverAllCrafts ? huntSignalTag(hunt, locale) : t('ops.careers.tagSignal', { label: huntSignalTag(hunt, locale) })}
           tone={considerationTone(hunt.score.consideration)}
           href={bolsaHref({
             signalValue: signalFilter === hunt.score.consideration ? '' : hunt.score.consideration,
@@ -737,6 +761,7 @@ function ApplicationCard({
         formatDate={formatDate}
         locale={locale}
         disciplineLabels={disciplineLabels}
+        coverAllCrafts={hunt.coverAllCrafts}
       />
     </li>
   );
@@ -819,6 +844,25 @@ export default async function OpsCareersPanel({
       extra: forJob.filter((attempt) => attempt.id !== linked?.id),
     };
   };
+  const huntForApp = (row: OpsJobApplicationRow) => {
+    const tests = attemptsOnApplication(row);
+    const posting = (row.job_posting_id && postingById.get(row.job_posting_id)) || relatedApplicationPosting(row);
+    return huntForCandidate(
+      huntReports,
+      row.email,
+      row.discipline,
+      tests.linked?.catalog_key,
+      postingAsksDisciplineFlag(posting)
+    );
+  };
+  const huntForAttempt = (row: OpsJobAttemptRow) =>
+    huntForCandidate(
+      huntReports,
+      row.email,
+      disciplineFromCatalogKey(row.catalog_key),
+      row.catalog_key,
+      postingById.get(row.job_posting_id)?.asks_discipline
+    );
   const signalFilter =
     signal === 'strong' || signal === 'solid' || signal === 'minimum' || signal === 'none' ? signal : '';
   const originFilter = origin === 'shared';
@@ -844,8 +888,8 @@ export default async function OpsCareersPanel({
         return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
       }
       if (originFilter && aShared && bShared && aHash !== bHash) return aHash.localeCompare(bHash);
-      const ha = huntForCandidate(huntReports, a.email, disciplineFromCatalogKey(a.catalog_key), a.catalog_key);
-      const hb = huntForCandidate(huntReports, b.email, disciplineFromCatalogKey(b.catalog_key), b.catalog_key);
+      const ha = huntForAttempt(a);
+      const hb = huntForAttempt(b);
       const diff = considerationRank(hb.score.consideration) - considerationRank(ha.score.consideration);
       if (diff) return diff;
       return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
@@ -854,19 +898,18 @@ export default async function OpsCareersPanel({
       if (originFilter && (originSize.get(String(row.ip_hash || '').trim()) || 0) < 2) return false;
       if (!signalFilter) return true;
       return (
-        huntForCandidate(huntReports, row.email, disciplineFromCatalogKey(row.catalog_key), row.catalog_key).score
-          .consideration === signalFilter
+        huntForAttempt(row).score.consideration === signalFilter
       );
     });
 
   const matchesApplicationSignal = (row: OpsJobApplicationRow) => {
     if (!signalFilter) return true;
-    return huntForCandidate(huntReports, row.email, row.discipline).score.consideration === signalFilter;
+    return huntForApp(row).score.consideration === signalFilter;
   };
   const rankApplications = (rows: OpsJobApplicationRow[]) =>
     [...rows].sort((a, b) => {
-      const ha = huntForCandidate(huntReports, a.email, a.discipline);
-      const hb = huntForCandidate(huntReports, b.email, b.discipline);
+      const ha = huntForApp(a);
+      const hb = huntForApp(b);
       const diff = considerationRank(hb.score.consideration) - considerationRank(ha.score.consideration);
       if (diff) return diff;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
@@ -898,12 +941,7 @@ export default async function OpsCareersPanel({
       ) {
         return false;
       }
-      const hunt = huntForCandidate(
-        huntReports,
-        row.email,
-        disciplineFromCatalogKey(row.catalog_key),
-        row.catalog_key
-      );
+      const hunt = huntForAttempt(row);
       const postingHunt = postingById.get(row.job_posting_id)?.requires_hunt;
       if (
         !isCandidateReadyForCv({
@@ -922,8 +960,8 @@ export default async function OpsCareersPanel({
       return true;
     })
     .sort((a, b) => {
-      const ha = huntForCandidate(huntReports, a.email, disciplineFromCatalogKey(a.catalog_key), a.catalog_key);
-      const hb = huntForCandidate(huntReports, b.email, disciplineFromCatalogKey(b.catalog_key), b.catalog_key);
+      const ha = huntForAttempt(a);
+      const hb = huntForAttempt(b);
       const diff = considerationRank(hb.score.consideration) - considerationRank(ha.score.consideration);
       if (diff) return diff;
       return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
@@ -1246,11 +1284,11 @@ export default async function OpsCareersPanel({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-medium text-zinc-500">{t('ops.careers.signalGroup')}</span>
           {[
-            ['', t('ops.careers.signalAll')],
-            ['strong', huntConsiderationLabel('strong', locale)],
-            ['solid', huntConsiderationLabel('solid', locale)],
-            ['minimum', huntConsiderationLabel('minimum', locale)],
-            ['none', huntConsiderationLabel('none', locale)],
+            ['', huntTypeFilterLabel('', locale)],
+            ['strong', huntTypeFilterLabel('strong', locale)],
+            ['solid', huntTypeFilterLabel('solid', locale)],
+            ['minimum', huntTypeFilterLabel('minimum', locale)],
+            ['none', huntTypeFilterLabel('none', locale)],
           ].map(([value, label]) => (
             <HoverTip key={value || 'all'} text={considerationHint(value, t)}>
               <Link
@@ -1279,7 +1317,7 @@ export default async function OpsCareersPanel({
                   <ApplicationCard
                     key={row.id}
                     row={row}
-                    hunt={huntForCandidate(huntReports, row.email, row.discipline)}
+                    hunt={huntForApp(row)}
                     linkedAttempt={tests.linked}
                     extraAttempts={tests.extra}
                     t={t}
@@ -1324,7 +1362,7 @@ export default async function OpsCareersPanel({
                   {readyForCv.map((row) => {
                     const posting = postings.find((p) => p.id === row.job_posting_id);
                     const discipline = disciplineFromCatalogKey(row.catalog_key);
-                    const hunt = huntForCandidate(huntReports, row.email, discipline, row.catalog_key);
+                    const hunt = huntForAttempt(row);
                     const role = applicationRoleLabel({
                       postingTitle: posting?.title,
                       discipline,
@@ -1380,9 +1418,11 @@ export default async function OpsCareersPanel({
                             />
                           )}
                           <CareersTag
-                            label={t('ops.careers.tagSignal', {
-                              label: huntConsiderationLabel(hunt.score.consideration, locale),
-                            })}
+                            label={
+                              hunt.coverAllCrafts
+                                ? huntSignalTag(hunt, locale)
+                                : t('ops.careers.tagSignal', { label: huntSignalTag(hunt, locale) })
+                            }
                             tone={considerationTone(hunt.score.consideration)}
                             href={bolsaHref({
                               signalValue:
@@ -1439,6 +1479,7 @@ export default async function OpsCareersPanel({
                           formatDate={formatDate}
                           locale={locale}
                           disciplineLabels={DISCIPLINE_LABELS}
+                          coverAllCrafts={hunt.coverAllCrafts}
                         />
                       </li>
                     );
@@ -1466,7 +1507,7 @@ export default async function OpsCareersPanel({
                       <ApplicationCard
                         key={row.id}
                         row={row}
-                        hunt={huntForCandidate(huntReports, row.email, row.discipline)}
+                        hunt={huntForApp(row)}
                         linkedAttempt={tests.linked}
                         extraAttempts={tests.extra}
                         t={t}
@@ -1503,7 +1544,7 @@ export default async function OpsCareersPanel({
                   {attemptsActive.slice(0, 40).map((row) => {
                     const posting = postings.find((p) => p.id === row.job_posting_id);
                     const discipline = disciplineFromCatalogKey(row.catalog_key);
-                    const hunt = huntForCandidate(huntReports, row.email, discipline, row.catalog_key);
+                    const hunt = huntForAttempt(row);
                     const role = applicationRoleLabel({
                       postingTitle: posting?.title,
                       discipline,
@@ -1573,9 +1614,11 @@ export default async function OpsCareersPanel({
                             />
                           ))}
                           <CareersTag
-                            label={t('ops.careers.tagSignal', {
-                              label: huntConsiderationLabel(hunt.score.consideration, locale),
-                            })}
+                            label={
+                              hunt.coverAllCrafts
+                                ? huntSignalTag(hunt, locale)
+                                : t('ops.careers.tagSignal', { label: huntSignalTag(hunt, locale) })
+                            }
                             tone={considerationTone(hunt.score.consideration)}
                             href={bolsaHref({
                               signalValue:
@@ -1649,6 +1692,7 @@ export default async function OpsCareersPanel({
                               locale={locale}
                               disciplineLabels={DISCIPLINE_LABELS}
                               heading={false}
+                              coverAllCrafts={hunt.coverAllCrafts}
                             />
                           </details>
                         ) : null}
@@ -1683,6 +1727,7 @@ export default async function OpsCareersPanel({
                   formatDate={formatDate}
                   locale={locale}
                   disciplineLabels={DISCIPLINE_LABELS}
+                  coverAllCrafts={!row.discipline || row.discipline === 'other'}
                 />
               </div>
             </li>
