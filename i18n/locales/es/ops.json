@@ -687,7 +687,14 @@
     },
     "settings": {
       "title": "Configuración",
-      "description": "Tu perfil, contraseña y legales del portal",
+      "description": "Tu perfil, apariencia, contraseña y legales del portal",
+      "themeTitle": "Apariencia",
+      "themeHint": "Solo aplica en Ops. El sitio público permanece en tema claro.",
+      "theme": {
+        "light": "Claro",
+        "dark": "Oscuro",
+        "system": "Sistema"
+      },
       "account": "Tu cuenta",
       "passwordTitle": "Cambiar contraseña",
       "passwordHint": "Mínimo 8 caracteres. Necesitas tu contraseña actual.",

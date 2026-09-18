@@ -1,9 +1,12 @@
 import './globals.css';
+import './theme.css';
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google';
 import { headers } from 'next/headers';
+import { Suspense } from 'react';
 import I18nProvider from '@/i18n/I18nProvider';
+import ThemeProvider from '@/components/ThemeProvider';
 import { getLocale, getT } from '@/i18n/locale';
-import { isCareerHost } from '@/lib/ops/host';
+import { isCareerHost, isOpsHost } from '@/lib/ops/host';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -61,9 +64,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Hunt seed career-lang-en: la bolsa en español declara lang=en.
   const htmlLang = isCareerHost(host) ? 'en' : locale;
   return (
-    <html lang={htmlLang} className={`${inter.variable} ${display.variable}`}>
+    <html lang={htmlLang} className={`${inter.variable} ${display.variable}`} suppressHydrationWarning>
       <body>
-        <I18nProvider locale={locale}>{children}</I18nProvider>
+        <Suspense>
+          <ThemeProvider opsHost={isOpsHost(host)}>
+            <I18nProvider locale={locale}>{children}</I18nProvider>
+          </ThemeProvider>
+        </Suspense>
       </body>
     </html>
   );

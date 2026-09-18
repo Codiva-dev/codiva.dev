@@ -318,7 +318,7 @@ export default function TechProjectNetwork() {
                 y1={techPos.y}
                 x2={logoOffset.x}
                 y2={logoOffset.y}
-                stroke={isHighlighted ? '#104E4E' : '#6A757A'}
+                stroke={isHighlighted ? 'var(--codiva-primary)' : 'var(--codiva-secondary)'}
                 strokeWidth={lineWidth}
                 strokeLinecap="round"
                 initial={{ pathLength: 0, opacity: 0 }}
@@ -367,8 +367,8 @@ export default function TechProjectNetwork() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  backgroundColor: isHighlighted ? '#104E4E' : '#E5E7EB',
-                  color: isHighlighted ? '#FFFFFF' : '#6A757A',
+                  backgroundColor: isHighlighted ? 'var(--codiva-primary)' : 'var(--codiva-muted)',
+                  color: isHighlighted ? '#FFFFFF' : 'var(--codiva-secondary)',
                 }}
                 transition={{ duration: 0.6, delay: idx * 0.05 }}
                 whileHover={{ scale: 1.08 }}

@@ -43,7 +43,7 @@ export default function HeroVisual() {
                 y1={a.y}
                 x2={b.x}
                 y2={b.y}
-                stroke="#104E4E"
+                stroke="var(--codiva-primary)"
                 strokeOpacity="0.22"
                 strokeWidth="0.6"
               />
@@ -55,9 +55,9 @@ export default function HeroVisual() {
                 cx={node.x}
                 cy={node.y}
                 r="5.5"
-                fill="#104E4E"
+                fill="var(--codiva-primary)"
                 fillOpacity="0.12"
-                stroke="#104E4E"
+                stroke="var(--codiva-primary)"
                 strokeWidth="0.8"
                 initial={{ scale: 0, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -67,7 +67,7 @@ export default function HeroVisual() {
                 x={node.x}
                 y={node.y + 11}
                 textAnchor="middle"
-                fill="#6A757A"
+                fill="var(--codiva-secondary)"
                 fontSize="3.5"
                 fontFamily="Inter, system-ui, sans-serif"
                 fontWeight="500"

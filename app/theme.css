@@ -1,0 +1,230 @@
+/* Tokens de superficie para Ops. El modo oscuro solo aplica dentro de .ops-theme. */
+
+:root {
+  color-scheme: light;
+  --c-page: #f9fafb;
+  --c-paper: #ffffff;
+  --c-paper-2: #f4f4f5;
+  --c-paper-3: #e4e4e7;
+  --c-line: #e4e4e7;
+  --c-line-strong: #d4d4d8;
+  --c-ink: #18181b;
+  --c-ink-2: #27272a;
+  --c-ink-3: #3f3f46;
+  --c-muted: #52525b;
+  --c-faint: #71717a;
+  --c-link: #104e4e;
+  --codiva-primary: #104e4e;
+  --codiva-secondary: #6a757a;
+  --codiva-muted: #e5e7eb;
+}
+
+html.dark .ops-theme {
+  color-scheme: dark;
+  --c-page: #09090b;
+  --c-paper: #27272a;
+  --c-paper-2: #18181b;
+  --c-paper-3: #3f3f46;
+  --c-line: #3f3f46;
+  --c-line-strong: #52525b;
+  --c-ink: #fafafa;
+  --c-ink-2: #f4f4f5;
+  --c-ink-3: #e4e4e7;
+  --c-muted: #a1a1aa;
+  --c-faint: #a1a1aa;
+  --c-link: #7ec8c8;
+  --codiva-primary: #104e4e;
+  --codiva-secondary: #a1a9ad;
+  --codiva-muted: #3f3f46;
+}
+
+html.dark .ops-theme .bg-codiva-background,
+html.dark .ops-theme .bg-white,
+html.dark .ops-theme .focus\:bg-white:focus,
+html.dark .ops-theme .open\:bg-white[open] {
+  background-color: var(--c-paper);
+}
+
+html.dark .ops-theme .hover\:bg-white:hover {
+  background-color: var(--c-paper);
+}
+
+html.dark .ops-theme .bg-white\/95 {
+  background-color: rgb(39 39 42 / 0.95);
+}
+
+html.dark .ops-theme .bg-white\/80,
+html.dark .ops-theme .hover\:bg-white\/80:hover {
+  background-color: rgb(39 39 42 / 0.8);
+}
+
+html.dark .ops-theme .bg-white\/70 {
+  background-color: rgb(39 39 42 / 0.7);
+}
+
+html.dark .ops-theme .bg-zinc-50,
+html.dark .ops-theme .disabled\:bg-zinc-50:disabled,
+html.dark .ops-theme .hover\:bg-zinc-50:hover {
+  background-color: var(--c-paper-2);
+}
+
+html.dark .ops-theme .bg-zinc-50\/80 {
+  background-color: rgb(39 39 42 / 0.8);
+}
+
+html.dark .ops-theme .bg-zinc-50\/70 {
+  background-color: rgb(39 39 42 / 0.7);
+}
+
+html.dark .ops-theme .bg-zinc-100,
+html.dark .ops-theme .hover\:bg-zinc-100:hover {
+  background-color: var(--c-paper-2);
+}
+
+html.dark .ops-theme .hover\:bg-zinc-100\/80:hover {
+  background-color: rgb(39 39 42 / 0.8);
+}
+
+html.dark .ops-theme .bg-zinc-200,
+html.dark .ops-theme .hover\:bg-zinc-200:hover {
+  background-color: var(--c-paper-3);
+}
+
+html.dark .ops-theme .text-zinc-900,
+html.dark .ops-theme .hover\:text-zinc-900:hover {
+  color: var(--c-ink);
+}
+
+html.dark .ops-theme .text-zinc-800,
+html.dark .ops-theme .hover\:text-zinc-800:hover {
+  color: var(--c-ink-2);
+}
+
+html.dark .ops-theme .text-zinc-700 {
+  color: var(--c-ink-3);
+}
+
+html.dark .ops-theme .text-zinc-600 {
+  color: var(--c-muted);
+}
+
+html.dark .ops-theme .text-zinc-500 {
+  color: var(--c-faint);
+}
+
+html.dark .ops-theme .border-zinc-100 {
+  border-color: var(--c-paper-2);
+}
+
+html.dark .ops-theme .border-zinc-200 {
+  border-color: var(--c-line);
+}
+
+html.dark .ops-theme .border-zinc-300,
+html.dark .ops-theme .hover\:border-zinc-300:hover {
+  border-color: var(--c-line-strong);
+}
+
+html.dark .ops-theme .divide-zinc-200 > :not([hidden]) ~ :not([hidden]) {
+  border-color: var(--c-line);
+}
+
+html.dark .ops-theme .ring-white {
+  --tw-ring-color: var(--c-page);
+}
+
+html.dark .ops-theme .ring-zinc-200\/80,
+html.dark .ops-theme .ring-zinc-200\/70 {
+  --tw-ring-color: rgb(63 63 70 / 0.8);
+}
+
+html.dark .ops-theme .text-codiva-secondary {
+  color: var(--codiva-secondary);
+}
+
+html.dark .ops-theme .bg-codiva-primary .bg-white {
+  background-color: #fff;
+}
+
+html.dark .ops-theme .bg-codiva-primary .text-codiva-primary {
+  color: #104e4e;
+}
+
+html.dark .ops-theme {
+  --tw-ring-offset-color: var(--c-page);
+}
+
+html.dark .ops-theme .hover\:text-zinc-700:hover {
+  color: var(--c-ink-3);
+}
+
+html.dark .ops-theme ::-webkit-scrollbar-thumb {
+  background-color: #52525b;
+}
+
+html.dark .ops-theme .bg-red-50,
+html.dark .ops-theme .hover\:bg-red-50:hover,
+html.dark .ops-theme .hover\:bg-red-50\/40:hover {
+  background-color: rgb(69 10 10 / 0.45);
+}
+
+html.dark .ops-theme .text-red-700 {
+  color: #fca5a5;
+}
+
+html.dark .ops-theme .border-red-200,
+html.dark .ops-theme .hover\:border-red-200:hover {
+  border-color: rgb(153 27 27 / 0.55);
+}
+
+html.dark .ops-theme .bg-emerald-50 {
+  background-color: rgb(6 78 59 / 0.4);
+}
+
+html.dark .ops-theme .text-emerald-800 {
+  color: #6ee7b7;
+}
+
+html.dark .ops-theme .bg-amber-50,
+html.dark .ops-theme .hover\:bg-amber-50\/50:hover {
+  background-color: rgb(69 26 3 / 0.45);
+}
+
+html.dark .ops-theme .text-amber-950,
+html.dark .ops-theme .text-amber-900 {
+  color: #fde68a;
+}
+
+html.dark .ops-theme .border-amber-200,
+html.dark .ops-theme .border-amber-300 {
+  border-color: rgb(180 83 9 / 0.5);
+}
+
+html.dark .ops-theme .glass-panel {
+  background: rgb(39 39 42 / 0.72);
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow:
+    0 8px 32px -12px rgb(0 0 0 / 0.5),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+html.dark .ops-theme .glass-panel-solid {
+  background: rgb(24 24 27 / 0.96);
+  border-color: rgb(255 255 255 / 0.12);
+  box-shadow:
+    0 12px 40px -10px rgb(0 0 0 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  html.dark .ops-theme .glass-panel,
+  html.dark .ops-theme .glass-panel-solid {
+    background: rgb(24 24 27 / 0.96);
+  }
+}
+
+html.dark .ops-theme .codiva-toast {
+  box-shadow:
+    0 8px 28px -10px rgb(16 78 78 / 0.45),
+    0 2px 8px rgb(0 0 0 / 0.35);
+}

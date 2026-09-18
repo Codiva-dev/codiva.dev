@@ -59,11 +59,11 @@ export default function OpsStaffShell({
   }, []);
 
   if (embedded) {
-    return <div className="min-h-dvh overflow-auto bg-codiva-background">{children}</div>;
+    return <div className="ops-theme min-h-dvh overflow-auto bg-codiva-background">{children}</div>;
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden">
+    <div className="ops-theme flex h-dvh overflow-hidden">
       {mobileOpen ? (
         <button
           type="button"

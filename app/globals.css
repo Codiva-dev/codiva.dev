@@ -6,6 +6,7 @@
 /* Variables base */
 html {
   scroll-behavior: smooth;
+  background-color: var(--c-page, #f9fafb);
   /* Anclas (#servicios, etc.) no quedan bajo el navbar fijo */
   scroll-padding-top: 6.5rem;
 }
@@ -17,8 +18,8 @@ html {
 }
 
 body {
-  background-color: #F9FAFB; /* Fondo oficial Codiva */
-  color: #18181B;            /* Equivale a text-zinc-900 */
+  background-color: var(--c-page, #f9fafb);
+  color: var(--c-ink, #18181b);
   font-family: var(--font-inter), sans-serif;
   -webkit-font-smoothing: antialiased;
 }
@@ -36,7 +37,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #6A757A; /* codiva.secondary */
+  background-color: var(--codiva-secondary, #6A757A);
   border-radius: 4px;
 }
 
@@ -46,7 +47,8 @@ body {
 
 /* Estilo global de enlaces */
 a {
-  @apply text-codiva-primary underline-offset-2 hover:underline transition;
+  color: var(--c-link);
+  @apply underline-offset-2 hover:underline transition;
 }
 
 /* Ping animado rápido */

@@ -687,7 +687,14 @@
     },
     "settings": {
       "title": "Settings",
-      "description": "Your profile, password, and portal legal documents",
+      "description": "Your profile, appearance, password, and portal legal documents",
+      "themeTitle": "Appearance",
+      "themeHint": "Applies only in Ops. The public site stays in light theme.",
+      "theme": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
       "account": "Your account",
       "passwordTitle": "Change password",
       "passwordHint": "At least 8 characters. You need your current password.",

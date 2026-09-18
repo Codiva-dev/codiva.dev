@@ -24,7 +24,7 @@ function focusableIn(root) {
 }
 
 function MenuToggle({ open, onToggle, label, buttonRef }) {
-  const bar =
+    const bar =
     'absolute left-0 h-0.5 w-full rounded-full bg-slate-800 transition duration-200 ease-out';
   return (
     <button

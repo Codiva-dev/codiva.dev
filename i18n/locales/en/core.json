@@ -300,7 +300,13 @@
   },
   "a11y": {
     "changeLanguage": "Change language",
-    "menu": "Menu"
+    "menu": "Menu",
+    "theme": {
+      "light": "Light theme",
+      "dark": "Dark theme",
+      "system": "System theme",
+      "toggle": "Change theme"
+    }
   },
   "legal": {
     "back": "Back",
