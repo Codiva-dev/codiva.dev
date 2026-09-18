@@ -1,6 +1,11 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isDiscardedApplicationStatus } from '@/lib/ops/careers';
-import { assignedJobPostingIds, interviewFollowUp, visibleApplicationIds } from '@/lib/ops/interview-partner';
+import {
+  assignedJobPostingIds,
+  interviewFollowUp,
+  partnerMayOperateRound,
+  visibleApplicationIds,
+} from '@/lib/ops/interview-partner';
 import type { InterviewPartnerMember } from '@/lib/ops/auth';
 import {
   applicationCoversAttempt,
@@ -41,7 +46,7 @@ export async function listInterviewQueue(opts: {
       .from('ops_interview_assignments')
       .select('round_id, application_id, job_posting_id')
       .eq('member_id', opts.member.id),
-    admin.from('ops_job_interview_rounds').select('id, application_id, status'),
+    admin.from('ops_job_interview_rounds').select('id, application_id, status, kind, partner_member_id'),
   ]);
 
   const { data: applications } = await admin
@@ -64,8 +69,21 @@ export async function listInterviewQueue(opts: {
     reportCount.set(report.round_id, (reportCount.get(report.round_id) ?? 0) + 1);
   }
   const followUpByApp = new Map<string, ReturnType<typeof interviewFollowUp>>();
+  const appsById = new Map((applications ?? []).map((row) => [row.id, row]));
   for (const round of rounds ?? []) {
     if (!visible.has(round.application_id)) continue;
+    const application = appsById.get(round.application_id);
+    if (
+      opts.member &&
+      application &&
+      !partnerMayOperateRound(round, {
+        memberId: opts.member.id,
+        assignments: assignments ?? [],
+        application,
+      })
+    ) {
+      continue;
+    }
     const next = interviewFollowUp({
       status: round.status,
       reportCount: reportCount.get(round.id) ?? 0,

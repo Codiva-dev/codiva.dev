@@ -28,6 +28,7 @@ import {
 import {
   interviewFollowUp,
   isInterviewUuid,
+  partnerOperableRounds,
   visibleApplicationIds,
 } from '@/lib/ops/interview-partner';
 import { interviewsHref } from '@/lib/ops/interview-view-as';
@@ -57,7 +58,7 @@ export default async function InterviewsApplicationPage({
   const [{ data: rounds }, { data: assignments }, brief] = await Promise.all([
     admin
       .from('ops_job_interview_rounds')
-      .select('id, application_id, sort_order, kind, title, status, outcome, conducted_at')
+      .select('id, application_id, sort_order, kind, title, status, outcome, partner_member_id, conducted_at')
       .eq('application_id', applicationId)
       .order('sort_order', { ascending: true }),
     access.member
@@ -78,7 +79,14 @@ export default async function InterviewsApplicationPage({
     if (!allowed.includes(application.id)) notFound();
   }
 
-  const roundIds = (rounds ?? []).map((row) => row.id);
+  const visibleRounds = access.member
+    ? partnerOperableRounds(rounds ?? [], {
+        memberId: access.member.id,
+        assignments: assignments ?? [],
+        application,
+      })
+    : (rounds ?? []);
+  const roundIds = visibleRounds.map((row) => row.id);
   const [{ data: comments }, { data: reports }] = await Promise.all([
     roundIds.length
       ? admin
@@ -164,13 +172,13 @@ export default async function InterviewsApplicationPage({
         <h2 className="text-lg font-semibold text-zinc-900">{t('interviews.roundsTitle')}</h2>
         <p className="mt-1 text-sm text-zinc-500">{t('interviews.roundsHint')}</p>
 
-        {(rounds ?? []).length === 0 ? (
+        {visibleRounds.length === 0 ? (
           <p className="mt-4 rounded-2xl border border-dashed border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-600">
             {t('interviews.roundsEmpty')}
           </p>
         ) : (
           <ul className="mt-4 space-y-4">
-            {(rounds ?? []).map((round) => {
+            {visibleRounds.map((round) => {
               const roundComments = (comments ?? []).filter((row) => row.round_id === round.id);
               const roundReports = (reports ?? []).filter((row) => row.round_id === round.id);
               const follow = interviewFollowUp({

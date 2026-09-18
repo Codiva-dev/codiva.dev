@@ -96,6 +96,41 @@ export function visibleApplicationIds(
   return [...ids];
 }
 
+export function partnerHasBroadScope(
+  assignments: InterviewAssignmentScope[],
+  application: { id: string; job_posting_id: string }
+): boolean {
+  return assignments.some(
+    (row) => row.application_id === application.id || row.job_posting_id === application.job_posting_id
+  );
+}
+
+export function partnerMayOperateRound(
+  round: { id: string; kind: string; partner_member_id?: string | null },
+  opts: {
+    memberId: string;
+    assignments: InterviewAssignmentScope[];
+    application: { id: string; job_posting_id: string };
+  }
+): boolean {
+  if (round.partner_member_id === opts.memberId) return true;
+  if (opts.assignments.some((row) => row.round_id === round.id)) return true;
+  return partnerHasBroadScope(opts.assignments, opts.application) && round.kind === 'screening';
+}
+
+export function partnerOperableRounds<
+  T extends { id: string; kind: string; partner_member_id?: string | null; application_id?: string },
+>(
+  rounds: T[],
+  opts: {
+    memberId: string;
+    assignments: InterviewAssignmentScope[];
+    application: { id: string; job_posting_id: string };
+  }
+): T[] {
+  return rounds.filter((round) => partnerMayOperateRound(round, opts));
+}
+
 export function assignedJobPostingIds(assignments: InterviewAssignmentScope[]): string[] {
   return [
     ...new Set(
