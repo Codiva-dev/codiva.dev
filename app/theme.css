@@ -28,7 +28,6 @@ html.dark:has(.ops-theme) {
 html.dark .ops-theme {
   color-scheme: dark;
   color: var(--c-ink);
-  background-color: var(--c-page);
   --c-page: #111216;
   --c-paper: #2b2e38;
   --c-paper-2: #1c1e26;
@@ -56,6 +55,7 @@ html.dark .ops-theme ::selection {
   color: #fff;
 }
 
+html.dark .ops-theme.bg-codiva-background,
 html.dark .ops-theme .bg-codiva-background {
   background-color: var(--c-page);
 }
