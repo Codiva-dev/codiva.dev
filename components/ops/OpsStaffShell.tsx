@@ -63,7 +63,7 @@ export default function OpsStaffShell({
   }
 
   return (
-    <div className="ops-theme flex h-dvh overflow-hidden">
+    <div className="ops-theme flex h-dvh overflow-hidden bg-codiva-background">
       {mobileOpen ? (
         <button
           type="button"

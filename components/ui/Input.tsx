@@ -7,7 +7,7 @@ const sizes = {
 };
 
 const controlClass =
-  'w-full rounded-lg border border-zinc-300 bg-white outline-none transition focus:border-codiva-primary focus:ring-2 focus:ring-codiva-primary/20 disabled:cursor-not-allowed disabled:bg-zinc-50';
+  'w-full rounded-lg border border-zinc-300 bg-white text-zinc-900 outline-none transition placeholder:text-zinc-400 focus:border-codiva-primary focus:ring-2 focus:ring-codiva-primary/20 disabled:cursor-not-allowed disabled:bg-zinc-50';
 
 type ControlSize = keyof typeof sizes;
 

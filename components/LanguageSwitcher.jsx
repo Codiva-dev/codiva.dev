@@ -178,7 +178,7 @@ export default function LanguageSwitcher() {
                   onMouseLeave={() => {
                     if (isDesktop) scheduleClose();
                   }}
-                  className={`w-fit min-w-[150px] overflow-hidden rounded-xl border border-zinc-200 bg-white px-1 py-1 shadow-lg ${
+                  className={`ops-theme w-fit min-w-[150px] overflow-hidden rounded-xl border border-zinc-200 bg-white px-1 py-1 shadow-lg ${
                     openUp ? 'origin-bottom-right' : 'origin-top-right'
                   }`}
                 >

@@ -134,7 +134,7 @@ export default function CodivaToaster() {
     <Toaster
       position="top-right"
       gutter={12}
-      containerClassName="font-sans"
+      containerClassName="ops-theme font-sans"
       toastOptions={{
         duration: 4000,
         removeDelay: 220,

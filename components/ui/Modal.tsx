@@ -86,7 +86,7 @@ export default function Modal({
   if (!open || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className={cn('fixed inset-0 flex items-center justify-center p-3 sm:p-4', layers[layer])}>
+    <div className={cn('ops-theme fixed inset-0 flex items-center justify-center p-3 sm:p-4', layers[layer])}>
       <button
         type="button"
         className={cn('absolute inset-0', backdrop === 'dark' ? 'bg-zinc-900/70' : 'bg-zinc-900/40')}

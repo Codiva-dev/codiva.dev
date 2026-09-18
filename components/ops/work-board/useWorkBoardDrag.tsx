@@ -227,7 +227,7 @@ export function useWorkBoardDrag({
                 node.style.width = `${session.width}px`;
               }
             }}
-            className="pointer-events-none fixed left-0 top-0 z-[90] rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 shadow-xl"
+            className="ops-theme pointer-events-none fixed left-0 top-0 z-[90] rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-900 shadow-xl"
           >
             {sessionRef.current?.title || ''}
           </div>,
