@@ -1,8 +1,12 @@
 import StatusBadge, { ticketTone } from '@/components/ops/StatusBadge';
 import TicketRequestForm from '@/components/ticket/TicketRequestForm';
+import TicketI18n from '@/i18n/TicketI18n';
+import { pickLocaleMessages } from '@/i18n/config';
 import { requireProjectMember } from '@/lib/ops/auth';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
+import enTicket from '@/i18n/locales/en/ticket.json';
+import esTicket from '@/i18n/locales/es/ticket.json';
 
 export default async function PortalTicketsPage({
   params,
@@ -52,14 +56,16 @@ export default async function PortalTicketsPage({
       <section className="rounded-xl border border-zinc-200 bg-white p-5">
         <h3 className="mb-3 font-semibold">{t('portal.ticketsPage.new')}</h3>
         <p className="mb-4 text-sm text-zinc-600">{t('portal.ticketsPage.hint')}</p>
-        <TicketRequestForm
-          variant="portal"
-          projectId={project.id}
-          projectName={project.name}
-          defaultName={defaultName}
-          defaultEmail={user.email || ''}
-          lockedIdentity
-        />
+        <TicketI18n locale={t.locale} bundle={pickLocaleMessages(t.locale, esTicket, enTicket)}>
+          <TicketRequestForm
+            variant="portal"
+            projectId={project.id}
+            projectName={project.name}
+            defaultName={defaultName}
+            defaultEmail={user.email || ''}
+            lockedIdentity
+          />
+        </TicketI18n>
       </section>
     </div>
   );
