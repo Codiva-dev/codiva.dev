@@ -93,6 +93,7 @@ export async function inviteInterviewPartnerCore(opts: {
         partner_id: partnerId,
         user_id: userId,
         full_name: fullName,
+        email,
         role: role as InterviewPartnerRole,
         active: true,
       },

@@ -2,6 +2,11 @@ export const HUNT_COOKIE_NAME = 'codiva_hunt';
 export const HUNT_COOKIE_MAX_AGE_SEC = 30 * 24 * 3600;
 export const HUNT_SESSION_EVENT = 'codiva-hunt-session';
 export const HUNT_PROGRESS_EVENT = 'codiva-hunt-progress';
+export const HUNT_TOKEN_MIN_LENGTH = 16;
+
+export function isHuntToken(value: string | null | undefined): boolean {
+  return (value || '').trim().length >= HUNT_TOKEN_MIN_LENGTH;
+}
 
 export function serializeHuntCookie(token: string, hostname: string, secure: boolean): string {
   const parts = [

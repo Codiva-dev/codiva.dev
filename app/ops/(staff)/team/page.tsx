@@ -5,7 +5,6 @@ import OpsCareersPanel, {
   type OpsJobApplicationRow,
   type OpsJobAttemptRow,
   type OpsJobPostingRow,
-  type OpsPersonnelOfferLink,
 } from '@/components/ops/OpsCareersPanel';
 import { requireStaff } from '@/lib/ops/auth';
 import {
@@ -29,6 +28,8 @@ import {
 } from '@/lib/ops/career-disciplines';
 import { getT } from '@/i18n/locale';
 import { opsProjectPath } from '@/lib/ops/project-path';
+import { emailsByUserIds } from '@/lib/ops/auth-users';
+import { resolveTeamTab, rowsMissingEmail, teamTabLoads } from '@/lib/ops/team-page';
 import { createAdminClient } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -49,46 +50,34 @@ export default async function TeamPage({
     redirect('/dashboard?error=forbidden');
   }
   const canManageTeam = can(staff, 'team');
-  const tab =
-    tabParam === 'bolsa'
-      ? 'bolsa'
-      : tabParam === 'entrevistadores'
-        ? 'entrevistadores'
-        : canManageTeam
-          ? tabParam === 'ofertas'
-            ? 'ofertas'
-            : 'miembros'
-          : 'bolsa';
+  const tab = resolveTeamTab(tabParam, canManageTeam);
+  const loads = teamTabLoads(tab, canManageTeam);
   const t = await getT();
   const { EMPTY_LABEL, formatCurrency, formatDate } = labelsFor(t.locale);
   const { OPS_ROLE_LABELS, WORK_MODALITY_LABELS, OFFER_STATUS_LABELS } = offerLabelsFor(t.locale);
   const ROLE_LABELS = OPS_ROLE_LABELS;
 
   const empty = { data: [] as never[] };
-  const loadMembers = tab === 'miembros' && canManageTeam;
-  const loadOffers = tab === 'ofertas' || tab === 'miembros' || tab === 'bolsa';
-  const loadJobs = tab === 'bolsa' || tab === 'entrevistadores';
-  const loadBolsaExtras = tab === 'bolsa';
-  const loadPartners = tab === 'entrevistadores' || loadBolsaExtras;
-  const loadPartnerEmails = tab === 'entrevistadores';
-
   const [
     { data: staffRows },
     { data: offers },
+    { data: offerLinks },
     { data: postings },
     { data: applications },
     { data: attempts },
     { data: huntReports },
     { data: allProjects },
     { data: staffAssignments },
+    offerCountResult,
+    newAppCountResult,
   ] = await Promise.all([
-    loadMembers
+    loads.members
       ? supabase
           .from('staff_profiles')
-          .select('id, full_name, role, active, created_at, capabilities')
+          .select('id, full_name, email, role, active, created_at, capabilities')
           .order('created_at', { ascending: true })
       : Promise.resolve(empty),
-    canManageTeam && loadOffers
+    loads.offerList
       ? supabase
           .from('ops_personnel_offers')
           .select(
@@ -96,21 +85,34 @@ export default async function TeamPage({
           )
           .order('created_at', { ascending: false })
       : Promise.resolve(empty),
-    loadJobs
+    loads.offerLinks
+      ? supabase.from('ops_personnel_offers').select('id, staff_id').not('staff_id', 'is', null)
+      : Promise.resolve(empty),
+    loads.jobsFull || loads.jobsLite
       ? supabase
           .from('ops_job_postings')
-          .select('id, slug, title, location, employment_type, status, updated_at, careers_pipeline, requires_hunt, asks_discipline')
+          .select(
+            'id, slug, title, location, employment_type, status, updated_at, careers_pipeline, requires_hunt, asks_discipline'
+          )
           .order('updated_at', { ascending: false })
       : Promise.resolve(empty),
-    loadJobs
+    loads.jobsFull
       ? supabase
           .from('ops_job_applications')
           .select(
             'id, job_posting_id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline, asks_discipline)'
           )
           .order('created_at', { ascending: false })
-      : Promise.resolve(empty),
-    loadBolsaExtras
+      : loads.jobsLite
+        ? supabase
+            .from('ops_job_applications')
+            .select(
+              'id, job_posting_id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline, asks_discipline)'
+            )
+            .eq('status', 'interview')
+            .order('created_at', { ascending: false })
+        : Promise.resolve(empty),
+    loads.jobsFull
       ? supabase
           .from('ops_job_assessment_attempts')
           .select(
@@ -119,7 +121,7 @@ export default async function TeamPage({
           .order('created_at', { ascending: false })
           .limit(200)
       : Promise.resolve(empty),
-    loadBolsaExtras
+    loads.jobsFull
       ? supabase
           .from('ops_hunt_reports')
           .select(
@@ -128,23 +130,28 @@ export default async function TeamPage({
           .order('created_at', { ascending: false })
           .limit(80)
       : Promise.resolve(empty),
-    loadMembers
+    loads.members
       ? supabase.from('projects').select('id, name, slug, organizations(name)').order('name')
       : Promise.resolve(empty),
-    loadMembers
+    loads.members
       ? supabase.from('project_staff').select('project_id, staff_id, role_on_project')
       : Promise.resolve(empty),
+    loads.offerCount
+      ? supabase.from('ops_personnel_offers').select('id', { count: 'exact', head: true })
+      : Promise.resolve({ count: 0 }),
+    loads.newApplicationCount && canManageTeam
+      ? supabase.from('ops_job_applications').select('id', { count: 'exact', head: true }).eq('status', 'new')
+      : Promise.resolve({ count: null as number | null }),
   ]);
 
   const emails = new Map<string, string>();
-  if (loadMembers) {
-    const admin = createAdminClient();
-    await Promise.all(
-      (staffRows ?? []).map(async (row) => {
-        const { data } = await admin.auth.admin.getUserById(row.id);
-        if (data.user?.email) emails.set(row.id, data.user.email);
-      })
-    );
+  for (const row of staffRows ?? []) {
+    if (row.email) emails.set(row.id, row.email);
+  }
+  const missingStaffIds = rowsMissingEmail(staffRows ?? []).map((row) => row.id);
+  if (missingStaffIds.length) {
+    const fetched = await emailsByUserIds(createAdminClient(), missingStaffIds);
+    for (const [id, email] of fetched) emails.set(id, email);
   }
 
   const testerPostingIds = new Set(
@@ -169,8 +176,7 @@ export default async function TeamPage({
         (row) => isTesterCatalogKey(row.catalog_key) || testerPostingIds.has(row.job_posting_id)
       );
 
-  const loadInterviews = tab === 'bolsa';
-  const applicationIds = loadInterviews ? (visibleApplications ?? []).map((row) => row.id) : [];
+  const applicationIds = loads.jobsFull ? (visibleApplications ?? []).map((row) => row.id) : [];
   const [{ data: interviewRounds }, { data: interviewStaff }] = await Promise.all([
     applicationIds.length
       ? supabase
@@ -181,7 +187,7 @@ export default async function TeamPage({
           .in('application_id', applicationIds)
           .order('sort_order', { ascending: true })
       : Promise.resolve({ data: [] as never[] }),
-    loadInterviews
+    loads.jobsFull
       ? supabase.from('staff_profiles').select('id, full_name').eq('active', true).order('full_name')
       : Promise.resolve({ data: [] as never[] }),
   ]);
@@ -200,16 +206,16 @@ export default async function TeamPage({
     { data: interviewAssignments },
     { data: interviewReports },
   ] = await Promise.all([
-    loadPartners
+    loads.partners
       ? supabase.from('ops_recruiting_partners').select('id, name, active').order('name')
       : Promise.resolve({ data: [] as never[] }),
-    loadPartners
+    loads.partners
       ? supabase
           .from('ops_recruiting_partner_members')
-          .select('id, partner_id, user_id, full_name, role, active')
+          .select('id, partner_id, user_id, full_name, email, role, active')
           .order('full_name')
       : Promise.resolve({ data: [] as never[] }),
-    loadPartners
+    loads.partners
       ? supabase.from('ops_interview_assignments').select('id, member_id, round_id, application_id, job_posting_id')
       : Promise.resolve({ data: [] as never[] }),
     roundIds.length
@@ -218,14 +224,21 @@ export default async function TeamPage({
   ]);
 
   const partnerEmails = new Map<string, string>();
-  if (loadPartnerEmails) {
-    const admin = createAdminClient();
-    await Promise.all(
-      (recruitingMembers ?? []).map(async (member) => {
-        const { data } = await admin.auth.admin.getUserById(member.user_id);
-        if (data.user?.email) partnerEmails.set(member.id, data.user.email);
-      })
-    );
+  if (loads.partnerEmails) {
+    for (const member of recruitingMembers ?? []) {
+      if (member.email) partnerEmails.set(member.id, member.email);
+    }
+    const missingPartners = rowsMissingEmail(recruitingMembers ?? []);
+    if (missingPartners.length) {
+      const fetched = await emailsByUserIds(
+        createAdminClient(),
+        missingPartners.map((member) => member.user_id)
+      );
+      for (const member of missingPartners) {
+        const email = fetched.get(member.user_id);
+        if (email) partnerEmails.set(member.id, email);
+      }
+    }
   }
   const partnerOptions = (recruitingMembers ?? [])
     .filter((row) => row.active)
@@ -242,8 +255,30 @@ export default async function TeamPage({
     list.push({ project_id: row.project_id, role_on_project: row.role_on_project });
     assignmentsByStaff.set(row.staff_id, list);
   }
-  for (const row of offers ?? []) {
+  for (const row of offerLinks ?? []) {
     if (row.staff_id) offerByStaff.set(row.staff_id, row.id);
+  }
+  const offerBadgeCount = loads.offerList ? (offers ?? []).length : (offerCountResult.count ?? 0);
+  let newApplicationBadgeCount = 0;
+  if (tab === 'bolsa') {
+    newApplicationBadgeCount = (visibleApplications ?? []).filter((row) => row.status === 'new').length;
+  } else if (canManageTeam) {
+    newApplicationBadgeCount = newAppCountResult.count ?? 0;
+  } else if (loads.newApplicationCount) {
+    const { data: pipelineRows } = await supabase
+      .from('ops_job_postings')
+      .select('id, slug, careers_pipeline');
+    const pipelineIds = (pipelineRows ?? [])
+      .filter((row) => isCareersPipelinePosting(row))
+      .map((row) => row.id);
+    if (pipelineIds.length) {
+      const { count } = await supabase
+        .from('ops_job_applications')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'new')
+        .in('job_posting_id', pipelineIds);
+      newApplicationBadgeCount = count ?? 0;
+    }
   }
   const projectLabel = new Map(
     (allProjects ?? []).map((p) => {
@@ -279,9 +314,9 @@ export default async function TeamPage({
             </TabLink>
             <TabLink href="/team?tab=ofertas" active={tab === 'ofertas'}>
               {t('ops.team.tabOffers')}
-              {(offers ?? []).length > 0 ? (
+              {offerBadgeCount > 0 ? (
                 <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-                  {(offers ?? []).length}
+                  {offerBadgeCount}
                 </span>
               ) : null}
             </TabLink>
@@ -292,9 +327,9 @@ export default async function TeamPage({
         </TabLink>
         <TabLink href="/team?tab=bolsa" active={tab === 'bolsa'}>
           {t('ops.team.tabJobs')}
-          {(visibleApplications ?? []).filter((row) => row.status === 'new').length > 0 ? (
+          {newApplicationBadgeCount > 0 ? (
             <span className="ml-2 rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-600">
-              {(visibleApplications ?? []).filter((row) => row.status === 'new').length}
+              {newApplicationBadgeCount}
             </span>
           ) : null}
         </TabLink>
@@ -545,7 +580,6 @@ export default async function TeamPage({
           applications={(visibleApplications ?? []) as OpsJobApplicationRow[]}
           attempts={(visibleAttempts ?? []) as OpsJobAttemptRow[]}
           huntReports={(huntReports ?? []) as OpsHuntReportRow[]}
-          offers={(offers ?? []) as OpsPersonnelOfferLink[]}
           signal={signalParam || ''}
           origin={originParam || ''}
           stage={stageParam || ''}

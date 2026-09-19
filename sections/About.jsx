@@ -1,8 +1,7 @@
 'use client';
 
-import { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { revealClass, useInView } from '../utils/inView';
 import Heading from '../components/Heading';
 import Paragraph from '../components/Paragraph';
 import TypewriterCycle from '../components/TypewriterCycle';
@@ -10,12 +9,7 @@ import CodivaBrandText from '../components/CodivaBrandText';
 
 export default function About() {
   const { t } = useTranslation();
-  const sectionRef = useRef(null);
-
-  const inView = useInView(sectionRef, {
-    triggerOnce: false,
-    threshold: 0.85,
-  });
+  const [sectionRef, inView] = useInView(0.85);
 
   const productionTypes = t('about.productionTypes', { returnObjects: true });
   const typedPhrases = Array.isArray(productionTypes) ? productionTypes : [];
@@ -31,12 +25,7 @@ export default function About() {
         ref={sectionRef}
         className="glass-panel relative w-full max-w-4xl rounded-2xl px-5 py-8 text-center sm:px-8 sm:py-12"
       >
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-          transition={{ duration: 0.6 }}
-          key={inView ? 'visible-title' : 'hidden-title'}
-        >
+        <div className={revealClass(inView)}>
           <Heading
             as="h2"
             size="text-2xl sm:text-3xl md:text-4xl"
@@ -44,13 +33,7 @@ export default function About() {
             role="heading"
             aria-level={2}
           >
-            <motion.span
-              initial={{ opacity: 0, y: 10 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              {t('about.title')}
-            </motion.span>
+            <span className={revealClass(inView, 'reveal-delay-3')}>{t('about.title')}</span>
           </Heading>
 
           <noscript>
@@ -64,14 +47,9 @@ export default function About() {
               {t('about.paragraph2Outro')}
             </p>
           </noscript>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          key={inView ? 'visible-text' : 'hidden-text'}
-        >
+        <div className={revealClass(inView, 'reveal-delay-2')}>
           <Paragraph className="max-w-2xl mx-auto text-codiva-secondary text-base md:text-lg mb-4">
             <CodivaBrandText className="align-baseline">
               {t('about.paragraph1Intro')}
@@ -103,7 +81,7 @@ export default function About() {
               {t('about.paragraph2Outro')}
             </CodivaBrandText>
           </Paragraph>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

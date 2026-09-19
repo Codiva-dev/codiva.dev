@@ -5,30 +5,8 @@ import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useTranslation } from 'react-i18next';
 import { localIsoDate } from '@/lib/local-iso-date';
-
-const EMAIL_WITH_TLD = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-function phoneDigits(value) {
-  return String(value || '').replace(/\D/g, '');
-}
-
-function RequiredMark() {
-  return (
-    <span className="text-codiva-primary" aria-hidden="true">
-      {' '}
-      *
-    </span>
-  );
-}
-
-function FieldError({ id, children }) {
-  if (!children) return null;
-  return (
-    <p id={id} data-field-error="" className="mt-1 text-xs text-red-500" role="alert">
-      {children}
-    </p>
-  );
-}
+import { EMAIL_WITH_TLD, phoneDigits } from '@/lib/lead-form';
+import { FieldError, RequiredMark } from '@/components/LeadField';
 
 export default function FormularioCotizacion() {
   const { t, i18n } = useTranslation();
