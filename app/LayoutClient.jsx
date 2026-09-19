@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { scrollToSection } from '../utils/scrollToSection';
-import HuntBeacon from '../components/careers/HuntBeacon';
+import HuntBeaconSlot from '../components/careers/HuntBeaconSlot';
 import Navbar from '../components/Navbar';
 import CodivaToaster from '@/components/ui/CodivaToaster';
 
@@ -78,7 +78,7 @@ export default function LayoutClient({ children, variant = 'marketing' }) {
 
       <CodivaToaster />
 
-      {isTicket ? null : <HuntBeacon />}
+      {isTicket ? null : <HuntBeaconSlot />}
 
       <Analytics />
     </div>
