@@ -106,6 +106,21 @@ export default async function ProjectDetailPage({
 
   if (!project) redirect('/projects');
 
+  const empty = { data: [] as never[] };
+  const emptySingle = { data: null };
+  const loadTimeline = tab === 'timeline';
+  const loadQuotes = tab === 'cotizaciones';
+  const loadDocs = tab === 'documentos';
+  const loadDeliverables = tab === 'entregables';
+  const loadPortalMembers = tab === 'accesos';
+  const loadTickets = tab === 'tickets';
+  const loadCharges = tab === 'pagos';
+  const loadAccess = tab === 'accesos';
+  const loadEquipo = tab === 'equipo';
+  const loadSprints = tab === 'sprints' || tab === 'horas';
+  const loadHours = tab === 'horas';
+  const loadStaffOptions = tab === 'equipo' || tab === 'sprints' || tab === 'horas';
+
   const [
     { data: milestones },
     { data: quotes },
@@ -124,42 +139,61 @@ export default async function ProjectDetailPage({
     { data: allStaffRows },
     { data: timeEntries },
   ] = await Promise.all([
-    supabase.from('milestones').select('*, milestone_updates(*)').eq('project_id', id).order('sort_order'),
-    supabase.from('quotes').select('*').eq('project_id', id).order('version', { ascending: false }),
-    supabase.from('documents').select('*').eq('project_id', id).order('uploaded_at', { ascending: false }),
-    supabase.from('deliverables').select('*').eq('project_id', id).order('sort_order', { ascending: true }),
-    supabase
-      .from('project_members')
-      .select(
-        'id, role, invited_at, user_id, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version, nda_accepted_at, nda_version'
-      )
-      .eq('project_id', id),
-    supabase.from('tickets').select('id, title, status, priority, created_at').eq('project_id', id).order('created_at', { ascending: false }).limit(10),
-    supabase
-      .from('document_requests')
-      .select('*')
-      .eq('project_id', id)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('project_charges')
-      .select('*')
-      .eq('project_id', id)
-      .order('sort_order', { ascending: true }),
-    supabase
-      .from('project_site_access')
-      .select('id, label, kind, url, username, secret, notes, visible_to_client, sort_order')
-      .eq('project_id', id)
-      .order('sort_order', { ascending: true }),
-    supabase.from('project_release_settings').select('*').eq('project_id', id).maybeSingle(),
-    supabase
-      .from('project_release_requests')
-      .select(
-        'id, project_id, status, preview_url, production_url, notes, commit_sha, commit_message, vercel_deployment_id, error_message, github_run_url, requested_by_kind, created_at, updated_at, completed_at'
-      )
-      .eq('project_id', id)
-      .order('created_at', { ascending: false })
-      .limit(20),
-    project.organization_id
+    loadTimeline
+      ? supabase.from('milestones').select('*, milestone_updates(*)').eq('project_id', id).order('sort_order')
+      : Promise.resolve(empty),
+    loadQuotes
+      ? supabase.from('quotes').select('*').eq('project_id', id).order('version', { ascending: false })
+      : Promise.resolve(empty),
+    loadDocs
+      ? supabase.from('documents').select('*').eq('project_id', id).order('uploaded_at', { ascending: false })
+      : Promise.resolve(empty),
+    loadDeliverables
+      ? supabase.from('deliverables').select('*').eq('project_id', id).order('sort_order', { ascending: true })
+      : Promise.resolve(empty),
+    loadPortalMembers
+      ? supabase
+          .from('project_members')
+          .select(
+            'id, role, invited_at, user_id, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version, nda_accepted_at, nda_version'
+          )
+          .eq('project_id', id)
+      : Promise.resolve(empty),
+    loadTickets
+      ? supabase
+          .from('tickets')
+          .select('id, title, status, priority, created_at')
+          .eq('project_id', id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+      : Promise.resolve(empty),
+    loadDocs
+      ? supabase.from('document_requests').select('*').eq('project_id', id).order('sort_order', { ascending: true })
+      : Promise.resolve(empty),
+    loadCharges
+      ? supabase.from('project_charges').select('*').eq('project_id', id).order('sort_order', { ascending: true })
+      : Promise.resolve(empty),
+    loadAccess
+      ? supabase
+          .from('project_site_access')
+          .select('id, label, kind, url, username, secret, notes, visible_to_client, sort_order')
+          .eq('project_id', id)
+          .order('sort_order', { ascending: true })
+      : Promise.resolve(empty),
+    loadAccess
+      ? supabase.from('project_release_settings').select('*').eq('project_id', id).maybeSingle()
+      : Promise.resolve(emptySingle),
+    loadAccess
+      ? supabase
+          .from('project_release_requests')
+          .select(
+            'id, project_id, status, preview_url, production_url, notes, commit_sha, commit_message, vercel_deployment_id, error_message, github_run_url, requested_by_kind, created_at, updated_at, completed_at'
+          )
+          .eq('project_id', id)
+          .order('created_at', { ascending: false })
+          .limit(20)
+      : Promise.resolve(empty),
+    loadQuotes && project.organization_id
       ? supabase
           .from('projects')
           .select('id, name')
@@ -167,30 +201,34 @@ export default async function ProjectDetailPage({
           .neq('id', id)
           .order('name')
       : Promise.resolve({ data: [] as { id: string; name: string }[] }),
-    supabase
-      .from('project_staff')
-      .select('staff_id, role_on_project, staff_profiles(full_name, role)')
-      .eq('project_id', id),
-    supabase
-      .from('project_sprints')
-      .select('id, name, goal, starts_on, ends_on, status')
-      .eq('project_id', id)
-      .order('starts_on', { ascending: true, nullsFirst: false }),
-    supabase
-      .from('staff_profiles')
-      .select('id, full_name, role')
-      .eq('active', true)
-      .order('full_name'),
-    supabase
-      .from('time_entries')
-      .select('id, hours, worked_on, notes, staff_id, sprint_item_id')
-      .eq('project_id', id)
-      .order('worked_on', { ascending: false })
-      .limit(100),
+    loadEquipo
+      ? supabase
+          .from('project_staff')
+          .select('staff_id, role_on_project, staff_profiles(full_name, role)')
+          .eq('project_id', id)
+      : Promise.resolve(empty),
+    loadSprints
+      ? supabase
+          .from('project_sprints')
+          .select('id, name, goal, starts_on, ends_on, status')
+          .eq('project_id', id)
+          .order('starts_on', { ascending: true, nullsFirst: false })
+      : Promise.resolve(empty),
+    loadStaffOptions
+      ? supabase.from('staff_profiles').select('id, full_name, role').eq('active', true).order('full_name')
+      : Promise.resolve(empty),
+    loadHours
+      ? supabase
+          .from('time_entries')
+          .select('id, hours, worked_on, notes, staff_id, sprint_item_id')
+          .eq('project_id', id)
+          .order('worked_on', { ascending: false })
+          .limit(100)
+      : Promise.resolve(empty),
   ]);
 
   const sprintIds = (sprints ?? []).map((s) => s.id);
-  const { data: sprintItems } = sprintIds.length
+  const { data: sprintItems } = loadSprints && sprintIds.length
     ? await supabase
         .from('sprint_items')
         .select('id, sprint_id, title, details, status, assignee_id')
@@ -198,37 +236,44 @@ export default async function ProjectDetailPage({
         .order('sort_order', { ascending: true })
     : { data: [] as never[] };
 
-  const { data: orgNdaDocs } = project.organization_id
-    ? await supabase
-        .from('documents')
-        .select('*')
-        .eq('organization_id', project.organization_id)
-        .eq('type', 'nda')
-        .eq('signed', true)
-        .is('disposed_at', null)
-        .order('uploaded_at', { ascending: false })
-    : { data: [] as never[] };
+  const { data: orgNdaDocs } =
+    loadDocs && project.organization_id
+      ? await supabase
+          .from('documents')
+          .select('*')
+          .eq('organization_id', project.organization_id)
+          .eq('type', 'nda')
+          .eq('signed', true)
+          .is('disposed_at', null)
+          .order('uploaded_at', { ascending: false })
+      : { data: [] as never[] };
 
   const staffDocuments = [
     ...(documents ?? []),
     ...(orgNdaDocs ?? []).filter((d) => !(documents ?? []).some((p) => p.id === d.id)),
   ];
 
-  const admin = createAdminClient();
-  const [{ data: fileAccess }, { data: recentActivity }] = await Promise.all([
-    admin
-      .from('file_access_log')
-      .select('id, file_path, action, actor_id, created_at, document_id, ip, user_agent')
-      .eq('project_id', id)
-      .order('created_at', { ascending: false })
-      .limit(20),
-    admin
-      .from('activity_log')
-      .select('id, entity_type, action, actor_id, metadata, created_at')
-      .contains('metadata', { project_id: id })
-      .order('created_at', { ascending: false })
-      .limit(20),
-  ]);
+  const loadAudit = loadDocs;
+  const admin = loadAudit || loadPortalMembers ? createAdminClient() : null;
+  const [{ data: fileAccess }, { data: recentActivity }] = admin && loadAudit
+    ? await Promise.all([
+        admin
+          .from('file_access_log')
+          .select('id, file_path, action, actor_id, created_at, document_id, ip, user_agent')
+          .eq('project_id', id)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        admin
+          .from('activity_log')
+          .select('id, entity_type, action, actor_id, metadata, created_at')
+          .contains('metadata', { project_id: id })
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ])
+    : [
+        { data: [] as never[] },
+        { data: [] as never[] },
+      ];
 
   const memberEmails = new Map<string, string>();
   const actorIds = new Set<string>();
@@ -239,12 +284,14 @@ export default async function ProjectDetailPage({
   (recentActivity ?? []).forEach((a) => {
     if (a.actor_id) actorIds.add(a.actor_id);
   });
-  await Promise.all(
-    [...actorIds].map(async (userId) => {
-      const { data } = await admin.auth.admin.getUserById(userId);
-      if (data.user?.email) memberEmails.set(userId, data.user.email);
-    })
-  );
+  if (admin && actorIds.size) {
+    await Promise.all(
+      [...actorIds].map(async (userId) => {
+        const { data } = await admin.auth.admin.getUserById(userId);
+        if (data.user?.email) memberEmails.set(userId, data.user.email);
+      })
+    );
+  }
 
   const tabs = [
     { key: 'resumen', labelKey: 'ops.project.tabResumen' },
