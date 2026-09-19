@@ -1068,6 +1068,7 @@ async function provisionStaffUser(input: {
     {
       id: userId,
       full_name: fullName || email.split('@')[0],
+      email,
       role,
       capabilities,
       active: true,
