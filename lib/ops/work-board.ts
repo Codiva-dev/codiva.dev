@@ -672,6 +672,71 @@ export function mentionDisplayName(user: { full_name?: string | null; email?: st
   return String(user?.email || '').trim() || 'Staff';
 }
 
+function mentionNameParts(user: { full_name?: string | null; email?: string | null }) {
+  const name = String(user?.full_name || '')
+    .trim()
+    .replace(/[[\]]/g, '');
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length) return parts;
+  const local = String(user?.email || '')
+    .trim()
+    .split('@')[0]
+    ?.trim();
+  return local ? [local] : [];
+}
+
+export function mentionShortName(
+  user: { id?: string; full_name?: string | null; email?: string | null },
+  others: Array<{ id?: string; full_name?: string | null; email?: string | null }> = []
+) {
+  const parts = mentionNameParts(user);
+  const first = parts[0] || 'Staff';
+  const last = parts.length > 1 ? parts[parts.length - 1] : '';
+  const firstKey = first.toLowerCase();
+  const userId = String(user?.id || '').trim();
+  const collision = others.some((row) => {
+    const otherId = String(row?.id || '').trim();
+    if (userId && otherId && otherId === userId) return false;
+    const otherFirst = mentionNameParts(row)[0];
+    return Boolean(otherFirst) && otherFirst.toLowerCase() === firstKey;
+  });
+  if (collision && last && last.toLowerCase() !== firstKey) return `${first} ${last}`;
+  return first;
+}
+
+export function mentionLabelFor(
+  part: Extract<MentionPart, { type: 'mention' }>,
+  staff: Array<{ id: string; full_name?: string | null; email?: string | null }> = []
+) {
+  const user = staff.find((row) => row.id.toLowerCase() === part.userId);
+  return user ? mentionShortName(user, staff) : mentionShortName({ full_name: part.label });
+}
+
+export function mentionSerializedIndex(
+  body: string,
+  visualIndex: number,
+  staff: Array<{ id: string; full_name?: string | null; email?: string | null }> = []
+) {
+  const parts = splitMentionTokens(body);
+  let visual = 0;
+  let serialized = 0;
+  const target = Math.max(0, visualIndex);
+  for (const part of parts) {
+    if (part.type === 'text') {
+      const len = part.text.length;
+      if (target <= visual + len) return serialized + (target - visual);
+      visual += len;
+      serialized += len;
+      continue;
+    }
+    const label = `@${mentionLabelFor(part, staff)}`;
+    if (target <= visual + label.length) return target <= visual ? serialized : serialized + part.raw.length;
+    visual += label.length;
+    serialized += part.raw.length;
+  }
+  return serialized;
+}
+
 export function workAssigneeInitials(name: string) {
   const parts = String(name || '')
     .trim()
@@ -683,10 +748,13 @@ export function workAssigneeInitials(name: string) {
   return `${first}${last}`.toUpperCase();
 }
 
-export function buildMentionToken(user: { id: string; full_name?: string | null; email?: string | null }) {
+export function buildMentionToken(
+  user: { id: string; full_name?: string | null; email?: string | null },
+  others: Array<{ id?: string; full_name?: string | null; email?: string | null }> = []
+) {
   const id = String(user?.id || '').trim();
   if (!isUuid(id)) return '';
-  const label = mentionDisplayName(user).replace(/[[\]]/g, '');
+  const label = mentionShortName(user, others).replace(/[[\]]/g, '');
   return `@[${label}](${id})`;
 }
 

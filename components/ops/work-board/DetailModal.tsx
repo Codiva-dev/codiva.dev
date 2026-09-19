@@ -27,6 +27,7 @@ import {
   canTransitionWorkStatus,
   formatDwellDuration,
   isWorkBoardColumn,
+  mentionLabelFor,
   splitMentionTokens,
   stageEventDurationMs,
   type WorkAssignment,
@@ -314,7 +315,7 @@ export function DetailModal({
                           key={index}
                           className="rounded bg-codiva-primary/10 px-1 font-medium text-codiva-primary"
                         >
-                          @{part.label}
+                          @{mentionLabelFor(part, staff)}
                         </span>
                       ) : (
                         <span key={index}>{part.text}</span>

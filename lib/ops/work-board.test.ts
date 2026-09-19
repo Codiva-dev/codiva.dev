@@ -12,7 +12,10 @@ import {
   workBoardSearch,
   formatDwellDuration,
   mentionedStaffIds,
+  mentionLabelFor,
   mentionPlainText,
+  mentionSerializedIndex,
+  mentionShortName,
   workAssigneeInitials,
   asWorkUrgency,
   sortWorkCardsByUrgency,
@@ -327,20 +330,40 @@ describe('work-board mentions', () => {
 
   it('builds and splits mention tokens', () => {
     const token = buildMentionToken({ id: 'b0000001-0001-4000-8000-00000000000b', full_name: 'Ada Lovelace' });
-    expect(token).toBe('@[Ada Lovelace](b0000001-0001-4000-8000-00000000000b)');
+    expect(token).toBe('@[Ada](b0000001-0001-4000-8000-00000000000b)');
     const parts = splitMentionTokens(`Hola ${token} revisa esto`);
     expect(parts).toEqual([
       { type: 'text', text: 'Hola ' },
       {
         type: 'mention',
-        label: 'Ada Lovelace',
+        label: 'Ada',
         userId: 'b0000001-0001-4000-8000-00000000000b',
         raw: token,
       },
       { type: 'text', text: ' revisa esto' },
     ]);
     expect(mentionedStaffIds(`Hola ${token}`)).toEqual(['b0000001-0001-4000-8000-00000000000b']);
-    expect(mentionPlainText(`Hola ${token}`)).toBe('Hola @Ada Lovelace');
+    expect(mentionPlainText(`Hola ${token}`)).toBe('Hola @Ada');
+  });
+
+  it('uses a short mention name and disambiguates collisions', () => {
+    expect(mentionShortName({ full_name: 'Rafael Alejandro Castillo Martinez' })).toBe('Rafael');
+    expect(mentionShortName({ email: 'ada@codiva.dev' })).toBe('ada');
+    const staff = [
+      { id: '1', full_name: 'Rafael Alejandro Castillo Martinez' },
+      { id: '2', full_name: 'Rafael Perez' },
+    ];
+    expect(mentionShortName(staff[0], staff)).toBe('Rafael Martinez');
+    expect(mentionShortName(staff[1], staff)).toBe('Rafael Perez');
+  });
+
+  it('maps visual caret past a short mention chip back to the stored token', () => {
+    const token = buildMentionToken({ id: 'b0000001-0001-4000-8000-00000000000b', full_name: 'Ada Lovelace' });
+    const body = `Hola ${token} revisa`;
+    expect(mentionSerializedIndex(body, 5)).toBe(5);
+    expect(mentionSerializedIndex(body, 9)).toBe(5 + token.length);
+    const mention = splitMentionTokens(body).find((part) => part.type === 'mention');
+    expect(mention && mention.type === 'mention' ? mentionLabelFor(mention) : null).toBe('Ada');
   });
 
   it('detects an in-progress @query', () => {
