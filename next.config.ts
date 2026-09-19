@@ -1,16 +1,26 @@
 import type { NextConfig } from 'next';
 import { nextSecurityHeaderSources } from './lib/security-headers';
 
+const clientPackTextFiles = [
+  './public/client-packs/**/*.html',
+  './public/client-packs/**/*.md',
+];
+
 const nextConfig: NextConfig = {
   serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core'],
+  // Pack HTML is read from disk with a dynamic path (NFT cannot see it).
+  // PDFs/images are never loaded as utf8 — keep them out of every function.
   outputFileTracingIncludes: {
-    '*': ['./public/client-packs/**/*'],
+    '/ops/p/[slug]/canvas/[id]': clientPackTextFiles,
+    '/ops/p/[slug]/canvas/[id]/pdf': clientPackTextFiles,
+    '/ops/projects/[id]': clientPackTextFiles,
+    '/ops/projects/[id]/arquitectura/[deliverableId]': clientPackTextFiles,
   },
   compiler: {
     removeConsole:
       process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
-  transpilePackages: ['docx-preview', 'pptxviewjs', 'chart.js'],
+  transpilePackages: ['docx-preview', 'pptxviewjs'],
   serverActions: {
     bodySizeLimit: '10mb',
   },
