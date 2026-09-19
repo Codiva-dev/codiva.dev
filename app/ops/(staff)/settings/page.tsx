@@ -1,5 +1,6 @@
 import OpsChangePasswordForm from '@/components/ops/OpsChangePasswordForm';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
+import OpsPushOptIn from '@/components/ops/OpsPushOptIn';
 import ToastForm from '@/components/ops/ToastForm';
 import { requireStaff } from '@/lib/ops/auth';
 import { labelsFor } from '@/lib/ops/labels';
@@ -90,6 +91,8 @@ export default async function SettingsPage() {
           <p className="mb-4 text-sm text-zinc-600">{t('ops.settings.passwordHint')}</p>
           <OpsChangePasswordForm />
         </section>
+
+        <OpsPushOptIn vapidPublicKey={(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim()} />
 
         {ownOffer ? (
           <section className="rounded-xl border border-zinc-200 bg-white p-5">

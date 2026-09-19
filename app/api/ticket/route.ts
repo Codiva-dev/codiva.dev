@@ -10,6 +10,7 @@ import {
   rateLimitJsonResponse,
 } from '@/lib/rate-limit';
 import { notifyStaffSafe, sendTicketConfirmationEmail } from '@/lib/ops/email';
+import { notifyStaffPushSafe, staffIdsForProjectPush } from '@/lib/ops/push';
 import { templateStaffAlert } from '@/lib/ops/email-templates';
 import { logActivity } from '@/lib/ops/activity';
 import { uploadOpsFile } from '@/lib/ops/storage';
@@ -181,6 +182,15 @@ export async function POST(req: Request) {
           { ctaLabel: 'Ver ticket', ctaHref: ticketUrl }
         ),
         replyTo: body.email,
+      }),
+      notifyStaffPushSafe({
+        staffIds: await staffIdsForProjectPush(linked.projectId),
+        payload: {
+          title: `Ticket ${body.priority}`,
+          body: body.issueTitle,
+          href: `/tickets/${ticket.id}`,
+          tag: `ticket-${ticket.id}`,
+        },
       }),
     ]);
 

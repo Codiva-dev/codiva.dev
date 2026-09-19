@@ -25,6 +25,10 @@
     {
       "path": "/api/ops/cron/cv-nudge",
       "schedule": "45 * * * *"
+    },
+    {
+      "path": "/api/ops/cron/calendar-nudge",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

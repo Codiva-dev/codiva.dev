@@ -13,6 +13,7 @@ import {
 import { interviewsHref } from '@/lib/ops/interview-view-as';
 import { getT, type Translator } from '@/i18n/locale';
 import { isDiscardedApplicationStatus, jobApplicationStatusLabel } from '@/lib/ops/careers';
+import { labelsFor } from '@/lib/ops/labels';
 import { redirect } from 'next/navigation';
 
 function followUpTone(value: string) {
@@ -31,10 +32,12 @@ function CandidateCards({
   rows,
   homeHref,
   t,
+  formatDateTime,
 }: {
   rows: InterviewQueueRow[];
   homeHref: string;
   t: Translator;
+  formatDateTime: (date: string | null | undefined) => string;
 }) {
   return (
     <ul className="mt-6 space-y-3">
@@ -49,6 +52,11 @@ function CandidateCards({
                 <p className="font-semibold text-zinc-900">{row.full_name}</p>
                 {row.jobTitle ? <p className="text-sm text-codiva-primary">{row.jobTitle}</p> : null}
                 <p className="mt-1 text-sm text-zinc-500">{row.email}</p>
+                {row.nextScheduledAt ? (
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {t('interviews.scheduled')}: {formatDateTime(row.nextScheduledAt)}
+                  </p>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 <StatusBadge
@@ -122,6 +130,7 @@ export default async function InterviewsQueuePage() {
     redirect(await interviewsHref('/aceptar'));
   }
   const t = await getT();
+  const { formatDateTime } = labelsFor(t.locale);
   const [rows, failed] = await Promise.all([
     listInterviewQueue({
       isStaffPreview: access.isStaffPreview,
@@ -145,7 +154,7 @@ export default async function InterviewsQueuePage() {
         <p className="mt-6 text-sm text-zinc-600">{t('interviews.queueEmpty')}</p>
       ) : (
         <>
-          {open.length ? <CandidateCards rows={open} homeHref={homeHref} t={t} /> : null}
+          {open.length ? <CandidateCards rows={open} homeHref={homeHref} t={t} formatDateTime={formatDateTime} /> : null}
           {failed.length ? (
             <section className={open.length ? 'mt-10' : 'mt-6'}>
               <h2 className="text-lg font-semibold text-zinc-900">{t('interviews.failedTitle')}</h2>
@@ -157,7 +166,7 @@ export default async function InterviewsQueuePage() {
             <section className={open.length || failed.length ? 'mt-10' : 'mt-6'}>
               <h2 className="text-lg font-semibold text-zinc-900">{t('interviews.rejectedTitle')}</h2>
               <p className="mt-1 text-sm text-zinc-500">{t('interviews.rejectedHint')}</p>
-              <CandidateCards rows={rejected} homeHref={homeHref} t={t} />
+              <CandidateCards rows={rejected} homeHref={homeHref} t={t} formatDateTime={formatDateTime} />
             </section>
           ) : null}
         </>

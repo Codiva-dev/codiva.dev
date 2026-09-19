@@ -16,6 +16,7 @@ import {
   Gauge,
   Kanban,
   ListTodo,
+  CalendarDays,
   PanelLeftClose,
 } from 'lucide-react';
 import { canAny, type Capability, type PermissionSubject } from '@/lib/ops/permissions';
@@ -34,6 +35,7 @@ const NAV: {
   { href: '/inbox', labelKey: 'ops.nav.inbox', icon: Inbox, capability: 'inbox' },
   { href: '/projects', labelKey: 'ops.nav.projects', icon: FolderKanban },
   { href: '/workload', labelKey: 'ops.nav.workload', icon: Gauge, capability: 'workload' },
+  { href: '/calendar', labelKey: 'ops.nav.calendar', icon: CalendarDays },
   { href: '/pendientes', labelKey: 'ops.nav.pendientes', icon: ListTodo, capability: 'assignments' },
   { href: '/asignaciones', labelKey: 'ops.nav.asignaciones', icon: Kanban, capability: 'assignments' },
   { href: '/organizations', labelKey: 'ops.nav.organizations', icon: Building2, capability: 'organizations' },

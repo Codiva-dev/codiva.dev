@@ -180,6 +180,50 @@
       "title": "Fase de entrevista pendiente",
       "body": "Te asignaron una fase para {{candidate}} ({{job}}). Entra para ver el status, hacer seguimiento y cargar el reporte.",
       "cta": "Ver candidato"
+    },
+    "interviewScheduled": {
+      "preview": "Entrevista agendada: {{candidate}}",
+      "title": "Entrevista agendada",
+      "subject": "Entrevista agendada · {{candidate}}",
+      "body": "Quedó agendada una fase con {{candidate}} ({{job}}). El .ics va adjunto para tu calendario.",
+      "when": "Cuándo",
+      "duration": "Duración (min)",
+      "location": "Lugar",
+      "link": "Enlace",
+      "cta": "Ver candidato"
+    },
+    "interviewReminder": {
+      "preview": "Recordatorio de entrevista: {{candidate}}",
+      "title": "Recordatorio de entrevista",
+      "subject": "Recordatorio · {{candidate}}",
+      "body": "Se acerca la fase con {{candidate}} ({{job}}).",
+      "when": "Cuándo",
+      "duration": "Duración (min)",
+      "location": "Lugar",
+      "link": "Enlace",
+      "cta": "Ver candidato"
+    },
+    "calendarScheduled": {
+      "preview": "Junta agendada: {{title}}",
+      "title": "Junta agendada",
+      "subject": "Junta agendada · {{title}}",
+      "body": "Se agendó {{title}} en el calendario de Ops.",
+      "when": "Cuándo",
+      "duration": "Duración (min)",
+      "location": "Lugar",
+      "link": "Enlace",
+      "cta": "Ver calendario"
+    },
+    "calendarReminder": {
+      "preview": "Recordatorio: {{title}}",
+      "title": "Recordatorio de junta",
+      "subject": "Recordatorio · {{title}}",
+      "body": "Se acerca {{title}}.",
+      "when": "Cuándo",
+      "duration": "Duración (min)",
+      "location": "Lugar",
+      "link": "Enlace",
+      "cta": "Ver calendario"
     }
   },
   "quoteDoc": {

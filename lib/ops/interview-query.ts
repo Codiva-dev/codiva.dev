@@ -21,7 +21,40 @@ export type InterviewQueueRow = {
   status: string;
   jobTitle: string | null;
   followUp: ReturnType<typeof interviewFollowUp>;
+  nextScheduledAt: string | null;
 };
+
+export function pickNextScheduledAt(
+  values: Array<string | null | undefined>,
+  now = new Date()
+): string | null {
+  const nowMs = now.getTime();
+  const future = values.filter((iso): iso is string => Boolean(iso)).filter((iso) => {
+    const t = Date.parse(iso);
+    return Number.isFinite(t) && t >= nowMs;
+  });
+  future.sort();
+  return future[0] ?? null;
+}
+
+function nextScheduledByApplication(
+  rounds: Array<{ application_id: string; scheduled_at: string | null }>,
+  now = new Date()
+) {
+  const grouped = new Map<string, string[]>();
+  for (const round of rounds) {
+    if (!round.scheduled_at) continue;
+    const list = grouped.get(round.application_id) ?? [];
+    list.push(round.scheduled_at);
+    grouped.set(round.application_id, list);
+  }
+  const out = new Map<string, string>();
+  for (const [id, times] of grouped) {
+    const next = pickNextScheduledAt(times, now);
+    if (next) out.set(id, next);
+  }
+  return out;
+}
 
 export async function listInterviewQueue(opts: {
   isStaffPreview: boolean;
@@ -36,7 +69,16 @@ export async function listInterviewQueue(opts: {
       .eq('status', 'interview')
       .order('created_at', { ascending: false })
       .limit(80);
-    return toQueueRows(applications ?? [], new Map());
+    const ids = (applications ?? []).map((row) => row.id);
+    const { data: rounds } = ids.length
+      ? await admin
+          .from('ops_job_interview_rounds')
+          .select('application_id, scheduled_at')
+          .in('application_id', ids)
+          .neq('status', 'skipped')
+          .not('scheduled_at', 'is', null)
+      : { data: [] as { application_id: string; scheduled_at: string | null }[] };
+    return toQueueRows(applications ?? [], new Map(), nextScheduledByApplication(rounds ?? []));
   }
 
   if (!opts.member) return [];
@@ -46,7 +88,7 @@ export async function listInterviewQueue(opts: {
       .from('ops_interview_assignments')
       .select('round_id, application_id, job_posting_id')
       .eq('member_id', opts.member.id),
-    admin.from('ops_job_interview_rounds').select('id, application_id, status, kind, partner_member_id'),
+    admin.from('ops_job_interview_rounds').select('id, application_id, status, kind, partner_member_id, scheduled_at'),
   ]);
 
   const { data: applications } = await admin
@@ -69,6 +111,7 @@ export async function listInterviewQueue(opts: {
     reportCount.set(report.round_id, (reportCount.get(report.round_id) ?? 0) + 1);
   }
   const followUpByApp = new Map<string, ReturnType<typeof interviewFollowUp>>();
+  const scheduledTimesByApp = new Map<string, string[]>();
   const appsById = new Map((applications ?? []).map((row) => [row.id, row]));
   for (const round of rounds ?? []) {
     if (!visible.has(round.application_id)) continue;
@@ -84,6 +127,11 @@ export async function listInterviewQueue(opts: {
     ) {
       continue;
     }
+    if (round.scheduled_at) {
+      const times = scheduledTimesByApp.get(round.application_id) ?? [];
+      times.push(round.scheduled_at);
+      scheduledTimesByApp.set(round.application_id, times);
+    }
     const next = interviewFollowUp({
       status: round.status,
       reportCount: reportCount.get(round.id) ?? 0,
@@ -93,7 +141,12 @@ export async function listInterviewQueue(opts: {
       followUpByApp.set(round.application_id, next);
     }
   }
-  return toQueueRows(scoped, followUpByApp);
+  const scheduledByApp = new Map<string, string>();
+  for (const [id, times] of scheduledTimesByApp) {
+    const next = pickNextScheduledAt(times);
+    if (next) scheduledByApp.set(id, next);
+  }
+  return toQueueRows(scoped, followUpByApp, scheduledByApp);
 }
 
 export type InterviewFailedAttemptRow = {
@@ -203,7 +256,8 @@ function toQueueRows(
     status: string;
     ops_job_postings?: { title?: string | null } | { title?: string | null }[] | null;
   }[],
-  followUpByApp: Map<string, ReturnType<typeof interviewFollowUp>>
+  followUpByApp: Map<string, ReturnType<typeof interviewFollowUp>>,
+  scheduledByApp: Map<string, string> = new Map()
 ): InterviewQueueRow[] {
   return applications.map((row) => {
     const posting = Array.isArray(row.ops_job_postings) ? row.ops_job_postings[0] : row.ops_job_postings;
@@ -215,6 +269,7 @@ function toQueueRows(
       status: row.status,
       jobTitle: posting?.title ?? null,
       followUp: followUpByApp.get(row.id) ?? 'pending',
+      nextScheduledAt: scheduledByApp.get(row.id) ?? null,
     };
   });
 }

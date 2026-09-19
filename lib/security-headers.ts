@@ -41,6 +41,7 @@ export function contentSecurityPolicy(
     "img-src 'self' data: blob: https:",
     "font-src 'self' data:",
     `connect-src 'self' ${SUPABASE} ${ANALYTICS} ${SENTRY} ${VERCEL_LIVE} https://*.codiva.dev`,
+    "worker-src 'self'",
     `frame-src 'self' blob: https: ${VERCEL_LIVE}`,
     frameAncestors,
     "base-uri 'self'",

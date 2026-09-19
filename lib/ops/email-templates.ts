@@ -448,6 +448,103 @@ export function templateInterviewAssigned(opts: {
   });
 }
 
+export function templateInterviewScheduled(opts: {
+  recipientName: string;
+  candidateName: string;
+  jobTitle: string;
+  when: string;
+  durationMinutes: number;
+  location?: string | null;
+  meetingUrl?: string | null;
+  href: string;
+  reminder?: '24h' | '1h';
+  locale?: Locale;
+}): string {
+  const locale = opts.locale ?? DEFAULT_LOCALE;
+  const hello = opts.recipientName ? greeting(opts.recipientName, locale) : '';
+  const key = opts.reminder ? 'email.interviewReminder' : 'email.interviewScheduled';
+  const extras: string[] = [];
+  extras.push(
+    `<p style="margin:0 0 8px;"><strong>${tSync(locale, `${key}.when`)}</strong> ${escapeHtml(opts.when)}</p>`
+  );
+  extras.push(
+    `<p style="margin:0 0 8px;"><strong>${tSync(locale, `${key}.duration`)}</strong> ${escapeHtml(
+      String(opts.durationMinutes)
+    )}</p>`
+  );
+  if (opts.location) {
+    extras.push(
+      `<p style="margin:0 0 8px;"><strong>${tSync(locale, `${key}.location`)}</strong> ${escapeHtml(opts.location)}</p>`
+    );
+  }
+  if (opts.meetingUrl) {
+    extras.push(
+      `<p style="margin:0 0 8px;"><strong>${tSync(locale, `${key}.link`)}</strong> <a href="${escapeHtml(
+        opts.meetingUrl
+      )}" style="color:${BRAND.primary};">${escapeHtml(opts.meetingUrl)}</a></p>`
+    );
+  }
+  return emailLayout({
+    locale,
+    preview: tSync(locale, `${key}.preview`, { candidate: opts.candidateName }),
+    title: tSync(locale, `${key}.title`),
+    bodyHtml: `
+      ${hello}
+      <p style="margin:0 0 12px;">${tSync(locale, `${key}.body`, {
+        candidate: opts.candidateName,
+        job: opts.jobTitle,
+      })}</p>
+      ${extras.join('')}
+    `,
+    cta: { label: tSync(locale, `${key}.cta`), href: opts.href },
+  });
+}
+
+export function templateCalendarEventMail(opts: {
+  recipientName: string;
+  title: string;
+  when: string;
+  durationMinutes: number;
+  location?: string | null;
+  meetingUrl?: string | null;
+  href: string;
+  reminder?: '24h' | '1h';
+  locale?: Locale;
+}): string {
+  const locale = opts.locale ?? DEFAULT_LOCALE;
+  const hello = opts.recipientName ? greeting(opts.recipientName, locale) : '';
+  const key = opts.reminder ? 'email.calendarReminder' : 'email.calendarScheduled';
+  const extras: string[] = [
+    `<p style="margin:0 0 8px;"><strong>${tSync(locale, `${key}.when`)}</strong> ${escapeHtml(opts.when)}</p>`,
+    `<p style="margin:0 0 8px;"><strong>${tSync(locale, `${key}.duration`)}</strong> ${escapeHtml(
+      String(opts.durationMinutes)
+    )}</p>`,
+  ];
+  if (opts.location) {
+    extras.push(
+      `<p style="margin:0 0 8px;"><strong>${tSync(locale, `${key}.location`)}</strong> ${escapeHtml(opts.location)}</p>`
+    );
+  }
+  if (opts.meetingUrl) {
+    extras.push(
+      `<p style="margin:0 0 8px;"><strong>${tSync(locale, `${key}.link`)}</strong> <a href="${escapeHtml(
+        opts.meetingUrl
+      )}" style="color:${BRAND.primary};">${escapeHtml(opts.meetingUrl)}</a></p>`
+    );
+  }
+  return emailLayout({
+    locale,
+    preview: tSync(locale, `${key}.preview`, { title: opts.title }),
+    title: tSync(locale, `${key}.title`),
+    bodyHtml: `
+      ${hello}
+      <p style="margin:0 0 12px;">${tSync(locale, `${key}.body`, { title: opts.title })}</p>
+      ${extras.join('')}
+    `,
+    cta: { label: tSync(locale, `${key}.cta`), href: opts.href },
+  });
+}
+
 export function templateQuoteSent(
   projectName: string,
   portalUrl: string,

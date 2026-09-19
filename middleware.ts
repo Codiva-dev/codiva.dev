@@ -82,6 +82,7 @@ const CAREER_RESERVED = new Set([
   'tickets',
   'organizations',
   'workload',
+  'calendar',
   'asignaciones',
   'pendientes',
   'q',
@@ -121,6 +122,10 @@ export async function middleware(request: NextRequest) {
   );
 
   if (pathname.startsWith('/api') || pathname.startsWith('/_next')) {
+    return sessionResponse;
+  }
+
+  if (pathname === '/ops-sw.js' || pathname === '/ops-manifest.webmanifest') {
     return sessionResponse;
   }
 
@@ -517,6 +522,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|ops-sw\\.js|ops-manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)',
   ],
 };

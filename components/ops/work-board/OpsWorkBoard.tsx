@@ -40,6 +40,7 @@ import { tallyFilterValues } from '@/lib/ops/search-text';
 import { type MentionStaff } from './OpsMentionComposer';
 import { useWorkBoardDrag } from './useWorkBoardDrag';
 import { useWorkBoardHoverScroll } from './useWorkBoardHoverScroll';
+import { useWorkBoardRealtime, type WorkBoardPresence } from './useWorkBoardRealtime';
 import { CreateModal } from './CreateModal';
 import { DetailModal } from './DetailModal';
 import { WorkCard } from './WorkCard';
@@ -93,7 +94,19 @@ export default function OpsWorkBoard({
   const [pendingDelete, setPendingDelete] = useState<WorkAssignment | null>(null);
   const urlId = initialAssignmentId || '';
   const [selectedId, setSelectedId] = useState(urlId);
+  const [presence, setPresence] = useState<WorkBoardPresence[]>([]);
   const pendingSubtasksRef = useRef(new Map<string, 'open' | 'done'>());
+  const currentUserName = staff.find((row) => row.id === currentUserId)?.full_name || 'Staff';
+
+  useWorkBoardRealtime({
+    setAssignments,
+    staff,
+    currentUserId,
+    currentUserName,
+    selectedId,
+    onPresence: setPresence,
+    remoteChangeLabel: t('ops.asignaciones.remoteChange'),
+  });
 
   useEffect(() => {
     const fromServer = selectedId
@@ -300,6 +313,16 @@ export default function OpsWorkBoard({
   }
 
   const selected = visible.find((row) => row.id === selectedId) ?? assignments.find((row) => row.id === selectedId);
+  const viewersByAssignment = useMemo(() => {
+    const map = new Map<string, WorkBoardPresence[]>();
+    for (const row of presence) {
+      if (!row.assignmentId) continue;
+      const list = map.get(row.assignmentId) ?? [];
+      list.push(row);
+      map.set(row.assignmentId, list);
+    }
+    return map;
+  }, [presence]);
 
   async function changeStatus(
     assignmentId: string,
@@ -500,6 +523,7 @@ export default function OpsWorkBoard({
                       onRefresh={() => router.refresh()}
                       onPointerDownCard={onCardPointerDown}
                       consumeClickIfDragged={consumeClickIfDragged}
+                      viewers={viewersByAssignment.get(row.id) ?? []}
                       onArchive={
                         canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)
                           ? () => void changeStatus(row.id, 'archived', 'detail', 'ops.asignaciones.archivedToast')
@@ -543,6 +567,7 @@ export default function OpsWorkBoard({
                         onOpen={() => selectAssignment(row.id)}
                         onToggleSubtask={onToggleSub}
                         onRefresh={() => router.refresh()}
+                        viewers={viewersByAssignment.get(row.id) ?? []}
                         onDelete={canManage ? () => setPendingDelete(row) : undefined}
                         onArchive={
                           canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)

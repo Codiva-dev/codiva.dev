@@ -36,6 +36,7 @@ import {
   parentCannotMarkDoneWithOpenSubtasks,
   parseSubtaskLines,
   patchWorkAssignmentStatus,
+  mergeRealtimeAssignment,
   patchWorkSubtaskStatus,
   planWorkSubtaskRewrite,
   processHref,
@@ -486,6 +487,49 @@ describe('work-board process links', () => {
     );
     expect(next[0].status).toBe('build');
     expect(next[0].status_entered_at).toBe('2026-08-27T00:00:00.000Z');
+  });
+
+  it('merges a realtime row onto a loaded card', () => {
+    const current = {
+      id: 'a',
+      title: 't',
+      description: '',
+      stream: 'delivery' as const,
+      urgency: 'normal' as const,
+      status: 'backlog' as const,
+      assignee_id: null as string | null,
+      assignee_name: '',
+      due_at: null as string | null,
+      progress_pct: 0,
+      process_kind: 'none' as const,
+      process_id: null as string | null,
+      process_label: '',
+      process_href: null as string | null,
+      status_entered_at: '2026-01-01T00:00:00.000Z',
+      created_at: '2026-01-01T00:00:00.000Z',
+      created_by: null as string | null,
+      subtasks: [],
+      stage_events: [],
+      comments: [],
+      files: [],
+      subtask_edit_request: null,
+      unread_mention_count: 0,
+    };
+    const next = mergeRealtimeAssignment(
+      [current],
+      {
+        id: 'a',
+        title: 'Nuevo',
+        status: 'review',
+        assignee_id: 'staff-1',
+        progress_pct: 40,
+      },
+      new Map([['staff-1', 'Ana']])
+    );
+    expect(next?.[0].title).toBe('Nuevo');
+    expect(next?.[0].status).toBe('review');
+    expect(next?.[0].assignee_name).toBe('Ana');
+    expect(mergeRealtimeAssignment([current], { id: 'missing' }, new Map())).toBeNull();
   });
 
   it('patches a subtask and rolls up progress locally', () => {

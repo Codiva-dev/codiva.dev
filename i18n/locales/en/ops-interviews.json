@@ -35,6 +35,9 @@
     "roundsTitle": "Interview rounds",
     "roundsHint": "This is the filter round. Update status, leave notes, and upload your analysis (.pdf, .doc, or .docx).",
     "roundsEmpty": "The filter round is created when the candidate moves to Interview. Once it exists, upload your analysis here.",
+    "scheduled": "Scheduled",
+    "addToCalendar": "Add to my calendar",
+    "meetLink": "Join meeting",
     "reportHint": "Upload your analysis as PDF or Word. That closes the “Needs report” follow-up for this round.",
     "brief": {
       "title": "Candidate evaluation",

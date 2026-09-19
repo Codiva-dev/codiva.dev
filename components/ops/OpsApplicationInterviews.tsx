@@ -1,4 +1,5 @@
 import ToastForm from '@/components/ops/ToastForm';
+import type { Translator } from '@/i18n/locale';
 import {
   addJobInterviewComment,
   addJobInterviewRound,
@@ -16,7 +17,10 @@ import {
   isJobInterviewOutcome,
   isJobInterviewRoundStatus,
 } from '@/lib/ops/careers';
-import type { Translator } from '@/i18n/locale';
+import {
+  CALENDAR_DURATIONS,
+  utcIsoToZonedLocal,
+} from '@/lib/ops/calendar';
 
 export type OpsInterviewStaff = { id: string; full_name: string };
 export type OpsInterviewPartnerOption = { id: string; user_id: string; full_name: string; partner_name: string };
@@ -44,6 +48,10 @@ export type OpsInterviewRoundRow = {
   outcome: string | null;
   interviewer_id: string | null;
   partner_member_id?: string | null;
+  scheduled_at?: string | null;
+  duration_minutes?: number | null;
+  location?: string | null;
+  meeting_url?: string | null;
   conducted_at: string | null;
   created_at: string;
 };
@@ -111,6 +119,63 @@ function commentAuthorName(
   );
 }
 
+function ScheduleFields({
+  round,
+  t,
+}: {
+  round?: Pick<OpsInterviewRoundRow, 'scheduled_at' | 'duration_minutes' | 'location' | 'meeting_url'>;
+  t: Translator;
+}) {
+  return (
+    <>
+      <label className="grid gap-1 text-xs text-zinc-500 sm:col-span-2">
+        {t('ops.careers.interviewWhen')}
+        <input
+          type="datetime-local"
+          name="scheduled_local"
+          defaultValue={utcIsoToZonedLocal(round?.scheduled_at)}
+          className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm text-zinc-800"
+        />
+      </label>
+      <label className="grid gap-1 text-xs text-zinc-500">
+        {t('ops.careers.interviewDuration')}
+        <select
+          name="duration_minutes"
+          defaultValue={String(round?.duration_minutes || 60)}
+          className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm text-zinc-800"
+        >
+          {CALENDAR_DURATIONS.map((minutes) => (
+            <option key={minutes} value={minutes}>
+              {t('ops.calendar.minutes', { n: String(minutes) })}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="grid gap-1 text-xs text-zinc-500">
+        {t('ops.careers.interviewLocation')}
+        <input
+          name="location"
+          defaultValue={round?.location || ''}
+          maxLength={200}
+          placeholder={t('ops.careers.interviewLocationPlaceholder')}
+          className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm text-zinc-800"
+        />
+      </label>
+      <label className="grid gap-1 text-xs text-zinc-500 sm:col-span-2">
+        {t('ops.careers.interviewMeet')}
+        <input
+          name="meeting_url"
+          type="url"
+          defaultValue={round?.meeting_url || ''}
+          maxLength={500}
+          placeholder="https://"
+          className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm text-zinc-800"
+        />
+      </label>
+    </>
+  );
+}
+
 function kindLabel(kind: string, t: Translator) {
   if (!isJobInterviewKind(kind)) return kind;
   return t(`ops.careers.interviewKind.${kind}` as const);
@@ -137,6 +202,7 @@ export default function OpsApplicationInterviews({
   canTeam,
   t,
   formatDate,
+  formatDateTime,
 }: {
   applicationId: string;
   rounds: OpsInterviewRoundRow[];
@@ -148,6 +214,7 @@ export default function OpsApplicationInterviews({
   canTeam: boolean;
   t: Translator;
   formatDate: (date: string | null | undefined) => string;
+  formatDateTime?: (date: string | null | undefined) => string;
 }) {
   const commentsByRound = new Map<string, OpsInterviewCommentRow[]>();
   for (const row of comments) {
@@ -189,6 +256,9 @@ export default function OpsApplicationInterviews({
                     {statusLabel(round.status, t)}
                     {outcome ? ` · ${outcome}` : ''}
                     {interviewer ? ` · ${interviewer}` : ''}
+                    {round.scheduled_at
+                      ? ` · ${formatDateTime ? formatDateTime(round.scheduled_at) : formatDate(round.scheduled_at)}`
+                      : ''}
                     {round.conducted_at ? ` · ${formatDate(round.conducted_at)}` : ''}
                   </p>
                   {roundComments.length ? (
@@ -337,6 +407,15 @@ export default function OpsApplicationInterviews({
                       partners={partners}
                       t={t}
                     />
+                    <ScheduleFields round={round} t={t} />
+                    {round.scheduled_at ? (
+                      <a
+                        href={`/api/ops/calendar/ics?kind=interview&id=${round.id}`}
+                        className="text-xs text-codiva-primary hover:underline sm:col-span-2"
+                      >
+                        {t('ops.calendar.addToCalendar')}
+                      </a>
+                    ) : null}
                     <button
                       type="submit"
                       className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 sm:col-span-2"
@@ -425,6 +504,7 @@ export default function OpsApplicationInterviews({
             placeholder={t('ops.careers.interviewTitlePlaceholder')}
             className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm sm:col-span-2"
           />
+          <ScheduleFields t={t} />
           <button
             type="submit"
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-50 sm:col-span-2"

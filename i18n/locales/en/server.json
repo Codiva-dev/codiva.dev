@@ -180,6 +180,50 @@
       "title": "Pending interview round",
       "body": "You were assigned a round for {{candidate}} ({{job}}). Open it to see status, follow up, and upload the report.",
       "cta": "View candidate"
+    },
+    "interviewScheduled": {
+      "preview": "Interview scheduled: {{candidate}}",
+      "title": "Interview scheduled",
+      "subject": "Interview scheduled · {{candidate}}",
+      "body": "A round with {{candidate}} ({{job}}) is on the calendar. The .ics is attached.",
+      "when": "When",
+      "duration": "Duration (min)",
+      "location": "Place",
+      "link": "Link",
+      "cta": "View candidate"
+    },
+    "interviewReminder": {
+      "preview": "Interview reminder: {{candidate}}",
+      "title": "Interview reminder",
+      "subject": "Reminder · {{candidate}}",
+      "body": "The round with {{candidate}} ({{job}}) is coming up.",
+      "when": "When",
+      "duration": "Duration (min)",
+      "location": "Place",
+      "link": "Link",
+      "cta": "View candidate"
+    },
+    "calendarScheduled": {
+      "preview": "Meeting scheduled: {{title}}",
+      "title": "Meeting scheduled",
+      "subject": "Meeting scheduled · {{title}}",
+      "body": "{{title}} was added to the Ops calendar.",
+      "when": "When",
+      "duration": "Duration (min)",
+      "location": "Place",
+      "link": "Link",
+      "cta": "Open calendar"
+    },
+    "calendarReminder": {
+      "preview": "Reminder: {{title}}",
+      "title": "Meeting reminder",
+      "subject": "Reminder · {{title}}",
+      "body": "{{title}} is coming up.",
+      "when": "When",
+      "duration": "Duration (min)",
+      "location": "Place",
+      "link": "Link",
+      "cta": "Open calendar"
     }
   },
   "quoteDoc": {

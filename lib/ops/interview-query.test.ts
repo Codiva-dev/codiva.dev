@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { partitionInterviewQueue, selectFailedAttemptsForPartner, type InterviewQueueRow } from './interview-query';
+import { partitionInterviewQueue, pickNextScheduledAt, selectFailedAttemptsForPartner, type InterviewQueueRow } from './interview-query';
 
 function row(overrides: Partial<InterviewQueueRow>): InterviewQueueRow {
   return {
@@ -10,6 +10,7 @@ function row(overrides: Partial<InterviewQueueRow>): InterviewQueueRow {
     status: 'interview',
     jobTitle: 'Tester',
     followUp: 'pending',
+    nextScheduledAt: null,
     ...overrides,
   };
 }
@@ -63,5 +64,17 @@ describe('selectFailedAttemptsForPartner', () => {
       [{ email: 'bob@example.com', job_posting_id: job }]
     );
     expect(rows.map((row) => row.id)).toEqual(['latest']);
+  });
+});
+
+describe('pickNextScheduledAt', () => {
+  it('picks the earliest future time and ignores the past', () => {
+    const now = new Date('2026-09-22T16:00:00.000Z');
+    expect(
+      pickNextScheduledAt(
+        ['2026-09-22T15:00:00.000Z', '2026-09-23T10:00:00.000Z', '2026-09-22T18:00:00.000Z'],
+        now
+      )
+    ).toBe('2026-09-22T18:00:00.000Z');
   });
 });

@@ -23,6 +23,28 @@ import WorkFileLightbox from './WorkFileLightbox';
 import WorkSubtaskEditor from './WorkSubtaskEditor';
 import { isWorkCardInteractiveTarget } from './useWorkBoardDrag';
 
+function PresenceDots({
+  viewers,
+  label,
+}: {
+  viewers: Array<{ id: string; name: string }>;
+  label: string;
+}) {
+  if (!viewers.length) return null;
+  return (
+    <span title={label} aria-label={label} className="flex shrink-0 -space-x-1">
+      {viewers.slice(0, 3).map((row) => (
+        <span
+          key={row.id}
+          className="flex h-5 w-5 items-center justify-center rounded-full bg-codiva-primary text-[9px] font-semibold text-white ring-1 ring-white"
+        >
+          {workAssigneeInitials(row.name) || '·'}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function PendingNotificationBadge({ count }: { count: number }) {
   const { t } = useTranslation();
   if (count <= 0) return null;
@@ -151,6 +173,7 @@ export function WorkCard({
   onDelete,
   onArchive,
   onRestore,
+  viewers = [],
 }: {
   assignment: WorkAssignment;
   locale: 'es' | 'en';
@@ -174,6 +197,7 @@ export function WorkCard({
   onDelete?: () => void;
   onArchive?: () => void;
   onRestore?: () => void;
+  viewers?: Array<{ id: string; name: string }>;
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(!compact);
@@ -203,6 +227,10 @@ export function WorkCard({
   const lifecycleButton = (
     <WorkLifecycleButton assignment={assignment} onArchive={onArchive} onRestore={onRestore} compact={!expanded} />
   );
+  const presenceLabel = viewers.length
+    ? t('ops.asignaciones.viewingNow', { names: viewers.map((row) => row.name).join(', ') })
+    : '';
+  const presenceDots = <PresenceDots viewers={viewers} label={presenceLabel} />;
 
   function open(event: React.MouseEvent) {
     if (isWorkCardInteractiveTarget(event.target)) return;
@@ -226,6 +254,7 @@ export function WorkCard({
           <h3 className="min-w-0 flex-1 text-[13px] font-semibold leading-snug text-zinc-900 [overflow-wrap:anywhere]">
             {assignment.title}
           </h3>
+          {presenceDots}
           <PendingNotificationBadge count={pendingCount} />
           {lifecycleButton}
           {expandToggle}
@@ -273,6 +302,7 @@ export function WorkCard({
             <h3 className="min-w-0 flex-1 text-sm font-semibold text-zinc-900 [overflow-wrap:anywhere]">
               {assignment.title}
             </h3>
+            {presenceDots}
             <PendingNotificationBadge count={pendingCount} />
           </div>
           <p className="mt-0.5 text-xs text-zinc-600">

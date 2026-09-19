@@ -72,6 +72,7 @@
       "inbox": "Inbox",
       "projects": "Projects",
       "workload": "Workload",
+      "calendar": "Calendar",
       "asignaciones": "Assignments",
       "pendientes": "Pending",
       "organizations": "Organizations",
@@ -346,7 +347,16 @@
       "changelogPlaceholder": "Changelog (what changed)",
       "sendEmails": "Email a re-acceptance notice to outdated members",
       "publish": "Publish version to the log",
-      "noVersions": "No versions recorded yet (they are created when you publish)."
+      "noVersions": "No versions recorded yet (they are created when you publish).",
+      "pushTitle": "Browser alerts",
+      "pushHint": "Tickets, mentions, assignments, and meetings in 1 hour. They stay on this device.",
+      "pushEnable": "Enable alerts",
+      "pushDisable": "Disable on this device",
+      "pushEnabled": "Alerts enabled on this device.",
+      "pushDisabled": "Alerts disabled on this device.",
+      "pushFailed": "Could not update alerts.",
+      "pushDenied": "The browser blocked notifications. Enable them in the site settings.",
+      "pushUnsupported": "This browser does not support push alerts, or they are not configured yet."
     },
     "toast": {
       "ready": "Changes saved",
@@ -646,6 +656,11 @@
       },
       "interviewOutcomeNone": "No outcome",
       "interviewUnassigned": "No interviewer",
+      "interviewWhen": "When (Mexico City)",
+      "interviewDuration": "Duration",
+      "interviewLocation": "Place",
+      "interviewLocationPlaceholder": "Office, Meet, phone…",
+      "interviewMeet": "Meeting link",
       "interviewUnknownAuthor": "Staff",
       "interviewTitlePlaceholder": "Title (optional)",
       "interviewAddRound": "Add round",
@@ -898,7 +913,21 @@
       "progressPct": "{{pct}}% progress",
       "delivery": "Delivery: {{date}}",
       "sprints": "Sprints",
-      "noActiveProjects": "No active projects"
+      "noActiveProjects": "No active projects",
+      "attentionTitle": "Attention queue",
+      "attentionHint": "What cannot wait: charges, tickets, the board, QA, interviews, and hours.",
+      "attentionEmpty": "Nothing urgent right now.",
+      "attentionSnooze": "Snooze 24 h",
+      "attentionSnoozed": "Snoozed for 24 hours",
+      "attentionKind": {
+        "charge_overdue": "Overdue charge",
+        "ticket_stale": "Stale ticket",
+        "assignment_stuck": "Stuck assignment",
+        "release_qa": "Release needs QA",
+        "interview_unscheduled": "Unscheduled interview",
+        "sprint_no_hours": "Sprint with no hours",
+        "lead_stale": "Cold lead"
+      }
     },
     "orgs": {
       "created": "Organization created",
@@ -1585,6 +1614,8 @@
       "subtaskAdded": "Subtask added",
       "loadFailed": "Could not load assignments.",
       "statusFailed": "Could not move the card.",
+      "remoteChange": "The board was updated.",
+      "viewingNow": "{{names}} viewing this card",
       "notFound": "Assignment not found.",
       "forbiddenEdit": "You can only update assignments assigned to you.",
       "forbiddenManage": "Only board admins can change the scope. Request the change.",
@@ -1696,6 +1727,43 @@
       "editRequests": "Change requests",
       "editRequestsEmpty": "No subtask change requests.",
       "editRequestedBy": "{{name}} asked to change the subtasks"
+    },
+    "calendar": {
+      "title": "Calendar",
+      "description": "Scheduled interviews and internal meetings. Times are America/Mexico_City. The .ics file opens in Google Calendar or Outlook.",
+      "prevWeek": "Previous week",
+      "thisWeek": "This week",
+      "nextWeek": "Next week",
+      "today": "Today",
+      "emptyDay": "Nothing scheduled.",
+      "addEvent": "New meeting",
+      "titlePlaceholder": "Kickoff, QA, follow-up…",
+      "titleRequired": "Add a title",
+      "timeRequired": "Pick a date and time",
+      "kindInvalid": "Invalid meeting type",
+      "eventInvalid": "Invalid meeting",
+      "eventNotFound": "Meeting not found",
+      "unassigned": "Unassigned",
+      "noProject": "No project",
+      "saveEvent": "Schedule",
+      "eventCreated": "Meeting scheduled",
+      "eventSaved": "Meeting updated",
+      "eventDeleted": "Meeting deleted",
+      "editEvent": "Edit",
+      "deleteEvent": "Delete meeting",
+      "deleteConfirm": "Delete this meeting from the calendar?",
+      "open": "Open",
+      "addToCalendar": "Add to my calendar",
+      "unscheduled": "Interviews without a time",
+      "unscheduledHint": "Pending rounds that still have no date.",
+      "minutes": "{{n}} min",
+      "kind": {
+        "internal": "Internal",
+        "client": "With client",
+        "release_qa": "Release QA",
+        "quote_followup": "Quote follow-up",
+        "other": "Other"
+      }
     }
   }
 }

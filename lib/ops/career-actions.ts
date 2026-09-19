@@ -33,11 +33,15 @@ import { isAssessmentCatalogKey } from '@/lib/careers/assessments/catalog';
 import { notifyCandidateApplicationStatus } from '@/lib/careers/notify-application-status';
 import { notifyInterviewAssigned, syncRoundAssignee } from '@/lib/ops/interview-actions';
 import { encodeInterviewAssignee, INTERVIEW_REPORT_BUCKET } from '@/lib/ops/interview-partner';
+import { parseCalendarScheduleFields, scheduleChanged } from '@/lib/ops/calendar';
+import { notifyInterviewSchedule } from '@/lib/ops/calendar-notify';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 function revalidateCareerPaths(slug?: string) {
   revalidatePath('/team');
   revalidatePath('/empleos');
+  revalidatePath('/calendar');
+  revalidatePath('/entrevistas');
   if (slug) revalidatePath(`/empleos/${slug}`);
 }
 
@@ -576,6 +580,8 @@ export async function addJobInterviewRound(applicationId: string, formData: Form
     .limit(1)
     .maybeSingle();
 
+  const schedule = parseCalendarScheduleFields(formData);
+
   const { data: round, error } = await supabase
     .from('ops_job_interview_rounds')
     .insert({
@@ -585,6 +591,10 @@ export async function addJobInterviewRound(applicationId: string, formData: Form
       title,
       status: 'planned',
       created_by: user.id,
+      scheduled_at: schedule.scheduled_at,
+      duration_minutes: schedule.duration_minutes,
+      location: schedule.location,
+      meeting_url: schedule.meeting_url,
     })
     .select('id')
     .single();
@@ -597,6 +607,9 @@ export async function addJobInterviewRound(applicationId: string, formData: Form
     assigneeRaw,
     actorId: user.id,
   });
+  if (schedule.scheduled_at) {
+    after(() => notifyInterviewSchedule({ roundId: round.id }));
+  }
   await maybePromoteToInterview(supabase, application, user.id);
   await seedInterviewRoundsFromPosting(supabase, applicationId, user.id);
   await logActivity({
@@ -607,7 +620,7 @@ export async function addJobInterviewRound(applicationId: string, formData: Form
     actorId: user.id,
   });
 
-  revalidatePath('/team');
+  revalidateCareerPaths();
 }
 
 export async function updateJobInterviewRound(roundId: string, formData: FormData) {
@@ -616,7 +629,7 @@ export async function updateJobInterviewRound(roundId: string, formData: FormDat
 
   const { data: round } = await supabase
     .from('ops_job_interview_rounds')
-    .select('id, application_id, status, conducted_at')
+    .select('id, application_id, status, conducted_at, scheduled_at')
     .eq('id', roundId)
     .maybeSingle();
   if (!round) throw new Error('Fase no encontrada');
@@ -631,6 +644,8 @@ export async function updateJobInterviewRound(roundId: string, formData: FormDat
   const outcomeRaw = String(formData.get('outcome') || '').trim();
   const outcome = outcomeRaw && isJobInterviewOutcome(outcomeRaw) ? outcomeRaw : null;
   const assigneeRaw = String(formData.get('assignee') || formData.get('interviewer_id') || '').trim();
+  const schedule = parseCalendarScheduleFields(formData);
+  const timeChanged = scheduleChanged(round.scheduled_at, schedule.scheduled_at);
 
   const conductedAt =
     status === 'done' && !round.conducted_at ? new Date().toISOString() : round.conducted_at;
@@ -643,6 +658,11 @@ export async function updateJobInterviewRound(roundId: string, formData: FormDat
       status,
       outcome,
       conducted_at: conductedAt,
+      scheduled_at: schedule.scheduled_at,
+      duration_minutes: schedule.duration_minutes,
+      location: schedule.location,
+      meeting_url: schedule.meeting_url,
+      ...(timeChanged ? { reminder_24h_sent_at: null, reminder_1h_sent_at: null } : {}),
     })
     .eq('id', roundId);
 
@@ -655,15 +675,19 @@ export async function updateJobInterviewRound(roundId: string, formData: FormDat
     actorId: user.id,
   });
 
+  if (timeChanged && schedule.scheduled_at) {
+    after(() => notifyInterviewSchedule({ roundId }));
+  }
+
   await logActivity({
     entityType: 'job_application',
     entityId: round.application_id,
     action: 'interview_round_updated',
-    metadata: { roundId, status, outcome },
+    metadata: { roundId, status, outcome, scheduled: Boolean(schedule.scheduled_at) },
     actorId: user.id,
   });
 
-  revalidatePath('/team');
+  revalidateCareerPaths();
 }
 
 export async function addJobInterviewComment(roundId: string, formData: FormData) {

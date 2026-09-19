@@ -72,6 +72,7 @@
       "inbox": "Inbox",
       "projects": "Proyectos",
       "workload": "Carga",
+      "calendar": "Calendario",
       "asignaciones": "Asignaciones",
       "pendientes": "Pendientes",
       "organizations": "Organizaciones",
@@ -346,7 +347,16 @@
       "changelogPlaceholder": "Changelog (qué cambió)",
       "sendEmails": "Enviar correo de re-aceptación a miembros desactualizados",
       "publish": "Publicar versión en bitácora",
-      "noVersions": "Sin versiones registradas aún (se crean al publicar)."
+      "noVersions": "Sin versiones registradas aún (se crean al publicar).",
+      "pushTitle": "Alertas en el navegador",
+      "pushHint": "Avisos de tickets, menciones, asignaciones y juntas en 1 hora. Se quedan en este dispositivo.",
+      "pushEnable": "Activar alertas",
+      "pushDisable": "Desactivar en este dispositivo",
+      "pushEnabled": "Alertas activadas en este dispositivo.",
+      "pushDisabled": "Alertas desactivadas en este dispositivo.",
+      "pushFailed": "No se pudieron actualizar las alertas.",
+      "pushDenied": "El navegador bloqueó las notificaciones. Actívalas en la configuración del sitio.",
+      "pushUnsupported": "Este navegador no admite alertas push, o aún no están configuradas."
     },
     "toast": {
       "ready": "Cambios guardados",
@@ -646,6 +656,11 @@
       },
       "interviewOutcomeNone": "Sin resultado",
       "interviewUnassigned": "Sin entrevistador",
+      "interviewWhen": "Cuándo (CDMX)",
+      "interviewDuration": "Duración",
+      "interviewLocation": "Lugar",
+      "interviewLocationPlaceholder": "Oficina, Meet, teléfono…",
+      "interviewMeet": "Enlace de la junta",
       "interviewUnknownAuthor": "Staff",
       "interviewTitlePlaceholder": "Título (opcional)",
       "interviewAddRound": "Agregar fase",
@@ -898,7 +913,21 @@
       "progressPct": "{{pct}}% avance",
       "delivery": "Entrega: {{date}}",
       "sprints": "Sprints",
-      "noActiveProjects": "Sin proyectos activos"
+      "noActiveProjects": "Sin proyectos activos",
+      "attentionTitle": "Cola de atención",
+      "attentionHint": "Lo que no puede esperar: cargos, tickets, tablero, QA, entrevistas y horas.",
+      "attentionEmpty": "Nada urgente ahora.",
+      "attentionSnooze": "Posponer 24 h",
+      "attentionSnoozed": "Pospuesto 24 horas",
+      "attentionKind": {
+        "charge_overdue": "Cargo vencido",
+        "ticket_stale": "Ticket sin avance",
+        "assignment_stuck": "Asignación atorada",
+        "release_qa": "Release por QA",
+        "interview_unscheduled": "Entrevista sin horario",
+        "sprint_no_hours": "Sprint sin horas",
+        "lead_stale": "Lead frío"
+      }
     },
     "orgs": {
       "created": "Organización creada",
@@ -1581,6 +1610,8 @@
       "subtaskAdded": "Subtarea agregada",
       "loadFailed": "No se pudieron cargar las asignaciones.",
       "statusFailed": "No se pudo mover la tarjeta.",
+      "remoteChange": "El tablero se actualizó.",
+      "viewingNow": "{{names}} viendo esta tarjeta",
       "notFound": "Asignación no encontrada.",
       "forbiddenEdit": "Solo puedes avanzar las asignaciones que te tocaron.",
       "forbiddenManage": "Solo quien administra el tablero puede cambiar el alcance. Pide el cambio.",
@@ -1692,6 +1723,43 @@
       "editRequests": "Pedidos de cambio",
       "editRequestsEmpty": "No hay pedidos de cambio de subtareas.",
       "editRequestedBy": "{{name}} pide cambiar las subtareas"
+    },
+    "calendar": {
+      "title": "Calendario",
+      "description": "Entrevistas agendadas y juntas internas. Las horas son America/Mexico_City. El .ics se abre en Google o Outlook.",
+      "prevWeek": "Semana anterior",
+      "thisWeek": "Esta semana",
+      "nextWeek": "Semana siguiente",
+      "today": "Hoy",
+      "emptyDay": "Nada agendado.",
+      "addEvent": "Nueva junta",
+      "titlePlaceholder": "Kickoff, QA, follow-up…",
+      "titleRequired": "Ponle un título",
+      "timeRequired": "Elige fecha y hora",
+      "kindInvalid": "Tipo de junta inválido",
+      "eventInvalid": "Junta inválida",
+      "eventNotFound": "Junta no encontrada",
+      "unassigned": "Sin asignar",
+      "noProject": "Sin proyecto",
+      "saveEvent": "Agendar",
+      "eventCreated": "Junta agendada",
+      "eventSaved": "Junta actualizada",
+      "eventDeleted": "Junta eliminada",
+      "editEvent": "Editar",
+      "deleteEvent": "Eliminar junta",
+      "deleteConfirm": "¿Eliminar esta junta del calendario?",
+      "open": "Abrir",
+      "addToCalendar": "Añadir a mi calendario",
+      "unscheduled": "Entrevistas sin hora",
+      "unscheduledHint": "Fases pendientes a las que aún no les pusiste fecha.",
+      "minutes": "{{n}} min",
+      "kind": {
+        "internal": "Interna",
+        "client": "Con cliente",
+        "release_qa": "QA de release",
+        "quote_followup": "Follow-up de cotización",
+        "other": "Otra"
+      }
     }
   }
 }

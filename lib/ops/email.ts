@@ -98,12 +98,19 @@ export async function notifyStaffSafe(
   }
 }
 
+export type EmailAttachment = {
+  filename: string;
+  content: Buffer | string;
+  contentType?: string;
+};
+
 export async function sendClientEmail({
   to,
   subject,
   html,
   replyTo,
   from = 'noreply',
+  attachments,
 }: {
   to: string;
   subject: string;
@@ -111,6 +118,7 @@ export async function sendClientEmail({
   /** Por defecto hello@; las respuestas no van a noreply. */
   replyTo?: string | null;
   from?: EmailFromKind;
+  attachments?: EmailAttachment[];
 }): Promise<EmailResult> {
   const client = resend();
   if (!client) return { ok: false, skipped: true, error: 'RESEND_API_KEY no configurada' };
@@ -123,6 +131,7 @@ export async function sendClientEmail({
     subject,
     html,
     ...(resolvedReplyTo ? { reply_to: resolvedReplyTo } : {}),
+    ...(attachments?.length ? { attachments } : {}),
   });
   if (error) {
     console.error('Resend sendClientEmail:', error, { to });

@@ -35,6 +35,9 @@
     "roundsTitle": "Fases de entrevista",
     "roundsHint": "Esta es la fase de filtro. Actualiza el estado, deja notas y sube tu análisis (.pdf, .doc o .docx).",
     "roundsEmpty": "El filtro se crea al pasar el candidato a Entrevista. Cuando exista, carga aquí tu análisis.",
+    "scheduled": "Agendada",
+    "addToCalendar": "Añadir a mi calendario",
+    "meetLink": "Entrar a la junta",
     "reportHint": "Sube tu análisis en PDF o Word. Eso cierra el seguimiento «Por reporte» de esta fase.",
     "brief": {
       "title": "Evaluación del candidato",

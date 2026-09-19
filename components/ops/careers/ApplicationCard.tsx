@@ -20,6 +20,7 @@ import {
   updateJobApplicationStatus,
 } from '@/lib/ops/career-actions';
 import { type Translator, type Locale } from '@/i18n/locale';
+import { formatDateTime } from '@/lib/ops/labels';
 import { HuntFindingsBlock } from './HuntFindingsBlock';
 import {
   applicationTone,
@@ -284,6 +285,7 @@ export function ApplicationCard({
         canTeam={canTeam}
         t={t}
         formatDate={formatDate}
+        formatDateTime={(date) => formatDateTime(date, locale)}
       />
       <HuntFindingsBlock
         rows={hunt.rows}

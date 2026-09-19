@@ -588,6 +588,44 @@ export function patchWorkAssignmentStatus(
   );
 }
 
+function realtimeText(value: unknown) {
+  return typeof value === 'string' ? value : '';
+}
+
+/** Aplica un cambio Realtime a una tarjeta ya cargada. `null` = hay que refrescar el tablero. */
+export function mergeRealtimeAssignment(
+  assignments: WorkAssignment[],
+  row: Record<string, unknown>,
+  staffName: Map<string, string>
+): WorkAssignment[] | null {
+  const id = realtimeText(row.id);
+  if (!id) return null;
+  const current = assignments.find((item) => item.id === id);
+  if (!current) return null;
+  const assigneeId = realtimeText(row.assignee_id) || null;
+  const status = realtimeText(row.status);
+  const stream = realtimeText(row.stream);
+  const urgency = realtimeText(row.urgency);
+  const dueAt = row.due_at;
+  return assignments.map((item) =>
+    item.id === id
+      ? {
+          ...item,
+          title: realtimeText(row.title) || item.title,
+          description: typeof row.description === 'string' ? row.description : item.description,
+          stream: isWorkStream(stream) ? stream : item.stream,
+          status: isWorkStatus(status) ? status : item.status,
+          urgency: isWorkUrgency(urgency) ? urgency : item.urgency,
+          assignee_id: assigneeId,
+          assignee_name: assigneeId ? staffName.get(assigneeId) || item.assignee_name : '',
+          due_at: typeof dueAt === 'string' || dueAt === null ? (dueAt as string | null) : item.due_at,
+          progress_pct: typeof row.progress_pct === 'number' ? row.progress_pct : item.progress_pct,
+          status_entered_at: realtimeText(row.status_entered_at) || item.status_entered_at,
+        }
+      : item
+  );
+}
+
 export function patchWorkSubtaskStatus(
   assignments: WorkAssignment[],
   subtaskId: string,

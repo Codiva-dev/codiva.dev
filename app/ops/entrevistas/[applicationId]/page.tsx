@@ -58,7 +58,7 @@ export default async function InterviewsApplicationPage({
   const [{ data: rounds }, { data: assignments }, brief] = await Promise.all([
     admin
       .from('ops_job_interview_rounds')
-      .select('id, application_id, sort_order, kind, title, status, outcome, partner_member_id, conducted_at')
+      .select('id, application_id, sort_order, kind, title, status, outcome, partner_member_id, conducted_at, scheduled_at, duration_minutes, location, meeting_url')
       .eq('application_id', applicationId)
       .order('sort_order', { ascending: true }),
     access.member
@@ -120,7 +120,7 @@ export default async function InterviewsApplicationPage({
   for (const row of partnerNames ?? []) names.set(row.user_id, row.full_name);
 
   const t = await getT();
-  const { formatDate } = labelsFor(t.locale);
+  const { formatDate, formatDateTime } = labelsFor(t.locale);
   const posting = Array.isArray(application.ops_job_postings)
     ? application.ops_job_postings[0]
     : application.ops_job_postings;
@@ -207,6 +207,30 @@ export default async function InterviewsApplicationPage({
                           : t('interviews.followUpClosed')
                     }`}
                   </p>
+                  {round.scheduled_at ? (
+                    <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-600">
+                      <span>
+                        {t('interviews.scheduled')}: {formatDateTime(round.scheduled_at)}
+                        {round.location ? ` · ${round.location}` : ''}
+                      </span>
+                      <a
+                        href={`/api/entrevistas/ics?id=${round.id}`}
+                        className="text-codiva-primary hover:underline"
+                      >
+                        {t('interviews.addToCalendar')}
+                      </a>
+                      {round.meeting_url ? (
+                        <a
+                          href={round.meeting_url}
+                          className="text-codiva-primary hover:underline"
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {t('interviews.meetLink')}
+                        </a>
+                      ) : null}
+                    </p>
+                  ) : null}
 
                   {roundComments.length ? (
                     <ul className="mt-3 space-y-2">

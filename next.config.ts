@@ -13,7 +13,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
-  serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core'],
+  serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core', 'web-push'],
   // Pack HTML is read from disk with a dynamic path (NFT cannot see it).
   // PDFs/images are never loaded as utf8 — keep them out of every function.
   outputFileTracingIncludes: {
@@ -44,6 +44,20 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       ...nextSecurityHeaderSources(),
+      {
+        source: '/ops-sw.js',
+        headers: [
+          { key: 'Service-Worker-Allowed', value: '/' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+        ],
+      },
+      {
+        source: '/ops-manifest.webmanifest',
+        headers: [
+          { key: 'Content-Type', value: 'application/manifest+json' },
+          { key: 'Cache-Control', value: 'public, max-age=3600' },
+        ],
+      },
       {
         source: '/logos/:path*',
         headers: [

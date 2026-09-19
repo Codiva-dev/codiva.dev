@@ -25,6 +25,7 @@ export const OPS_SEARCH_NAV: OpsSearchNavItem[] = [
   { href: '/inbox', labelKey: 'ops.nav.inbox', capability: 'inbox' },
   { href: '/projects', labelKey: 'ops.nav.projects', capability: null },
   { href: '/workload', labelKey: 'ops.nav.workload', capability: 'workload' },
+  { href: '/calendar', labelKey: 'ops.nav.calendar', capability: null },
   { href: '/pendientes', labelKey: 'ops.nav.pendientes', capability: 'assignments' },
   { href: '/asignaciones', labelKey: 'ops.nav.asignaciones', capability: 'assignments' },
   { href: '/organizations', labelKey: 'ops.nav.organizations', capability: 'organizations' },

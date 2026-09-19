@@ -13,6 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: 'Codiva.dev',
     description: t('ops.metaDescription'),
     robots: { index: false, follow: false },
+    manifest: '/ops-manifest.webmanifest',
   };
 }
 

@@ -9,6 +9,7 @@ import { getT } from '@/i18n/locale';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendClientEmail } from '@/lib/ops/email';
 import { templateStaffAlert } from '@/lib/ops/email-templates';
+import { notifyStaffPushSafe } from '@/lib/ops/push';
 import { opsBaseUrl } from '@/lib/ops/host';
 import { deleteOpsFile } from '@/lib/ops/storage';
 import {
@@ -40,6 +41,26 @@ function revalidateWorkLists() {
 function revalidateBoard() {
   revalidateWorkLists();
   revalidatePath('/asignaciones');
+}
+
+function notifyAssignmentPush(opts: {
+  staffIds: string[];
+  exceptStaffId?: string;
+  title: string;
+  body: string;
+  assignmentId: string;
+  tag?: string;
+}) {
+  void notifyStaffPushSafe({
+    staffIds: opts.staffIds,
+    exceptStaffId: opts.exceptStaffId,
+    payload: {
+      title: opts.title,
+      body: opts.body,
+      href: `/asignaciones?id=${opts.assignmentId}`,
+      tag: opts.tag || `assignment-${opts.assignmentId}`,
+    },
+  });
 }
 
 type AssignmentRow = {
@@ -243,6 +264,16 @@ export async function createWorkAssignment(formData: FormData) {
     actorId: access.staff.id,
   });
 
+  if (assigneeId && assigneeId !== access.staff.id) {
+    notifyAssignmentPush({
+      staffIds: [assigneeId],
+      exceptStaffId: access.staff.id,
+      title: 'Te asignaron trabajo',
+      body: title,
+      assignmentId: row.id,
+    });
+  }
+
   revalidateBoard();
   return { id: row.id };
 }
@@ -284,6 +315,17 @@ export async function updateWorkAssignment(assignmentId: string, formData: FormD
 
   const { error } = await access.supabase.from('work_assignments').update(patch).eq('id', assignmentId);
   if (error) throw await throwDb(error);
+
+  const nextAssignee = typeof patch.assignee_id === 'string' ? patch.assignee_id : null;
+  if (nextAssignee && nextAssignee !== current.assignee_id && nextAssignee !== access.staff.id) {
+    notifyAssignmentPush({
+      staffIds: [nextAssignee],
+      exceptStaffId: access.staff.id,
+      title: 'Te asignaron trabajo',
+      body: title,
+      assignmentId,
+    });
+  }
 
   await logActivity({
     entityType: 'work_assignment',
@@ -685,9 +727,11 @@ async function notifyWorkEditRequest({
       .from('staff_profiles')
       .select('id, full_name, role, capabilities, active')
       .eq('active', true);
+    const managerIds: string[] = [];
     for (const profile of managers ?? []) {
       if (profile.id === requesterId) continue;
       if (!can(profile, 'assignments_manage')) continue;
+      managerIds.push(profile.id);
       const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
       const email = authUser.user?.email;
       if (!email) continue;
@@ -706,6 +750,14 @@ async function notifyWorkEditRequest({
         }),
       });
     }
+    notifyAssignmentPush({
+      staffIds: managerIds,
+      exceptStaffId: requesterId,
+      title: `${requesterName} pide un cambio`,
+      body: title,
+      assignmentId,
+      tag: `edit-request-${assignmentId}`,
+    });
   } catch (err) {
     console.error('work assignment edit request notify:', err);
   }
@@ -728,6 +780,13 @@ async function notifyMentionedStaff({
     const admin = createAdminClient();
     const href = `${opsBaseUrl()}/asignaciones?id=${assignmentId}`;
     const preview = mentionPlainText(body).slice(0, 280);
+    notifyAssignmentPush({
+      staffIds: mentionedIds,
+      title: `${actorName} te mencionó`,
+      body: title,
+      assignmentId,
+      tag: `mention-${assignmentId}`,
+    });
     for (const staffId of mentionedIds) {
       const [{ data: profile }, { data: authUser }] = await Promise.all([
         admin.from('staff_profiles').select('id, full_name, active').eq('id', staffId).maybeSingle(),

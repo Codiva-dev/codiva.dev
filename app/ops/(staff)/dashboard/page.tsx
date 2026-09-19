@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import DashboardFinance from '@/components/ops/DashboardFinance';
+import OpsAttentionQueue from '@/components/ops/OpsAttentionQueue';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
 import PortalClientUrl from '@/components/ops/PortalClientUrl';
 import StatusBadge, { leadTone, projectTone, ticketTone } from '@/components/ops/StatusBadge';
 import Card, { CardHeader } from '@/components/ui/Card';
 import EmptyState from '@/components/ui/EmptyState';
 import { listVisibleProjectIds, projectIdInFilter, requireStaff } from '@/lib/ops/auth';
+import { loadAttentionQueue } from '@/lib/ops/attention-query';
 import { buildFinanceSummary, type FinanceFilters } from '@/lib/ops/finance';
 import { can } from '@/lib/ops/permissions';
 import { labelsFor } from '@/lib/ops/labels';
@@ -96,6 +98,7 @@ export default async function DashboardPage({
     { data: charges },
     { data: quotes },
     { data: mySprintItems },
+    attentionItems,
   ] = await Promise.all([
     showCommercial
       ? supabase
@@ -138,6 +141,11 @@ export default async function DashboardPage({
       .neq('status', 'done')
       .order('updated_at', { ascending: false })
       .limit(8),
+    loadAttentionQueue({
+      supabase,
+      staff,
+      visibleProjectIds: visibleIds,
+    }),
   ]);
 
   const financeSummary = showFinance
@@ -152,6 +160,8 @@ export default async function DashboardPage({
           showCommercial ? t('ops.pages.dashboardCommercial') : t('ops.pages.dashboardAssigned')
         }
       />
+
+      <OpsAttentionQueue items={attentionItems} t={t} />
 
       {financeSummary && <DashboardFinance summary={financeSummary} filters={filters} />}
 

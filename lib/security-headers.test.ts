@@ -17,6 +17,7 @@ describe('security headers', () => {
     const csp = contentSecurityPolicy(false);
     expect(csp).toContain("frame-ancestors 'none'");
     expect(csp).toContain("object-src 'self' blob:");
+    expect(csp).toContain("worker-src 'self'");
     expect(csp).not.toContain("'unsafe-eval'");
     const keys = securityHeaders(false).map((h) => h.key);
     expect(keys).toContain('Content-Security-Policy');

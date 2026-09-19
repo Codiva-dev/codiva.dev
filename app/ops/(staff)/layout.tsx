@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { requireStaff } from '@/lib/ops/auth';
 import OpsStaffShell from '@/components/ops/OpsStaffShell';
 import OpsStaffI18nGate from '@/i18n/OpsStaffI18nGate';
+import { OpsPushRegister } from '@/components/ops/OpsPushOptIn';
 import { isOpsSidebarOpenCookie, OPS_SIDEBAR_OPEN_COOKIE } from '@/lib/ops/sidebar-pref';
 import { can } from '@/lib/ops/permissions';
 import { countWorkPending } from '@/lib/ops/work-pending';
@@ -13,6 +14,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
   const pendingCount = can(staff, 'assignments')
     ? await countWorkPending(supabase, staff.id, can(staff, 'assignments_manage'))
     : 0;
+  const vapidPublicKey = (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim();
 
   return (
     <OpsStaffI18nGate>
@@ -25,6 +27,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
         pendingCount={pendingCount}
         initialSidebarOpen={sidebarOpen}
       >
+        <OpsPushRegister vapidPublicKey={vapidPublicKey} />
         {children}
       </OpsStaffShell>
     </OpsStaffI18nGate>

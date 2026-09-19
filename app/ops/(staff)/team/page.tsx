@@ -182,7 +182,7 @@ export default async function TeamPage({
       ? supabase
           .from('ops_job_interview_rounds')
           .select(
-            'id, application_id, sort_order, kind, title, status, outcome, interviewer_id, partner_member_id, conducted_at, created_at'
+            'id, application_id, sort_order, kind, title, status, outcome, interviewer_id, partner_member_id, scheduled_at, duration_minutes, location, meeting_url, conducted_at, created_at'
           )
           .in('application_id', applicationIds)
           .order('sort_order', { ascending: true })

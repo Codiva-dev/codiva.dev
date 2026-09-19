@@ -27,6 +27,8 @@ Recordatorio de cacería: `GET /api/ops/cron/hunt-nudge` cada hora (minuto 15, m
 
 Recordatorio de CV: `GET /api/ops/cron/cv-nudge` cada hora (minuto 45, mismo `CRON_SECRET`). A las 48 h de un hallazgo del oficio, si aún no hay postulación, se envía un correo.
 
+Recordatorio de agenda: `GET /api/ops/cron/calendar-nudge` cada 15 min (mismo `CRON_SECRET`). A las 24 h y a la 1 h de una entrevista o junta interna, se envía un correo con el `.ics`.
+
 ## Antivirus / malware (opcional)
 
 | Opción | Costo aprox. | Notas |

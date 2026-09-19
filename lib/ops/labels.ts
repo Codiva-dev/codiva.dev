@@ -1,5 +1,6 @@
 import { DEFAULT_LOCALE, dateLocale, type Locale } from '@/i18n/config';
 import { tSync } from '@/i18n/translate';
+import { OPS_CALENDAR_TZ } from '@/lib/ops/project-sprints';
 
 function group(locale: Locale, name: string, keys: string[]): Record<string, string> {
   return Object.fromEntries(keys.map((key) => [key, tSync(locale, `ops.labels.${name}.${key}`)]));
@@ -125,6 +126,7 @@ export function labelsFor(locale: Locale = DEFAULT_LOCALE) {
     EMPTY_LABEL: tSync(locale, 'ops.labels.empty'),
     DEFAULT_PROJECT_STATE: tSync(locale, 'ops.labels.defaultProjectState'),
     formatDate: (date: string | null | undefined) => formatDate(date, locale),
+    formatDateTime: (date: string | null | undefined) => formatDateTime(date, locale),
     formatCurrency: (amount: number | null | undefined, currency?: string) =>
       formatCurrency(amount, currency, locale),
     formatChargeAmount: (amount: number | null | undefined, currency?: string) =>
@@ -165,9 +167,22 @@ export function isClientBorneChargeKind(kind: string): boolean {
 export function formatDate(date: string | null | undefined, locale: Locale = DEFAULT_LOCALE): string {
   if (!date) return tSync(locale, 'ops.labels.empty');
   return new Date(date).toLocaleDateString(dateLocale(locale), {
+    timeZone: OPS_CALENDAR_TZ,
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+  });
+}
+
+export function formatDateTime(date: string | null | undefined, locale: Locale = DEFAULT_LOCALE): string {
+  if (!date) return tSync(locale, 'ops.labels.empty');
+  return new Date(date).toLocaleString(dateLocale(locale), {
+    timeZone: OPS_CALENDAR_TZ,
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 }
 

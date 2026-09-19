@@ -1,0 +1,23 @@
+{
+  "name": "Codiva Ops",
+  "short_name": "Codiva Ops",
+  "description": "Calendario, tablero y atención operativa de Codiva.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F9FAFB",
+  "theme_color": "#104E4E",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
