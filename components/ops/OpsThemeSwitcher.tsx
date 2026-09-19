@@ -78,7 +78,9 @@ export default function OpsThemeSwitcher() {
                   }}
                   className={cn(
                     'flex w-full items-center gap-3 rounded-md px-3 py-1.5 text-sm transition hover:bg-zinc-100',
-                    selected ? 'font-medium text-codiva-primary' : 'text-zinc-700'
+                    selected
+                      ? 'font-medium text-[color:var(--c-link)]'
+                      : 'text-[color:var(--c-ink-3)]'
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />

@@ -226,7 +226,6 @@ export function canAny(subject: PermissionSubject, capabilities: Capability[]): 
 
 /** Nav items that require a capability (or none = all staff). */
 export const NAV_CAPABILITY: Record<string, Capability | null> = {
-  '/dashboard': null,
   '/leads': 'leads',
   '/inbox': 'inbox',
   '/projects': null,

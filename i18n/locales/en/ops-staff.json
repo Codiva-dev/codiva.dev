@@ -1624,6 +1624,8 @@
       "processRequired": "Choose the lead, project, quote, or ticket.",
       "processSearch": "Search lead, project, quote, or ticket",
       "openSubtasks": "Close open subtasks before marking it done.",
+      "openSubtasksNamed": "Close the open subtask “{{title}}” before marking it done.",
+      "openSubtasksCount": "Close the {{count}} open subtasks before marking it done.",
       "subtaskRequired": "Enter a subtask title.",
       "commentRequired": "Write a comment.",
       "allStreams": "All processes",
@@ -1733,6 +1735,7 @@
       "caughtUpBody": "Charges, tickets, the board, and mentions are in order.",
       "openBoard": "Open the board",
       "openDashboard": "View overview",
+      "overviewTitle": "Overview",
       "actionsTitle": "Quick actions",
       "empty": "Nothing pending right now.",
       "time": {

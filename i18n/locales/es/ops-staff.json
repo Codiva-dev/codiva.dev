@@ -1620,6 +1620,8 @@
       "processRequired": "Elige el lead, proyecto, cotización o ticket.",
       "processSearch": "Buscar lead, proyecto, cotización o ticket",
       "openSubtasks": "Cierra las subtareas pendientes antes de marcarla como hecha.",
+      "openSubtasksNamed": "Cierra la subtarea «{{title}}» antes de marcarla como hecha.",
+      "openSubtasksCount": "Cierra las {{count}} subtareas pendientes antes de marcarla como hecha.",
       "subtaskRequired": "Escribe el título de la subtarea.",
       "commentRequired": "Escribe un comentario.",
       "allStreams": "Todos los procesos",
@@ -1729,6 +1731,7 @@
       "caughtUpBody": "Cargos, tickets, tablero y menciones están en orden.",
       "openBoard": "Ir al tablero",
       "openDashboard": "Ver resumen",
+      "overviewTitle": "Resumen",
       "actionsTitle": "Acciones rápidas",
       "empty": "Nada pendiente ahora.",
       "time": {

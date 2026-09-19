@@ -27,6 +27,7 @@ import {
   canTransitionWorkStatus,
   formatDwellDuration,
   isWorkBoardColumn,
+  openSubtasksBlockMessage,
   mentionLabelFor,
   splitMentionTokens,
   stageEventDurationMs,
@@ -77,6 +78,7 @@ export function DetailModal({
   const { t } = useTranslation();
   const titleId = useId();
   const [comment, setComment] = useState('');
+  const [statusEpoch, setStatusEpoch] = useState(0);
   const filesRef = useRef<File[]>([]);
   const canAct = canMutateWorkAssignment(currentUserId, assignment.assignee_id, canManage);
   const events = [...assignment.stage_events].sort(
@@ -85,11 +87,34 @@ export function DetailModal({
 
   async function onStatusChange(next: string) {
     if (!isWorkBoardColumn(next) || next === assignment.status) return;
-    if (!canTransitionWorkStatus(assignment.status, next)) return;
+    if (!canTransitionWorkStatus(assignment.status, next)) {
+      toast.error(
+        next === 'archived'
+          ? t('ops.asignaciones.archiveOnlyDone')
+          : assignment.status === 'archived'
+            ? t('ops.asignaciones.restoreOnlyDone')
+            : t('ops.asignaciones.statusFailed')
+      );
+      return;
+    }
+    if (next === 'done') {
+      const blocked = openSubtasksBlockMessage(t, assignment.subtasks);
+      if (blocked) {
+        toast.error(blocked);
+        setStatusEpoch((n) => n + 1);
+        return;
+      }
+    }
     try {
-      await updateWorkAssignmentStatus(assignment.id, next, 'detail');
+      const result = await updateWorkAssignmentStatus(assignment.id, next, 'detail');
+      if (!result.ok) {
+        toast.error(result.message);
+        setStatusEpoch((n) => n + 1);
+        return;
+      }
       onRefresh();
     } catch (err) {
+      setStatusEpoch((n) => n + 1);
       toast.error(toUserErrorMessage(err, t('ops.asignaciones.statusFailed')));
     }
   }
@@ -99,7 +124,7 @@ export function DetailModal({
     <Field label={t('ops.labels.workStatus.' + assignment.status)}>
       <Select
         size="sm"
-        key={assignment.status}
+        key={`${assignment.status}-${statusEpoch}`}
         defaultValue={assignment.status}
         onChange={(event) => void onStatusChange(event.target.value)}
       >

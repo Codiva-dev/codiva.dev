@@ -60,6 +60,7 @@ html.dark .ops-theme .bg-codiva-background {
   background-color: var(--c-page);
 }
 
+html.dark .ops-theme.bg-white,
 html.dark .ops-theme .bg-white,
 html.dark .ops-theme .focus\:bg-white:focus,
 html.dark .ops-theme .open\:bg-white[open] {
@@ -141,10 +142,12 @@ html.dark .ops-theme .border-zinc-100 {
   border-color: var(--c-paper-2);
 }
 
+html.dark .ops-theme.border-zinc-200,
 html.dark .ops-theme .border-zinc-200 {
   border-color: var(--c-line);
 }
 
+html.dark .ops-theme.border-zinc-300,
 html.dark .ops-theme .border-zinc-300,
 html.dark .ops-theme .hover\:border-zinc-300:hover {
   border-color: var(--c-line-strong);
@@ -489,26 +492,32 @@ html.dark .ops-theme a {
   color: var(--c-link);
 }
 
+html.dark .ops-theme.text-zinc-900,
 html.dark .ops-theme .text-zinc-900,
 html.dark .ops-theme .hover\:text-zinc-900:hover {
   color: var(--c-ink) !important;
 }
 
+html.dark .ops-theme.text-zinc-800,
 html.dark .ops-theme .text-zinc-800,
 html.dark .ops-theme .hover\:text-zinc-800:hover {
   color: var(--c-ink-2) !important;
 }
 
+html.dark .ops-theme.text-zinc-700,
 html.dark .ops-theme .text-zinc-700,
 html.dark .ops-theme .hover\:text-zinc-700:hover {
   color: var(--c-ink-3) !important;
 }
 
+html.dark .ops-theme.text-zinc-600,
 html.dark .ops-theme .text-zinc-600 {
   color: var(--c-muted) !important;
 }
 
+html.dark .ops-theme.text-zinc-500,
 html.dark .ops-theme .text-zinc-500,
+html.dark .ops-theme.text-zinc-400,
 html.dark .ops-theme .text-zinc-400,
 html.dark .ops-theme .hover\:text-zinc-400:hover {
   color: var(--c-faint) !important;

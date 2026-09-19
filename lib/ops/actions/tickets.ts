@@ -19,7 +19,7 @@ export async function updateTicketStatus(ticketId: string, status: string) {
   revalidatePath('/tickets');
   revalidatePath(`/tickets/${ticketId}`);
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }
 
 export async function updateTicketAssignment(ticketId: string, formData: FormData) {
@@ -48,5 +48,5 @@ export async function updateTicketAssignment(ticketId: string, formData: FormDat
   revalidatePath(`/tickets/${ticketId}`);
   revalidatePath('/workload');
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }

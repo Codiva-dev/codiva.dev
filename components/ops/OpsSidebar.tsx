@@ -18,7 +18,6 @@ import {
   ListTodo,
   CalendarDays,
   PanelLeftClose,
-  LayoutDashboard,
 } from 'lucide-react';
 import { canAny, type Capability, type PermissionSubject } from '@/lib/ops/permissions';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +32,6 @@ const NAV: {
   capability?: Capability | Capability[] | null;
 }[] = [
   { href: '/pendientes', labelKey: 'ops.nav.pendientes', icon: ListTodo },
-  { href: '/dashboard', labelKey: 'ops.nav.dashboard', icon: LayoutDashboard },
   { href: '/leads', labelKey: 'ops.nav.leads', icon: Users, capability: 'leads' },
   { href: '/inbox', labelKey: 'ops.nav.inbox', icon: Inbox, capability: 'inbox' },
   { href: '/projects', labelKey: 'ops.nav.projects', icon: FolderKanban },

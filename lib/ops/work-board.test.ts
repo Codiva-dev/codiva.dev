@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { tSync } from '@/i18n/translate';
 import {
   activeMentionQuery,
   buildMentionToken,
@@ -34,6 +35,7 @@ import {
   dropConfirmedWorkSubtaskStatuses,
   OPEN_WORK_STATUSES,
   parentCannotMarkDoneWithOpenSubtasks,
+  openSubtasksBlockMessage,
   parseSubtaskLines,
   patchWorkAssignmentStatus,
   mergeRealtimeAssignment,
@@ -68,6 +70,26 @@ describe('work-board progress', () => {
   it('blocks done when a subtask is still open', () => {
     expect(parentCannotMarkDoneWithOpenSubtasks([{ status: 'done' }])).toBe(false);
     expect(parentCannotMarkDoneWithOpenSubtasks([{ status: 'open' }, { status: 'done' }])).toBe(true);
+  });
+
+  it('names the open subtask in the done-block message', () => {
+    const t = (key: string, options?: Record<string, unknown>) =>
+      `${key}:${options?.title ?? options?.count ?? ''}`;
+    expect(openSubtasksBlockMessage(t, [{ status: 'done', title: 'Listo' }])).toBeNull();
+    expect(
+      openSubtasksBlockMessage(t, [{ status: 'open', title: 'Problemas de contraste' }])
+    ).toBe('ops.asignaciones.openSubtasksNamed:Problemas de contraste');
+    expect(
+      openSubtasksBlockMessage(t, [
+        { status: 'open', title: 'Uno' },
+        { status: 'open', title: 'Dos' },
+      ])
+    ).toBe('ops.asignaciones.openSubtasksCount:2');
+    expect(
+      openSubtasksBlockMessage(tSync.bind(null, 'es'), [
+        { status: 'open', title: 'Problemas de contraste' },
+      ])
+    ).toBe('Cierra la subtarea «Problemas de contraste» antes de marcarla como hecha.');
   });
 
   it('lets the assignee act without manage, but not rewrite the list', () => {

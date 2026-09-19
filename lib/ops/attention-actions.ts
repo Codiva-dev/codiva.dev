@@ -24,6 +24,5 @@ export async function snoozeAttentionItem(formData: FormData) {
     { onConflict: 'staff_id,item_key' }
   );
   if (error) throw await throwDb(error);
-  revalidatePath('/dashboard');
   revalidatePath('/pendientes');
 }

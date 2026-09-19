@@ -79,7 +79,7 @@ export async function createLead(formData: FormData) {
 
   revalidatePath('/leads');
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
   return lead.id;
 }
 
@@ -129,7 +129,7 @@ export async function convertInboxToLead(messageId: string) {
 
   revalidatePath('/inbox');
   revalidatePath('/leads');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
   return { leadId: lead.id };
 }
 
@@ -147,7 +147,7 @@ export async function updateLeadStatus(leadId: string, status: string) {
   revalidatePath('/leads');
   revalidatePath(`/leads/${leadId}`);
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }
 
 export async function updateLeadDetails(leadId: string, formData: FormData) {
@@ -272,7 +272,7 @@ export async function updateInboxStatus(messageId: string, status: string) {
   const { error } = await supabase.from('inbox_messages').update({ status }).eq('id', messageId);
   if (error) throw await throwDb(error);
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }
 
 export async function updateInboxLane(messageId: string, lane: string) {
@@ -291,7 +291,7 @@ export async function updateInboxLane(messageId: string, lane: string) {
     actorId: user.id,
   });
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }
 
 export async function deleteInboxMessage(messageId: string) {
@@ -316,5 +316,5 @@ export async function deleteInboxMessage(messageId: string) {
   });
 
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }

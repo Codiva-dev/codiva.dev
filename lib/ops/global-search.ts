@@ -21,7 +21,6 @@ export type OpsSearchNavItem = {
 
 export const OPS_SEARCH_NAV: OpsSearchNavItem[] = [
   { href: '/pendientes', labelKey: 'ops.nav.pendientes', capability: null },
-  { href: '/dashboard', labelKey: 'ops.nav.dashboard', capability: null },
   { href: '/leads', labelKey: 'ops.nav.leads', capability: 'leads' },
   { href: '/inbox', labelKey: 'ops.nav.inbox', capability: 'inbox' },
   { href: '/projects', labelKey: 'ops.nav.projects', capability: null },

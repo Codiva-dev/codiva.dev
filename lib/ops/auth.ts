@@ -12,6 +12,7 @@ import {
   type StaffRole,
 } from '@/lib/ops/permissions';
 import { isOpsHost } from '@/lib/ops/host';
+import { OPS_FORBIDDEN_PATH } from '@/lib/ops/home';
 import { loadInterviewMemberById, readInterviewViewAsMemberId } from '@/lib/ops/interview-view-as';
 import { safeNextPath } from '@/lib/ops/safe-path';
 
@@ -62,7 +63,7 @@ export async function requireAdminStaff() {
 export async function requireCareersReview() {
   const access = await requireStaff();
   if (!canAny(access.staff, ['team', 'careers_review'])) {
-    redirect('/dashboard?error=forbidden');
+    redirect(OPS_FORBIDDEN_PATH);
   }
   return access;
 }
@@ -76,11 +77,11 @@ export async function assertCareersReview() {
   return access;
 }
 
-/** Staff con una capability concreta; si no, redirige a dashboard. */
+/** Staff con una capability concreta; si no, redirige al inicio. */
 export async function requireCapability(capability: Capability) {
   const access = await requireStaff();
   if (!can(access.staff, capability)) {
-    redirect('/dashboard?error=forbidden');
+    redirect(OPS_FORBIDDEN_PATH);
   }
   return access;
 }
@@ -471,7 +472,7 @@ export async function requireInterviewsAccess() {
     }
     const staff = await getActiveStaff(supabase, user.id);
     if (!staff || !canAny(staff, ['team', 'careers_review'])) {
-      redirect('/dashboard?error=forbidden');
+      redirect(OPS_FORBIDDEN_PATH);
     }
     const viewAsId = await readInterviewViewAsMemberId();
     const viewed = viewAsId ? await loadInterviewMemberById(viewAsId) : null;

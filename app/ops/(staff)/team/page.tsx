@@ -33,6 +33,7 @@ import { resolveTeamTab, rowsMissingEmail, teamTabLoads } from '@/lib/ops/team-p
 import { createAdminClient } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { OPS_FORBIDDEN_PATH } from '@/lib/ops/home';
 import CodivaBrandText from '@/components/CodivaBrandText';
 import OpsStaffCapabilityFields from '@/components/ops/OpsStaffCapabilityFields';
 import OpsInterviewPartnersPanel from '@/components/ops/OpsInterviewPartnersPanel';
@@ -47,7 +48,7 @@ export default async function TeamPage({
     await searchParams;
   const { supabase, staff, user } = await requireStaff();
   if (!canAny(staff, ['team', 'careers_review'])) {
-    redirect('/dashboard?error=forbidden');
+    redirect(OPS_FORBIDDEN_PATH);
   }
   const canManageTeam = can(staff, 'team');
   const tab = resolveTeamTab(tabParam, canManageTeam);

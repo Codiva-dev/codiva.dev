@@ -241,7 +241,7 @@ export default function OpsPendientesHome({
   ];
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
+    <div className="w-full">
       <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <p className="text-sm font-medium text-codiva-primary">{t('ops.pendientes.kicker')}</p>
@@ -249,6 +249,9 @@ export default function OpsPendientesHome({
             {t(helloKey, { name: firstName })}
           </h1>
           <p className={cn('mt-2 text-sm', counts.overdue ? 'font-medium text-red-700' : 'text-zinc-600')}>{summary}</p>
+          <a href="#resumen" className="mt-3 inline-flex text-sm font-medium text-codiva-primary hover:underline">
+            {t('ops.pendientes.openDashboard')}
+          </a>
         </div>
         <label className="relative w-full max-w-md lg:w-80">
           <span className="sr-only">{t('ops.pendientes.searchPlaceholder')}</span>
@@ -290,7 +293,7 @@ export default function OpsPendientesHome({
               <Button as={Link} href="/asignaciones" size="sm">
                 {t('ops.pendientes.openBoard')}
               </Button>
-              <Button as={Link} href="/dashboard" size="sm" variant="secondary">
+              <Button as="a" href="#resumen" size="sm" variant="secondary">
                 {t('ops.pendientes.openDashboard')}
               </Button>
             </div>

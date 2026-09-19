@@ -26,6 +26,7 @@ import {
   clearWorkAssignmentUnreadMentions,
   isWorkBoardColumn,
   isWorkStatus,
+  openSubtasksBlockMessage,
   patchWorkAssignmentStatus,
   patchWorkSubtaskStatus,
   applyPendingWorkSubtaskStatuses,
@@ -347,12 +348,27 @@ export default function OpsWorkBoard({
       );
       return;
     }
+    if (status === 'done') {
+      const blocked = openSubtasksBlockMessage(t, current.subtasks);
+      if (blocked) {
+        toast.error(blocked);
+        selectAssignment(assignmentId);
+        return;
+      }
+    }
+    const previous = current.status;
     setAssignments((prev) => patchWorkAssignmentStatus(prev, assignmentId, status));
     try {
-      await updateWorkAssignmentStatus(assignmentId, status, source);
+      const result = await updateWorkAssignmentStatus(assignmentId, status, source);
+      if (!result.ok) {
+        setAssignments((prev) => patchWorkAssignmentStatus(prev, assignmentId, previous));
+        toast.error(result.message);
+        if (result.reason === 'open_subtasks') selectAssignment(assignmentId);
+        return;
+      }
       if (successKey) toast.success(t(successKey));
     } catch (err) {
-      router.refresh();
+      setAssignments((prev) => patchWorkAssignmentStatus(prev, assignmentId, previous));
       toast.error(toUserErrorMessage(err, t('ops.asignaciones.statusFailed')));
     }
   }

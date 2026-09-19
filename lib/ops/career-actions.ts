@@ -494,7 +494,7 @@ export async function deleteJobApplication(applicationId: string) {
 
   revalidatePath('/team');
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }
 
 export async function updateJobApplicationStatus(applicationId: string, formData: FormData) {
@@ -558,7 +558,7 @@ export async function updateJobApplicationStatus(applicationId: string, formData
 
   revalidatePath('/team');
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }
 
 export async function addJobInterviewRound(applicationId: string, formData: FormData) {
@@ -990,5 +990,5 @@ export async function updateHuntReportReview(reportId: string, formData: FormDat
   if (attemptId) revalidatePath(`/team/intentos/${attemptId}`);
   if (offerId) revalidatePath(`/team/ofertas/${offerId}`);
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }

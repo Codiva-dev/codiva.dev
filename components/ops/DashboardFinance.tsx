@@ -3,14 +3,17 @@ import StatusBadge, { chargeTone, projectTone } from '@/components/ops/StatusBad
 import type { FinanceFilters, FinanceSummary } from '@/lib/ops/finance';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
+import { OPS_HOME_PATH } from '@/lib/ops/home';
 import { opsProjectPath } from '@/lib/ops/project-path';
 
 export default async function DashboardFinance({
   summary,
   filters,
+  action = OPS_HOME_PATH,
 }: {
   summary: FinanceSummary;
   filters: FinanceFilters;
+  action?: string;
 }) {
   const t = await getT();
   const {
@@ -65,13 +68,13 @@ export default async function DashboardFinance({
           </p>
         </div>
         {hasFilters ? (
-          <Link href="/dashboard" className="text-sm text-codiva-primary hover:underline">
+          <Link href={action} className="text-sm text-codiva-primary hover:underline">
             Limpiar filtros
           </Link>
         ) : null}
       </div>
 
-      <form method="get" className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <form method="get" action={action} className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="block text-xs font-medium text-zinc-600">
           Cliente
           <select

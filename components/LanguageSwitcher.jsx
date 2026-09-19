@@ -187,7 +187,11 @@ export default function LanguageSwitcher() {
                       <button
                         type="button"
                         onClick={() => selectLanguage(lang.code)}
-                        className="flex w-full items-center justify-center gap-3 rounded-md px-3 py-1.5 text-sm transition hover:bg-zinc-100"
+                        className={`flex w-full items-center justify-center gap-3 rounded-md px-3 py-1.5 text-sm transition hover:bg-zinc-100 ${
+                          currentLang === lang.code
+                            ? 'font-medium text-[color:var(--c-link)]'
+                            : 'text-[color:var(--c-ink-3)]'
+                        }`}
                       >
                         <Image
                           src={lang.flag}
@@ -197,7 +201,7 @@ export default function LanguageSwitcher() {
                           className="rounded-sm object-contain"
                           style={{ aspectRatio: '3 / 2' }}
                         />
-                        <span className="text-[0.875rem] leading-normal text-zinc-700">
+                        <span className="text-[0.875rem] leading-normal">
                           {lang.label}
                         </span>
                       </button>

@@ -353,8 +353,30 @@ export function rollupProgressFromSubtasks(subtasks: Pick<WorkSubtask, 'status'>
   return Math.round((done / total) * 100);
 }
 
+export function openWorkSubtasks<T extends Pick<WorkSubtask, 'status'>>(
+  subtasks: T[] | null | undefined
+) {
+  return (subtasks ?? []).filter((row) => row.status !== 'done');
+}
+
 export function parentCannotMarkDoneWithOpenSubtasks(subtasks: Pick<WorkSubtask, 'status'>[]) {
-  return subtasks.some((s) => s.status !== 'done');
+  return openWorkSubtasks(subtasks).length > 0;
+}
+
+export function openSubtasksBlockMessage(
+  t: (key: string, options?: Record<string, unknown>) => string,
+  subtasks: Pick<WorkSubtask, 'status' | 'title'>[] | null | undefined
+) {
+  const open = openWorkSubtasks(subtasks);
+  if (!open.length) return null;
+  const title = open[0]?.title?.trim() || '';
+  if (open.length === 1 && title) {
+    return t('ops.asignaciones.openSubtasksNamed', { title });
+  }
+  if (open.length > 1) {
+    return t('ops.asignaciones.openSubtasksCount', { count: open.length });
+  }
+  return t('ops.asignaciones.openSubtasks');
 }
 
 export function canMutateWorkAssignment(

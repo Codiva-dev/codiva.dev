@@ -76,7 +76,7 @@ export async function convertLeadToProject(leadId: string) {
   revalidatePath('/leads');
   revalidatePath('/projects');
   revalidatePath('/inbox');
-  revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
   return { projectId: project.id, slug: project.slug };
 }
 

@@ -1,10 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { unstable_rethrow } from 'next/navigation';
 import { assertCapability } from '@/lib/ops/auth';
 import { can } from '@/lib/ops/permissions';
 import { logActivity } from '@/lib/ops/activity';
 import { throwDb } from '@/lib/ops/throw-db';
+import { toUserErrorMessage } from '@/lib/user-error';
 import { getT } from '@/i18n/locale';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendClientEmail } from '@/lib/ops/email';
@@ -23,7 +25,7 @@ import {
   mentionedStaffIds,
   mentionDisplayName,
   mentionPlainText,
-  parentCannotMarkDoneWithOpenSubtasks,
+  openSubtasksBlockMessage,
   parseSubtaskLines,
   planWorkSubtaskRewrite,
   rollupProgressFromSubtasks,
@@ -369,69 +371,82 @@ export async function deleteWorkAssignment(assignmentId: string) {
   revalidateBoard();
 }
 
+export type WorkStatusUpdateResult =
+  | { ok: true }
+  | { ok: false; message: string; reason?: 'open_subtasks' };
+
 export async function updateWorkAssignmentStatus(
   assignmentId: string,
   nextStatus: string,
   source: 'kanban' | 'detail' = 'kanban'
-) {
+): Promise<WorkStatusUpdateResult> {
   const access = await assertAssignmentsAccess();
   const t = await getT();
-  const manage = can(access.staff, 'assignments_manage');
-  if (!isWorkStatus(nextStatus)) throw new Error(t('ops.asignaciones.statusFailed'));
-
-  const { data: current, error: loadErr } = await access.supabase
-    .from('work_assignments')
-    .select('id, title, status, assignee_id')
-    .eq('id', assignmentId)
-    .single();
-  if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
-  await assertCanMutate(current, access.staff.id, manage);
-  if (current.status === nextStatus) return;
-  if (!canTransitionWorkStatus(current.status, nextStatus)) {
-    throw new Error(
-      nextStatus === 'archived'
-        ? t('ops.asignaciones.archiveOnlyDone')
-        : current.status === 'archived'
-          ? t('ops.asignaciones.restoreOnlyDone')
-          : t('ops.asignaciones.statusFailed')
-    );
-  }
-
-  if (nextStatus === 'done' && current.status !== 'archived') {
-    const { data: subs, error: subErr } = await access.supabase
-      .from('work_assignment_subtasks')
-      .select('status')
-      .eq('assignment_id', assignmentId);
-    if (subErr) throw await throwDb(subErr);
-    if (parentCannotMarkDoneWithOpenSubtasks(subs ?? [])) {
-      throw new Error(t('ops.asignaciones.openSubtasks'));
+  try {
+    const manage = can(access.staff, 'assignments_manage');
+    if (!isWorkStatus(nextStatus)) {
+      return { ok: false, message: t('ops.asignaciones.statusFailed') };
     }
+
+    const { data: current, error: loadErr } = await access.supabase
+      .from('work_assignments')
+      .select('id, title, status, assignee_id')
+      .eq('id', assignmentId)
+      .single();
+    if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
+    await assertCanMutate(current, access.staff.id, manage);
+    if (current.status === nextStatus) return { ok: true };
+    if (!canTransitionWorkStatus(current.status, nextStatus)) {
+      return {
+        ok: false,
+        message:
+          nextStatus === 'archived'
+            ? t('ops.asignaciones.archiveOnlyDone')
+            : current.status === 'archived'
+              ? t('ops.asignaciones.restoreOnlyDone')
+              : t('ops.asignaciones.statusFailed'),
+      };
+    }
+
+    if (nextStatus === 'done' && current.status !== 'archived') {
+      const { data: subs, error: subErr } = await access.supabase
+        .from('work_assignment_subtasks')
+        .select('status, title')
+        .eq('assignment_id', assignmentId);
+      if (subErr) throw await throwDb(subErr);
+      const blocked = openSubtasksBlockMessage(t, subs ?? []);
+      if (blocked) return { ok: false, message: blocked, reason: 'open_subtasks' };
+    }
+
+    const enteredAt = await recordStageChange({
+      supabase: access.supabase,
+      assignmentId,
+      fromStatus: current.status,
+      toStatus: nextStatus,
+      actorId: access.staff.id,
+      source,
+    });
+
+    const { error } = await access.supabase
+      .from('work_assignments')
+      .update({ status: nextStatus, status_entered_at: enteredAt })
+      .eq('id', assignmentId);
+    if (error) throw await throwDb(error);
+
+    await logActivity({
+      entityType: 'work_assignment',
+      entityId: assignmentId,
+      action: 'status',
+      metadata: { from: current.status, to: nextStatus, source },
+      actorId: access.staff.id,
+    });
+    if (nextStatus === 'archived' || current.status === 'archived') revalidateBoard();
+    else revalidateWorkLists();
+    return { ok: true };
+  } catch (err) {
+    unstable_rethrow(err);
+    return { ok: false, message: toUserErrorMessage(err, t('ops.asignaciones.statusFailed')) };
   }
-
-  const enteredAt = await recordStageChange({
-    supabase: access.supabase,
-    assignmentId,
-    fromStatus: current.status,
-    toStatus: nextStatus,
-    actorId: access.staff.id,
-    source,
-  });
-
-  const { error } = await access.supabase
-    .from('work_assignments')
-    .update({ status: nextStatus, status_entered_at: enteredAt })
-    .eq('id', assignmentId);
-  if (error) throw await throwDb(error);
-
-  await logActivity({
-    entityType: 'work_assignment',
-    entityId: assignmentId,
-    action: 'status',
-    metadata: { from: current.status, to: nextStatus, source },
-    actorId: access.staff.id,
-  });
-  if (nextStatus === 'archived' || current.status === 'archived') revalidateBoard();
-  else revalidateWorkLists();
 }
 
 export async function createWorkSubtask(assignmentId: string, title: string) {
