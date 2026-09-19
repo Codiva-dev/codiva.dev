@@ -5,10 +5,11 @@ import {
   opsBaseUrl,
   portalBaseUrl,
 } from '@/lib/ops/host';
+import { OPS_HOME_PATH } from '@/lib/ops/home';
 import { safeInternalPath } from '@/lib/ops/safe-path';
 
-export function opsAuthCallbackUrl(next = '/dashboard'): string {
-  const safeNext = safeInternalPath(next, '/dashboard');
+export function opsAuthCallbackUrl(next = OPS_HOME_PATH): string {
+  const safeNext = safeInternalPath(next, OPS_HOME_PATH);
   return `${opsBaseUrl()}/auth/callback?next=${encodeURIComponent(safeNext)}`;
 }
 
@@ -59,5 +60,5 @@ export function authCallbackSuccessUrl(host: string | null, next: string): strin
 export function authCallbackFallbackPath(host: string | null): string {
   if (isInterviewsHost(host)) return '/';
   if (isPortalHost(host)) return '/proyectos';
-  return '/dashboard';
+  return OPS_HOME_PATH;
 }

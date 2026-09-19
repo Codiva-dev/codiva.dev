@@ -31,7 +31,11 @@ export const ATTENTION_RANK: Record<AttentionKind, number> = {
 };
 
 export const ATTENTION_LIMIT = 12;
+export const ATTENTION_FULL_LIMIT = 80;
+export const ATTENTION_BUCKETS = ['overdue', 'today', 'week', 'later'] as const;
+export type AttentionBucket = (typeof ATTENTION_BUCKETS)[number];
 const DAY_MS = 24 * 60 * 60 * 1000;
+const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function attentionItemKey(kind: AttentionKind, id: string) {
   return `${kind}:${id}`;
@@ -46,15 +50,57 @@ export function isAttentionSnoozed(until: string | null | undefined, now = new D
 export function filterAttentionItems(
   items: AttentionItem[],
   snoozes: Array<{ item_key: string; until: string }>,
-  now = new Date()
+  now = new Date(),
+  limit = ATTENTION_LIMIT
 ) {
   const blocked = new Set(
     snoozes.filter((row) => isAttentionSnoozed(row.until, now)).map((row) => row.item_key)
   );
-  return items
+  const sorted = items
     .filter((item) => !blocked.has(item.key))
-    .sort((a, b) => a.rank - b.rank || b.at.localeCompare(a.at))
-    .slice(0, ATTENTION_LIMIT);
+    .sort((a, b) => a.rank - b.rank || b.at.localeCompare(a.at));
+  if (limit <= 0) return sorted;
+  return sorted.slice(0, limit);
+}
+
+export function attentionYmd(at: string | null | undefined) {
+  const raw = String(at || '').trim();
+  if (YMD_RE.test(raw)) return raw;
+  const parsed = Date.parse(raw);
+  if (!Number.isFinite(parsed)) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date(parsed));
+}
+
+function addDaysToYmd(ymd: string, days: number) {
+  const [year, month, day] = ymd.split('-').map(Number);
+  if (!year || !month || !day) return ymd;
+  const utc = new Date(Date.UTC(year, month - 1, day + days, 18, 0, 0));
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(utc);
+}
+
+export function attentionBucket(at: string | null | undefined, now = new Date()): AttentionBucket {
+  const today = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Mexico_City',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(now);
+  const ymd = attentionYmd(at);
+  if (!ymd) return 'later';
+  if (ymd < today) return 'overdue';
+  if (ymd === today) return 'today';
+  if (ymd <= addDaysToYmd(today, 6)) return 'week';
+  return 'later';
 }
 
 export function isStaleSince(iso: string | null | undefined, hours: number, now = new Date()) {

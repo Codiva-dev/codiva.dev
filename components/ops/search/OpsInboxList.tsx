@@ -72,7 +72,7 @@ export default function OpsInboxList({
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <StatusBadge label={kindLabels.contact} tone={kindTone('contact')} />
                         <StatusBadge label={laneLabels[contact.lane]} tone={laneTone(contact.lane)} />
-                        <h2 className="font-semibold">{contact.name}</h2>
+                        <h2 className="font-semibold text-zinc-900">{contact.name}</h2>
                       </div>
                       <p className="text-sm text-zinc-500">
                         {contact.email} · {formatDate(contact.created_at, locale)}
@@ -170,7 +170,7 @@ export default function OpsInboxList({
                   <div className="min-w-0">
                     <div className="mb-1 flex flex-wrap items-center gap-2">
                       <StatusBadge label={kindLabels[item.kind]} tone={kindTone(item.kind)} />
-                      <h2 className="font-semibold">{item.title}</h2>
+                      <h2 className="font-semibold text-zinc-900">{item.title}</h2>
                     </div>
                     <p className="text-sm text-zinc-500">
                       {item.subtitle} · {formatDate(item.createdAt, locale)}

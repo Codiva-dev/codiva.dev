@@ -18,6 +18,7 @@ import {
   ListTodo,
   CalendarDays,
   PanelLeftClose,
+  LayoutDashboard,
 } from 'lucide-react';
 import { canAny, type Capability, type PermissionSubject } from '@/lib/ops/permissions';
 import { useTranslation } from 'react-i18next';
@@ -31,12 +32,13 @@ const NAV: {
   icon: typeof Inbox;
   capability?: Capability | Capability[] | null;
 }[] = [
+  { href: '/pendientes', labelKey: 'ops.nav.pendientes', icon: ListTodo },
+  { href: '/dashboard', labelKey: 'ops.nav.dashboard', icon: LayoutDashboard },
   { href: '/leads', labelKey: 'ops.nav.leads', icon: Users, capability: 'leads' },
   { href: '/inbox', labelKey: 'ops.nav.inbox', icon: Inbox, capability: 'inbox' },
   { href: '/projects', labelKey: 'ops.nav.projects', icon: FolderKanban },
   { href: '/workload', labelKey: 'ops.nav.workload', icon: Gauge, capability: 'workload' },
   { href: '/calendar', labelKey: 'ops.nav.calendar', icon: CalendarDays },
-  { href: '/pendientes', labelKey: 'ops.nav.pendientes', icon: ListTodo, capability: 'assignments' },
   { href: '/asignaciones', labelKey: 'ops.nav.asignaciones', icon: Kanban, capability: 'assignments' },
   { href: '/organizations', labelKey: 'ops.nav.organizations', icon: Building2, capability: 'organizations' },
   { href: '/users', labelKey: 'ops.nav.users', icon: ContactRound, capability: 'portal_users' },
@@ -62,7 +64,7 @@ export default function OpsSidebar({
   const pathname = usePathname();
   const router = useRouter();
 
-  const normalized = pathname.replace(/^\/ops/, '') || '/dashboard';
+  const normalized = pathname.replace(/^\/ops/, '') || '/pendientes';
   const items = NAV.filter((item) => {
     if (!item.capability) return true;
     const caps = Array.isArray(item.capability) ? item.capability : [item.capability];
@@ -81,7 +83,7 @@ export default function OpsSidebar({
       <div className="flex items-start justify-between gap-2 border-b border-zinc-200 px-5 py-5">
         <div className="min-w-0">
           <Link
-            href="/dashboard"
+            href="/pendientes"
             onClick={onNavigate}
             className="inline-flex rounded-md outline-offset-2 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-codiva-primary"
             aria-label={t('ops.layout.home')}

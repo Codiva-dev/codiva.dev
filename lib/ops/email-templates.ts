@@ -1,5 +1,6 @@
 import { escapeHtml } from '@/utils/escapeHtml';
 import { opsBaseUrl, marketingBaseUrl } from '@/lib/ops/host';
+import { OPS_HOME_PATH } from '@/lib/ops/home';
 import { BRAND_EMAIL, CODIVA_BRAND, brandWordmarkHtml, paintBrandNameHtml } from '@/lib/brand';
 import { DEFAULT_LOCALE, type Locale } from '@/i18n/config';
 import { tSync } from '@/i18n/translate';
@@ -663,7 +664,7 @@ export function templateStaffAlert(
     bodyHtml: rows,
     cta: {
       label: options?.ctaLabel ?? 'Abrir Codiva.dev',
-      href: options?.ctaHref ?? `${opsBaseUrl()}/dashboard`,
+      href: options?.ctaHref ?? `${opsBaseUrl()}${OPS_HOME_PATH}`,
     },
     footerNote: 'Notificación interna · Codiva.dev',
   });

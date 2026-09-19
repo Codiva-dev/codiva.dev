@@ -30,7 +30,7 @@ export default function OpsLoginForm() {
       emailId="ops-login-email"
       passwordId="ops-login-password"
       urlMessage={urlMessage}
-      defaultNext="/dashboard"
+      defaultNext="/pendientes"
       authorize={async ({ supabase, user }) => {
         const { data: staff, error: staffError } = await supabase
           .from('staff_profiles')

@@ -23,7 +23,7 @@ export default async function OpsLoginPage({
       .maybeSingle();
     if (staff) {
       const params = await searchParams;
-      redirect(safeNextPath(params.next, '/dashboard'));
+      redirect(safeNextPath(params.next, '/pendientes'));
     }
   }
 

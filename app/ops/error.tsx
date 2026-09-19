@@ -31,8 +31,8 @@ export default function OpsError({
           <Button type="button" size="sm" onClick={reset}>
             {t('errors.retry')}
           </Button>
-          <Button as={Link} href="/dashboard" variant="secondary" size="sm">
-            Dashboard
+          <Button as={Link} href="/pendientes" variant="secondary" size="sm">
+            {t('errors.opsHome')}
           </Button>
           <Button as={Link} href="/login" variant="ghost" size="sm">
             Login

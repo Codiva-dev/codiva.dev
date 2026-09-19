@@ -917,6 +917,7 @@
       "attentionTitle": "Attention queue",
       "attentionHint": "What cannot wait: charges, tickets, the board, QA, interviews, and hours.",
       "attentionEmpty": "Nothing urgent right now.",
+      "attentionSeeAll": "See all",
       "attentionSnooze": "Snooze 24 h",
       "attentionSnoozed": "Snoozed for 24 hours",
       "attentionKind": {
@@ -1716,7 +1717,43 @@
     },
     "pendientes": {
       "title": "Pending",
-      "description": "Work still on you, unread mentions, and - if you administer the board - subtask change requests.",
+      "description": "Everything that needs attention, grouped by time, with quick monitoring actions.",
+      "kicker": "Today in Ops",
+      "helloMorning": "Good morning, {{name}}",
+      "helloAfternoon": "Good afternoon, {{name}}",
+      "helloEvening": "Good evening, {{name}}",
+      "summaryOverdue": "{{count}} overdue",
+      "summaryActions": "{{count}} quick actions",
+      "summaryToday": "{{count}} due today",
+      "summaryClear": "Nothing urgent. The rest can wait.",
+      "searchPlaceholder": "Filter pending items",
+      "filterAll": "All",
+      "filterEmpty": "Nothing in this filter.",
+      "caughtUpTitle": "You're caught up",
+      "caughtUpBody": "Charges, tickets, the board, and mentions are in order.",
+      "openBoard": "Open the board",
+      "openDashboard": "View overview",
+      "actionsTitle": "Quick actions",
+      "empty": "Nothing pending right now.",
+      "time": {
+        "none": "No date",
+        "today": "Today",
+        "tomorrow": "Tomorrow",
+        "yesterday": "Yesterday",
+        "ago": "{{count}} days ago",
+        "in": "In {{count}} days"
+      },
+      "bucket": {
+        "overdue": "Overdue",
+        "today": "Today",
+        "week": "This week",
+        "later": "Later"
+      },
+      "kind": {
+        "assignment": "Your assignment",
+        "mention": "Mention",
+        "editRequest": "Change request"
+      },
       "mine": "Your open assignments",
       "mineEmpty": "You have no open assignments.",
       "mentions": "Unread mentions",

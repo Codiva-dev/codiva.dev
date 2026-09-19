@@ -9,7 +9,7 @@ import { writeOpsSidebarOpenCookie } from '@/lib/ops/sidebar-pref';
 import type { PermissionSubject } from '@/lib/ops/permissions';
 
 const TOGGLE_BTN_CLASS =
-  'pointer-events-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-300 bg-white text-zinc-800 shadow-sm transition hover:bg-zinc-50';
+  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-300 bg-white text-zinc-800 shadow-sm transition hover:bg-zinc-50';
 
 export default function OpsStaffShell({
   staffName,
@@ -117,45 +117,37 @@ export default function OpsStaffShell({
       </div>
 
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="pointer-events-none absolute left-3 top-3 z-20 flex items-center gap-2">
-          <button
-            ref={mobileOpenBtnRef}
-            type="button"
-            className={`${TOGGLE_BTN_CLASS} lg:hidden`}
-            onClick={() => setMobileOpen(true)}
-            aria-expanded={mobileOpen}
-            aria-controls="ops-sidebar-panel"
-          >
-            <span className="sr-only">{t('ops.layout.openNavigation')}</span>
-            <Menu className="h-5 w-5" strokeWidth={2} aria-hidden />
-          </button>
-
-          {!desktopOpen ? (
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-zinc-200 bg-white px-3 py-2">
+          <div className="flex items-center gap-2">
             <button
+              ref={mobileOpenBtnRef}
               type="button"
-              className={`${TOGGLE_BTN_CLASS} hidden lg:flex`}
-              onClick={toggleDesktop}
-              aria-expanded={desktopOpen}
+              className={`${TOGGLE_BTN_CLASS} lg:hidden`}
+              onClick={() => setMobileOpen(true)}
+              aria-expanded={mobileOpen}
               aria-controls="ops-sidebar-panel"
-              aria-label={t('ops.layout.showSidebar')}
             >
-              <PanelLeft className="h-5 w-5" strokeWidth={2} aria-hidden />
+              <span className="sr-only">{t('ops.layout.openNavigation')}</span>
+              <Menu className="h-5 w-5" strokeWidth={2} aria-hidden />
             </button>
-          ) : null}
-        </div>
-        <div className="pointer-events-none absolute right-3 top-3 z-20">
-          <div className="pointer-events-auto">
-            <OpsCommandPalette />
-          </div>
-        </div>
 
-        <main
-          className={[
-            'flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8',
-            'pt-16',
-            desktopOpen ? '' : 'lg:pl-16',
-          ].join(' ')}
-        >
+            {!desktopOpen ? (
+              <button
+                type="button"
+                className={`${TOGGLE_BTN_CLASS} hidden lg:flex`}
+                onClick={toggleDesktop}
+                aria-expanded={desktopOpen}
+                aria-controls="ops-sidebar-panel"
+                aria-label={t('ops.layout.showSidebar')}
+              >
+                <PanelLeft className="h-5 w-5" strokeWidth={2} aria-hidden />
+              </button>
+            ) : null}
+          </div>
+          <OpsCommandPalette />
+        </header>
+
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>

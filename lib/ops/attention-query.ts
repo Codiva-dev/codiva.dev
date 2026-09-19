@@ -25,6 +25,7 @@ export async function loadAttentionQueue(opts: {
   staff: PermissionSubject & { id: string };
   visibleProjectIds: string[] | null;
   now?: Date;
+  limit?: number;
 }): Promise<AttentionItem[]> {
   const now = opts.now ?? new Date();
   const today = opsCalendarDate(now);
@@ -218,5 +219,5 @@ export async function loadAttentionQueue(opts: {
     });
   }
 
-  return filterAttentionItems(items, snoozes ?? [], now);
+  return filterAttentionItems(items, snoozes ?? [], now, opts.limit);
 }

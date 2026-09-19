@@ -917,6 +917,7 @@
       "attentionTitle": "Cola de atención",
       "attentionHint": "Lo que no puede esperar: cargos, tickets, tablero, QA, entrevistas y horas.",
       "attentionEmpty": "Nada urgente ahora.",
+      "attentionSeeAll": "Ver todos",
       "attentionSnooze": "Posponer 24 h",
       "attentionSnoozed": "Pospuesto 24 horas",
       "attentionKind": {
@@ -1712,7 +1713,43 @@
     },
     "pendientes": {
       "title": "Pendientes",
-      "description": "Lo que te toca cerrar, las menciones sin leer y, si administras el tablero, los pedidos de cambio.",
+      "description": "Todo lo que hay que atender, agrupado por tiempo, con acciones rápidas de monitoreo.",
+      "kicker": "Hoy en Ops",
+      "helloMorning": "Buenos días, {{name}}",
+      "helloAfternoon": "Buenas tardes, {{name}}",
+      "helloEvening": "Buenas noches, {{name}}",
+      "summaryOverdue": "{{count}} vencidos",
+      "summaryActions": "{{count}} acciones",
+      "summaryToday": "{{count}} para hoy",
+      "summaryClear": "Nada urgente. El resto puede esperar.",
+      "searchPlaceholder": "Filtrar pendientes",
+      "filterAll": "Todos",
+      "filterEmpty": "Nada en este filtro.",
+      "caughtUpTitle": "Estás al día",
+      "caughtUpBody": "Cargos, tickets, tablero y menciones están en orden.",
+      "openBoard": "Ir al tablero",
+      "openDashboard": "Ver resumen",
+      "actionsTitle": "Acciones rápidas",
+      "empty": "Nada pendiente ahora.",
+      "time": {
+        "none": "Sin fecha",
+        "today": "Hoy",
+        "tomorrow": "Mañana",
+        "yesterday": "Ayer",
+        "ago": "Hace {{count}} días",
+        "in": "En {{count}} días"
+      },
+      "bucket": {
+        "overdue": "Vencido",
+        "today": "Hoy",
+        "week": "Esta semana",
+        "later": "Después"
+      },
+      "kind": {
+        "assignment": "Tu asignación",
+        "mention": "Mención",
+        "editRequest": "Pedido de cambio"
+      },
       "mine": "Tus asignaciones abiertas",
       "mineEmpty": "No tienes asignaciones abiertas.",
       "mentions": "Menciones sin leer",

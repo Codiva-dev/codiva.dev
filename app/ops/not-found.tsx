@@ -28,8 +28,8 @@ export default async function OpsNotFound() {
       code="404"
       title={t('errors.notFoundTitle')}
       description={t('errors.opsNotFoundBody')}
-      primaryHref="/dashboard"
-      primaryLabel={t('errors.opsDashboard')}
+      primaryHref="/pendientes"
+      primaryLabel={t('errors.opsHome')}
       secondaryHref="/login"
       secondaryLabel={t('errors.opsLogin')}
     />

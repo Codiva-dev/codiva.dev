@@ -25,4 +25,5 @@ export async function snoozeAttentionItem(formData: FormData) {
   );
   if (error) throw await throwDb(error);
   revalidatePath('/dashboard');
+  revalidatePath('/pendientes');
 }

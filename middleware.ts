@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
 import { needsAuthSessionRefresh } from '@/lib/supabase/session-refresh';
+import { OPS_HOME_PATH } from '@/lib/ops/home';
 import {
   isOpsHost,
   isPortalHost,
@@ -430,7 +431,7 @@ export async function middleware(request: NextRequest) {
     if (pathname === '/ops' || pathname === '/ops/') {
       return withSessionCookies(
         sessionResponse,
-        absoluteRedirect(request, opsBaseUrl(), '/dashboard')
+        absoluteRedirect(request, opsBaseUrl(), OPS_HOME_PATH)
       );
     }
     if (pathname.startsWith('/ops/')) {
@@ -441,7 +442,7 @@ export async function middleware(request: NextRequest) {
     if (!pathname.startsWith('/ops')) {
       const url = request.nextUrl.clone();
       if (pathname === '/') {
-        url.pathname = '/ops/dashboard';
+        url.pathname = `/ops${OPS_HOME_PATH}`;
       } else {
         url.pathname = `/ops${pathname}`;
       }
@@ -464,10 +465,10 @@ export async function middleware(request: NextRequest) {
   // --- MARKETING ---
   if (pathname === '/ops' || pathname === '/ops/' || pathname.startsWith('/ops/')) {
     const rest =
-      pathname === '/ops' || pathname === '/ops/' ? '/dashboard' : pathname.slice('/ops'.length);
+      pathname === '/ops' || pathname === '/ops/' ? OPS_HOME_PATH : pathname.slice('/ops'.length);
     return withSessionCookies(
       sessionResponse,
-      absoluteRedirect(request, opsBaseUrl(), rest || '/dashboard')
+      absoluteRedirect(request, opsBaseUrl(), rest || OPS_HOME_PATH)
     );
   }
 

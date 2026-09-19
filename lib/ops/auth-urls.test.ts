@@ -54,6 +54,7 @@ describe('auth callback redirects', () => {
 
   it('keeps success on the same surface', () => {
     expect(authCallbackFallbackPath('portal.codiva.dev')).toBe('/proyectos');
+    expect(authCallbackFallbackPath('ops.codiva.dev')).toBe('/pendientes');
     expect(authCallbackSuccessUrl('portal.codiva.dev', '/reset-password')).toBe(
       'https://portal.codiva.dev/reset-password'
     );

@@ -14,7 +14,14 @@ export default function OpsAttentionQueue({
 }) {
   return (
     <Card as="section" className="mb-6">
-      <CardHeader title={t('ops.dashboard.attentionTitle')} />
+      <CardHeader
+        title={t('ops.dashboard.attentionTitle')}
+        action={
+          <Link href="/pendientes" className="text-sm text-codiva-primary hover:underline">
+            {t('ops.dashboard.attentionSeeAll')}
+          </Link>
+        }
+      />
       <p className="-mt-2 mb-4 text-sm text-zinc-500">{t('ops.dashboard.attentionHint')}</p>
       {items.length ? (
         <ul className="space-y-3">

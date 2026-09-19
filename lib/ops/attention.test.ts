@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  attentionBucket,
   attentionItemKey,
   filterAttentionItems,
   isStuckAssignment,
@@ -68,7 +69,29 @@ describe('attention helpers', () => {
     expect(filtered.map((row) => row.kind)).toEqual(['lead_stale']);
   });
 
+  it('can return the uncapped queue', () => {
+    const items = Array.from({ length: 15 }, (_, index) => ({
+      key: attentionItemKey('lead_stale', `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`),
+      kind: 'lead_stale' as const,
+      title: `Lead ${index}`,
+      subtitle: '',
+      href: `/leads/${index}`,
+      rank: 6,
+      at: '2026-09-22T10:00:00.000Z',
+    }));
+    expect(filterAttentionItems(items, [], now)).toHaveLength(12);
+    expect(filterAttentionItems(items, [], now, 0)).toHaveLength(15);
+  });
+
   it('returns Monday YMD in Mexico City', () => {
     expect(weekStartYmd(now)).toBe('2026-09-21');
+  });
+
+  it('buckets dates relative to today in Mexico City', () => {
+    expect(attentionBucket('2026-09-20', now)).toBe('overdue');
+    expect(attentionBucket('2026-09-22T15:00:00.000Z', now)).toBe('today');
+    expect(attentionBucket('2026-09-25T15:00:00.000Z', now)).toBe('week');
+    expect(attentionBucket('2026-10-10', now)).toBe('later');
+    expect(attentionBucket('', now)).toBe('later');
   });
 });

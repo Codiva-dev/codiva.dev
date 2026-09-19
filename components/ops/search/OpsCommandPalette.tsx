@@ -86,7 +86,7 @@ export default function OpsCommandPalette() {
     <>
       <button
         type="button"
-        className="pointer-events-auto flex h-10 items-center gap-2 rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-600 shadow-sm transition hover:bg-zinc-50"
+        className="flex h-10 shrink-0 items-center gap-2 rounded-xl border border-zinc-300 bg-white px-3 text-sm text-zinc-600 shadow-sm transition hover:bg-zinc-50"
         onClick={() => setOpen(true)}
         aria-label={t('ops.commandPalette.shortcutAria')}
       >
