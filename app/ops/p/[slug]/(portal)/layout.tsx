@@ -4,8 +4,13 @@ import { requirePortalMemberWithAcceptances } from '@/lib/ops/auth';
 import { getPortalVisibility, withQuoteNav } from '@/lib/ops/portal-visibility';
 import Link from 'next/link';
 import { getT } from '@/i18n/locale';
-import OpsPortalI18n from '@/i18n/OpsPortalI18n';
 import OpsChromeI18n from '@/i18n/OpsChromeI18n';
+import OpsPortalI18n from '@/i18n/OpsPortalI18n';
+import { loadOpsSurface } from '@/i18n/load-ops-surface';
+import enChrome from '@/i18n/locales/en/ops-chrome.json';
+import enPortal from '@/i18n/locales/en/ops-portal.json';
+import esChrome from '@/i18n/locales/es/ops-chrome.json';
+import esPortal from '@/i18n/locales/es/ops-portal.json';
 
 export default async function PortalLayout({
   children,
@@ -28,10 +33,12 @@ export default async function PortalLayout({
     : { count: 0 };
   const visibility = withQuoteNav(baseVisibility, (quoteCanvasCount ?? 0) > 0);
   const t = await getT();
+  const portal = await loadOpsSurface(esPortal, enPortal);
+  const chrome = await loadOpsSurface(esChrome, enChrome);
 
   return (
-    <OpsPortalI18n>
-      <OpsChromeI18n>
+    <OpsPortalI18n {...portal}>
+      <OpsChromeI18n {...chrome}>
       <div className="min-h-screen bg-codiva-background">
         {isStaffPreview && (
           <StaffPortalPreviewBanner projectName={project.name} slug={slug} />

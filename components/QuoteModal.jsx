@@ -2,11 +2,10 @@
 
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
 import { motion } from 'framer-motion';
 import { Mail, MessageCircle, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import LeadForm from '@/components/LeadForm';
 
 export default function QuoteModal({ showForm, onShowForm, onClose }) {
   const { t } = useTranslation();
@@ -30,12 +29,6 @@ export default function QuoteModal({ showForm, onShowForm, onClose }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [onClose]);
-
-  const validationSchema = Yup.object({
-    name: Yup.string().trim().required(t('common.validation.required')),
-    projectType: Yup.string().required(t('common.validation.required')),
-    message: Yup.string().trim().min(10, t('common.validation.tooShort')),
-  });
 
   return (
     <motion.div
@@ -90,9 +83,10 @@ export default function QuoteModal({ showForm, onShowForm, onClose }) {
             </div>
           </div>
         ) : (
-          <Formik
-            initialValues={{ name: '', projectType: '', message: '' }}
-            validationSchema={validationSchema}
+          <LeadForm
+            variant="quote-help"
+            formClassName="space-y-4 text-sm text-zinc-800"
+            buttonClassName="w-full rounded-xl bg-codiva-primary py-2.5 font-medium text-white transition hover:bg-codiva-primary-dark"
             onSubmit={(values) => {
               const name = String(values.name || '').trim();
               const projectType = values.projectType;
@@ -105,78 +99,10 @@ export default function QuoteModal({ showForm, onShowForm, onClose }) {
                 messageLabel: t('common.fields.message'),
                 message: message || 'N/A',
               });
-              const url = `https://wa.me/5215566819736?text=${encodeURIComponent(text)}`;
-              window.open(url, '_blank');
+              window.open(`https://wa.me/5215566819736?text=${encodeURIComponent(text)}`, '_blank');
               onClose();
             }}
-          >
-            {() => (
-              <Form className="space-y-4 text-sm text-zinc-800">
-                <div>
-                  <label htmlFor="name" className="mb-1 block font-medium">
-                    {t('common.fields.name')}
-                    <span className="text-codiva-primary" aria-hidden="true"> *</span>
-                  </label>
-                  <Field
-                    name="name"
-                    className="w-full rounded-md border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-codiva-primary"
-                  />
-                  <ErrorMessage name="name" component="div" className="mt-1 text-xs text-red-500" />
-                </div>
-
-                <div>
-                  <label htmlFor="projectType" className="mb-1 block font-medium">
-                    {t('common.fields.projectType')}
-                    <span className="text-codiva-primary" aria-hidden="true"> *</span>
-                  </label>
-                  <Field
-                    as="select"
-                    name="projectType"
-                    className="w-full rounded-md border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-codiva-primary"
-                  >
-                    <option value="">{t('quote.fields.selectOption')}</option>
-                    <option value={t('quote.fields.options.webEssentials')}>
-                      {t('quote.fields.options.webEssentials')}
-                    </option>
-                    <option value={t('quote.fields.options.appsSystems')}>
-                      {t('quote.fields.options.appsSystems')}
-                    </option>
-                    <option value={t('quote.fields.options.continuousCare')}>
-                      {t('quote.fields.options.continuousCare')}
-                    </option>
-                    <option value={t('quote.fields.options.other')}>
-                      {t('quote.fields.options.other')}
-                    </option>
-                  </Field>
-                  <ErrorMessage
-                    name="projectType"
-                    component="div"
-                    className="mt-1 text-xs text-red-500"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="message" className="mb-1 block font-medium">
-                    {t('common.fields.message')}
-                  </label>
-                  <Field
-                    as="textarea"
-                    name="message"
-                    rows="4"
-                    className="w-full rounded-md border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-codiva-primary"
-                  />
-                  <ErrorMessage name="message" component="div" className="mt-1 text-xs text-red-500" />
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full rounded-xl bg-codiva-primary py-2.5 font-medium text-white transition hover:bg-codiva-primary-dark"
-                >
-                  {t('common.buttons.submit')}
-                </button>
-              </Form>
-            )}
-          </Formik>
+          />
         )}
       </motion.div>
     </motion.div>

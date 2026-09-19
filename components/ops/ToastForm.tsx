@@ -5,7 +5,7 @@ import { isRedirectError } from 'next/dist/client/components/redirect-error';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import ConfirmDialog from '@/components/ops/ConfirmDialog';
-import { toUserErrorMessage } from '@/lib/user-error';
+import { toUserErrorMessage, isBodyTooLargeError } from '@/lib/user-error';
 
 type ServerAction = ((formData: FormData) => Promise<unknown>) | (() => Promise<unknown>);
 
@@ -43,6 +43,11 @@ export default function ToastForm({
   const [pending, setPending] = useState<FormData | null>(null);
 
   function errorMessage(err: unknown): string {
+    const raw =
+      typeof err === 'string' ? err : err instanceof Error && err.message ? err.message : '';
+    if (isBodyTooLargeError(raw)) {
+      return t('ops.asignaciones.fileTooBig', { name: t('ops.asignaciones.unnamedFile') });
+    }
     return toUserErrorMessage(err, t('common.status.actionFailed'));
   }
 

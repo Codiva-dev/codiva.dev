@@ -1,5 +1,5 @@
-import OpsStaffI18n from '@/i18n/OpsStaffI18n';
+import OpsStaffI18nGate from '@/i18n/OpsStaffI18nGate';
 
 export default function InterviewsApplicationLayout({ children }: { children: React.ReactNode }) {
-  return <OpsStaffI18n>{children}</OpsStaffI18n>;
+  return <OpsStaffI18nGate>{children}</OpsStaffI18nGate>;
 }

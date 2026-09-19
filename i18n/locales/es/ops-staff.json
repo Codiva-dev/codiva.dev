@@ -1608,6 +1608,7 @@
       "fileRequired": "Elige al menos un archivo.",
       "fileEmpty": "{{name}} está vacío.",
       "fileTooBig": "{{name}} pesa más de 10 MB.",
+      "fileUploadFailed": "No se pudo subir {{name}}. Inténtalo de nuevo.",
       "tooManyFiles": "Máximo 6 archivos por asignación.",
       "tooManySelected": "Máximo {{max}} archivos. Se omitieron los demás.",
       "fileTypeRejected": "{{name}} no se puede adjuntar. Usa imagen, PDF, Office, CSV, ZIP o un archivo de diseño.",

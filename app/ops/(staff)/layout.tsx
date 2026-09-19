@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { requireStaff } from '@/lib/ops/auth';
 import OpsStaffShell from '@/components/ops/OpsStaffShell';
-import OpsStaffI18n from '@/i18n/OpsStaffI18n';
+import OpsStaffI18nGate from '@/i18n/OpsStaffI18nGate';
 import { isOpsSidebarOpenCookie, OPS_SIDEBAR_OPEN_COOKIE } from '@/lib/ops/sidebar-pref';
 import { can } from '@/lib/ops/permissions';
 import { countWorkPending } from '@/lib/ops/work-pending';
@@ -15,7 +15,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
     : 0;
 
   return (
-    <OpsStaffI18n>
+    <OpsStaffI18nGate>
       <OpsStaffShell
         staffName={staff.full_name || 'Staff'}
         staffPermissions={{
@@ -27,6 +27,6 @@ export default async function StaffLayout({ children }: { children: React.ReactN
       >
         {children}
       </OpsStaffShell>
-    </OpsStaffI18n>
+    </OpsStaffI18nGate>
   );
 }

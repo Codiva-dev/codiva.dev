@@ -1,12 +1,25 @@
 'use client';
 
 import SurfaceI18n from '@/i18n/SurfaceI18n';
-import en from '@/i18n/locales/en/ops-portal.json';
-import es from '@/i18n/locales/es/ops-portal.json';
+import type { Locale } from '@/i18n/config';
+import type { ReactNode } from 'react';
 
-export default function OpsPortalI18n({ children }: { children: React.ReactNode }) {
+const loaders = {
+  es: () => import('@/i18n/locales/es/ops-portal.json'),
+  en: () => import('@/i18n/locales/en/ops-portal.json'),
+};
+
+export default function OpsPortalI18n({
+  locale,
+  bundle,
+  children,
+}: {
+  locale: Locale;
+  bundle: object;
+  children: ReactNode;
+}) {
   return (
-    <SurfaceI18n id="ops-portal" es={es} en={en}>
+    <SurfaceI18n id="ops-portal" locale={locale} bundle={bundle} loaders={loaders}>
       {children}
     </SurfaceI18n>
   );

@@ -1,5 +1,5 @@
-import OpsPortalI18n from '@/i18n/OpsPortalI18n';
+import OpsPortalI18nGate from '@/i18n/OpsPortalI18nGate';
 
 export default function PortalSurfaceLayout({ children }: { children: React.ReactNode }) {
-  return <OpsPortalI18n>{children}</OpsPortalI18n>;
+  return <OpsPortalI18nGate>{children}</OpsPortalI18nGate>;
 }

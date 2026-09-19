@@ -1612,6 +1612,7 @@
       "fileRequired": "Choose at least one file.",
       "fileEmpty": "{{name}} is empty.",
       "fileTooBig": "{{name}} is larger than 10 MB.",
+      "fileUploadFailed": "Could not upload {{name}}. Try again.",
       "tooManyFiles": "Maximum 6 files per assignment.",
       "tooManySelected": "Maximum {{max}} files. The rest were skipped.",
       "fileTypeRejected": "{{name}} cannot be attached. Use an image, PDF, Office, CSV, ZIP, or design file.",

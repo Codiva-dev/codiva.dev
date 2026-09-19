@@ -1,10 +1,10 @@
-import OpsPortalI18n from '@/i18n/OpsPortalI18n';
-import OpsStaffI18n from '@/i18n/OpsStaffI18n';
+import OpsPortalI18nGate from '@/i18n/OpsPortalI18nGate';
+import OpsStaffI18nGate from '@/i18n/OpsStaffI18nGate';
 
 export default function OpsLoginLayout({ children }: { children: React.ReactNode }) {
   return (
-    <OpsStaffI18n>
-      <OpsPortalI18n>{children}</OpsPortalI18n>
-    </OpsStaffI18n>
+    <OpsStaffI18nGate>
+      <OpsPortalI18nGate>{children}</OpsPortalI18nGate>
+    </OpsStaffI18nGate>
   );
 }

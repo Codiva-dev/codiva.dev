@@ -8,13 +8,8 @@ import Button from '@/components/ui/Button';
 import Field from '@/components/ui/Field';
 import Heading from '@/components/Heading';
 import Input, { Textarea } from '@/components/ui/Input';
-import { injectTranslationBundle } from '@/i18n/injectBundle';
-import enTicket from '@/i18n/locales/en/ticket.json';
-import esTicket from '@/i18n/locales/es/ticket.json';
 import { TICKET_MAX_BYTES, TICKET_MAX_FILES } from '@/lib/ops/ticket-constants';
 import { formatBytes } from '@/lib/format-bytes';
-
-injectTranslationBundle('ticket', esTicket, enTicket);
 
 type TicketFormValues = {
   name: string;

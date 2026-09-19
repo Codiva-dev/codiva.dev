@@ -3,8 +3,7 @@
 import Link from 'next/link';
 import { Github, Linkedin, Instagram } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { revealClass, useInView } from '../utils/inView';
 import { CODIVA_BRAND } from '@/lib/brand';
 import CodivaWordmark from './CodivaWordmark';
 import { careerBaseUrl, marketingBaseUrl, ticketBaseUrl } from '@/lib/ops/host';
@@ -28,19 +27,15 @@ function LegalLink({ href, children }) {
 
 export default function Footer({ variant = 'marketing' }) {
   const { t } = useTranslation();
-  const footerRef = useRef(null);
-  const inView = useInView(footerRef, { triggerOnce: false, threshold: 0.4 });
+  const [footerRef, inView] = useInView(0.4);
   const isCareer = variant === 'career';
   const legalBase = isCareer || variant === 'ticket' ? marketingBaseUrl() : '';
   const year = isCareer ? 2024 : new Date().getFullYear();
 
   return (
-    <motion.footer
+    <footer
       ref={footerRef}
-      initial={{ opacity: 0, y: 40 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="w-full px-6 md:px-12 py-10 text-sm bg-zinc-900 border-t border-zinc-800 font-inter"
+      className={`${revealClass(inView)} w-full px-6 md:px-12 py-10 text-sm bg-zinc-900 border-t border-zinc-800 font-inter`}
     >
       <div className="mx-auto flex min-w-0 max-w-6xl flex-col items-center justify-between gap-6 md:flex-row">
         <span className="text-zinc-400 text-center md:text-left">
@@ -148,6 +143,6 @@ export default function Footer({ variant = 'marketing' }) {
           </div>
         </div>
       </div>
-    </motion.footer>
+    </footer>
   );
 }
