@@ -94,7 +94,7 @@ function MonitorCard({ item }: { item: PendingMonitorItem }) {
   return (
     <article
       className={cn(
-        'relative flex gap-3 rounded-2xl border border-zinc-200 border-l-4 bg-white p-4 shadow-sm transition hover:border-zinc-300 hover:shadow-md',
+        'relative isolate z-0 flex gap-3 rounded-2xl border border-zinc-200 border-l-4 bg-white p-4 shadow-sm transition hover:border-zinc-300 hover:shadow-md',
         cardAccent(item)
       )}
     >
@@ -267,7 +267,7 @@ export default function OpsPendientesHome({
       </header>
 
       {emptyCatalog ? null : (
-        <div className="sticky top-0 z-10 -mx-4 mt-6 bg-codiva-background/90 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="sticky top-0 z-30 -mx-4 mt-6 bg-codiva-background/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {chips.map((chip) => (
               <FilterChip
