@@ -1,13 +1,19 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { isSupabaseAnonConfigured } from '@/lib/supabase/session-refresh';
 
-export async function updateSession(request: NextRequest) {
+export async function updateSession(request: NextRequest, options?: { refreshUser?: boolean }) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-codiva-path', `${request.nextUrl.pathname}${request.nextUrl.search}`);
-  let supabaseResponse = NextResponse.next({
+  const passthrough = NextResponse.next({
     request: { headers: requestHeaders },
   });
 
+  if (options?.refreshUser === false || !isSupabaseAnonConfigured()) {
+    return passthrough;
+  }
+
+  let supabaseResponse = passthrough;
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -23,8 +29,8 @@ export async function updateSession(request: NextRequest) {
           supabaseResponse = NextResponse.next({
             request: { headers: requestHeaders },
           });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+          cookiesToSet.forEach(({ name, value, options: cookieOptions }) =>
+            supabaseResponse.cookies.set(name, value, cookieOptions)
           );
         },
       },
