@@ -141,6 +141,48 @@ a {
   animation: hero-cta-in 0.5s ease-out 0.12s both;
 }
 
+.reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.reveal-delay-1 {
+  transition-delay: 0.1s;
+}
+
+.reveal-delay-2 {
+  transition-delay: 0.2s;
+}
+
+.reveal-delay-3 {
+  transition-delay: 0.3s;
+}
+
+.wordmark-cascade {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.wordmark-cascade.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+.wordmark-cascade-codiva {
+  transition-delay: 0.3s;
+}
+
+.wordmark-cascade-dev {
+  transition-delay: 0.5s;
+}
+
 @keyframes codiva-toast-in {
   from {
     opacity: 0;
@@ -185,6 +227,13 @@ a {
   .codiva-toast-in,
   .codiva-toast-out {
     animation: none;
+  }
+
+  .reveal,
+  .wordmark-cascade {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 
   .codiva-toast-out {
