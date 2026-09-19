@@ -15,7 +15,6 @@
     "generate:supabase-emails": "node scripts/generate-supabase-email-templates.mjs"
   },
   "dependencies": {
-    "@fontsource/inter": "^5.2.6",
     "@sentry/nextjs": "^10.70.0",
     "@sparticuz/chromium-min": "^149.0.0",
     "@supabase/ssr": "^0.12.0",
@@ -23,12 +22,10 @@
     "@vercel/analytics": "^1.5.0",
     "@vercel/blob": "^2.3.3",
     "@vercel/functions": "^3.9.3",
-    "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
     "docx-preview": "^0.4.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.18.1",
-    "hamburger-react": "^2.5.2",
     "i18next": "^25.2.1",
     "i18next-browser-languagedetector": "^8.2.0",
     "jszip": "^3.10.1",
@@ -41,7 +38,6 @@
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
     "react-i18next": "^15.5.3",
-    "react-simple-typewriter": "^5.0.1",
     "resend": "^4.6.0",
     "tailwind-scrollbar-hide": "^4.0.0",
     "yup": "^1.6.1"
@@ -54,7 +50,6 @@
   ],
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
