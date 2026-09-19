@@ -2,6 +2,8 @@ import { createHash } from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { slugify } from '@/lib/ops/slug';
 
+export const OPS_FILES_BUCKET = 'ops-files';
+
 /** TTL corto para URLs firmadas (segundos). */
 export const OPS_SIGNED_URL_TTL_SECONDS = 60 * 5; // 5 minutos
 
@@ -77,7 +79,7 @@ export async function createOpsSignedUrl(
   expiresIn = OPS_SIGNED_URL_TTL_SECONDS
 ): Promise<string> {
   const admin = createAdminClient();
-  const { data, error } = await admin.storage.from('ops-files').createSignedUrl(path, expiresIn);
+  const { data, error } = await admin.storage.from(OPS_FILES_BUCKET).createSignedUrl(path, expiresIn);
   if (error || !data?.signedUrl) {
     throw error ?? new Error('No se pudo firmar URL');
   }
@@ -86,7 +88,7 @@ export async function createOpsSignedUrl(
 
 export async function deleteOpsFile(path: string): Promise<void> {
   const admin = createAdminClient();
-  await admin.storage.from('ops-files').remove([path]);
+  await admin.storage.from(OPS_FILES_BUCKET).remove([path]);
 }
 
 export async function uploadOpsFile(
@@ -100,7 +102,7 @@ export async function uploadOpsFile(
   const buffer = Buffer.from(await file.arrayBuffer());
   const sha256 = sha256Hex(buffer);
 
-  const { error } = await admin.storage.from('ops-files').upload(path, buffer, {
+  const { error } = await admin.storage.from(OPS_FILES_BUCKET).upload(path, buffer, {
     contentType: file instanceof File ? file.type : 'application/octet-stream',
     upsert: false,
   });

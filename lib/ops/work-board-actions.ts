@@ -4,14 +4,13 @@ import { revalidatePath } from 'next/cache';
 import { assertCapability } from '@/lib/ops/auth';
 import { can } from '@/lib/ops/permissions';
 import { logActivity } from '@/lib/ops/activity';
-import { throwDb, throwPublic } from '@/lib/ops/throw-db';
+import { throwDb } from '@/lib/ops/throw-db';
 import { getT } from '@/i18n/locale';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { sendClientEmail } from '@/lib/ops/email';
 import { templateStaffAlert } from '@/lib/ops/email-templates';
 import { opsBaseUrl } from '@/lib/ops/host';
-import { scanUploadedBytes } from '@/lib/ops/malware-scan';
-import { deleteOpsFile, uploadOpsFile } from '@/lib/ops/storage';
+import { deleteOpsFile } from '@/lib/ops/storage';
 import {
   canMutateWorkAssignment,
   canRequestWorkSubtaskEdit,
@@ -27,12 +26,6 @@ import {
   parseSubtaskLines,
   planWorkSubtaskRewrite,
   rollupProgressFromSubtasks,
-  WORK_FILE_MAX_COUNT,
-  WORK_FILE_PROBLEM_I18N,
-  workFileKind,
-  workFileLabel,
-  workFileProblem,
-  workFilesFromInput,
   type WorkProcessKind,
   type WorkStatus,
   type WorkStream,
@@ -120,62 +113,6 @@ async function closeOpenEditRequest(
   if (error) throw await throwDb(error);
 }
 
-async function saveWorkFiles({
-  supabase,
-  assignmentId,
-  files,
-  staffId,
-  existingCount,
-}: {
-  supabase: Awaited<ReturnType<typeof assertCapability>>['supabase'];
-  assignmentId: string;
-  files: File[];
-  staffId: string;
-  existingCount: number;
-}) {
-  if (!files.length) return;
-  const t = await getT();
-  if (existingCount + files.length > WORK_FILE_MAX_COUNT) {
-    throw new Error(t('ops.asignaciones.tooManyFiles'));
-  }
-  for (const file of files) {
-    const problem = workFileProblem(file);
-    if (problem) {
-      console.warn('[work-file] rejected', problem, { name: file.name, type: file.type, size: file.size });
-      const name = workFileLabel(file.name) || t('ops.asignaciones.unnamedFile');
-      throw new Error(t(WORK_FILE_PROBLEM_I18N[problem], { name }));
-    }
-    const kind = workFileKind(file.type, file.name);
-    if (!kind) {
-      console.warn('[work-file] rejected', 'type', { name: file.name, type: file.type, size: file.size });
-      throw new Error(
-        t(WORK_FILE_PROBLEM_I18N.type, {
-          name: workFileLabel(file.name) || t('ops.asignaciones.unnamedFile'),
-        })
-      );
-    }
-    const uploaded = await uploadOpsFile(file, `assignments/${assignmentId}`);
-    const scan = await scanUploadedBytes(uploaded.buffer, uploaded.sha256, file.name);
-    if (scan.status === 'infected') {
-      await deleteOpsFile(uploaded.path);
-      await throwPublic('common.status.fileRejected');
-    }
-    const { error } = await supabase.from('work_assignment_files').insert({
-      assignment_id: assignmentId,
-      uploaded_by: staffId,
-      file_name: file.name.slice(0, 240),
-      file_path: uploaded.path,
-      content_type: file.type || 'application/octet-stream',
-      byte_size: file.size,
-      kind,
-    });
-    if (error) {
-      await deleteOpsFile(uploaded.path).catch(() => undefined);
-      throw await throwDb(error);
-    }
-  }
-}
-
 function parseProcess(formData: FormData): { process_kind: WorkProcessKind; process_id: string | null } {
   const kindRaw = String(formData.get('processKind') || 'none').trim();
   const kind = isWorkProcessKind(kindRaw) ? kindRaw : 'none';
@@ -237,7 +174,7 @@ async function syncProgress(
   return progress;
 }
 
-export async function createWorkAssignment(formData: FormData, files?: File[]) {
+export async function createWorkAssignment(formData: FormData) {
   const access = await assertCapability('assignments_manage');
   const t = await getT();
 
@@ -298,14 +235,6 @@ export async function createWorkAssignment(formData: FormData, files?: File[]) {
     await syncProgress(access.supabase, row.id);
   }
 
-  await saveWorkFiles({
-    supabase: access.supabase,
-    assignmentId: row.id,
-    files: workFilesFromInput(files?.length ? files : formData),
-    staffId: access.staff.id,
-    existingCount: 0,
-  });
-
   await logActivity({
     entityType: 'work_assignment',
     entityId: row.id,
@@ -315,9 +244,10 @@ export async function createWorkAssignment(formData: FormData, files?: File[]) {
   });
 
   revalidateBoard();
+  return { id: row.id };
 }
 
-export async function updateWorkAssignment(assignmentId: string, formData: FormData, files?: File[]) {
+export async function updateWorkAssignment(assignmentId: string, formData: FormData) {
   const access = await assertCapability('assignments_manage');
   const t = await getT();
 
@@ -354,21 +284,6 @@ export async function updateWorkAssignment(assignmentId: string, formData: FormD
 
   const { error } = await access.supabase.from('work_assignments').update(patch).eq('id', assignmentId);
   if (error) throw await throwDb(error);
-
-  const uploaded = workFilesFromInput(files?.length ? files : formData);
-  if (uploaded.length) {
-    const { count } = await access.supabase
-      .from('work_assignment_files')
-      .select('id', { count: 'exact', head: true })
-      .eq('assignment_id', assignmentId);
-    await saveWorkFiles({
-      supabase: access.supabase,
-      assignmentId,
-      files: uploaded,
-      staffId: access.staff.id,
-      existingCount: count ?? 0,
-    });
-  }
 
   await logActivity({
     entityType: 'work_assignment',
@@ -862,36 +777,6 @@ export async function markWorkMentionsReadForAssignment(assignmentId: string) {
     .is('read_at', null);
   if (error) throw await throwDb(error);
   revalidatePath('/pendientes');
-}
-
-export async function addWorkAssignmentFiles(assignmentId: string, filesInput: File[] | FormData) {
-  const access = await assertAssignmentsAccess();
-  const t = await getT();
-  const manage = can(access.staff, 'assignments_manage');
-  const files = workFilesFromInput(filesInput);
-  if (!files.length) throw new Error(t('ops.asignaciones.fileRequired'));
-
-  const { data: current, error: loadErr } = await access.supabase
-    .from('work_assignments')
-    .select('id, title, status, assignee_id')
-    .eq('id', assignmentId)
-    .single();
-  if (loadErr || !current) throw await throwDb(loadErr, t('ops.asignaciones.notFound'));
-  await assertCanMutate(current, access.staff.id, manage);
-
-  const { count } = await access.supabase
-    .from('work_assignment_files')
-    .select('id', { count: 'exact', head: true })
-    .eq('assignment_id', assignmentId);
-
-  await saveWorkFiles({
-    supabase: access.supabase,
-    assignmentId,
-    files,
-    staffId: access.staff.id,
-    existingCount: count ?? 0,
-  });
-  revalidateBoard();
 }
 
 export async function deleteWorkAssignmentFile(fileId: string) {
