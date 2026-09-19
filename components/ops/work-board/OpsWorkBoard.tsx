@@ -6,8 +6,8 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
-import { Select } from '@/components/ui/Input';
 import ConfirmDialog from '@/components/ops/ConfirmDialog';
+import OpsBuscador, { type OpsBuscadorGroup, type OpsBuscadorValues } from '@/components/ops/search/OpsBuscador';
 import { toUserErrorMessage } from '@/lib/user-error';
 import {
   deleteWorkAssignment,
@@ -30,10 +30,13 @@ import {
   patchWorkSubtaskStatus,
   applyPendingWorkSubtaskStatuses,
   dropConfirmedWorkSubtaskStatuses,
+  filterWorkAssignments,
   sortWorkCardsByUrgency,
+  workBoardSearch,
   type WorkAssignment,
   type WorkUrgency,
 } from '@/lib/ops/work-board';
+import { tallyFilterValues } from '@/lib/ops/search-text';
 import { type MentionStaff } from './OpsMentionComposer';
 import { useWorkBoardDrag } from './useWorkBoardDrag';
 import { useWorkBoardHoverScroll } from './useWorkBoardHoverScroll';
@@ -52,6 +55,11 @@ export default function OpsWorkBoard({
   currentUserId,
   locale,
   initialAssignmentId,
+  initialQuery = '',
+  initialStream = '',
+  initialPerson = '',
+  initialUrgency = '',
+  initialStatus = '',
 }: {
   assignments: WorkAssignment[];
   staff: MentionStaff[];
@@ -60,14 +68,21 @@ export default function OpsWorkBoard({
   currentUserId: string;
   locale: 'es' | 'en';
   initialAssignmentId?: string;
+  initialQuery?: string;
+  initialStream?: string;
+  initialPerson?: string;
+  initialUrgency?: string;
+  initialStatus?: string;
 }) {
   const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const [assignments, setAssignments] = useState(initialAssignments);
-  const [stream, setStream] = useState('');
-  const [person, setPerson] = useState('');
-  const [urgency, setUrgency] = useState('');
+  const [query, setQuery] = useState(initialQuery);
+  const [stream, setStream] = useState(initialStream);
+  const [person, setPerson] = useState(initialPerson);
+  const [urgency, setUrgency] = useState(initialUrgency);
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [view, setView] = useState<'board' | 'list' | 'archive'>(() =>
     initialAssignments.some((row) => row.id === (initialAssignmentId || '') && row.status === 'archived')
       ? 'archive'
@@ -95,13 +110,31 @@ export default function OpsWorkBoard({
     });
   }, [selectedId]);
 
-  function selectAssignment(id: string) {
-    setSelectedId(id);
-    const href = id ? `${pathname}?id=${encodeURIComponent(id)}` : pathname;
+  function writeBoardUrl(next: {
+    id?: string;
+    q?: string;
+    stream?: string;
+    person?: string;
+    urgency?: string;
+    status?: string;
+  }) {
+    const href = `${pathname}${workBoardSearch({
+      id: next.id ?? selectedId,
+      q: next.q ?? query,
+      stream: next.stream ?? stream,
+      person: next.person ?? person,
+      urgency: next.urgency ?? urgency,
+      status: next.status ?? statusFilter,
+    })}`;
     if (typeof window === 'undefined') return;
     const current = `${window.location.pathname}${window.location.search}`;
     if (current === href) return;
     window.history.replaceState(window.history.state, '', href);
+  }
+
+  function selectAssignment(id: string) {
+    setSelectedId(id);
+    writeBoardUrl({ id });
   }
 
   const statusLabels = useMemo(
@@ -134,28 +167,137 @@ export default function OpsWorkBoard({
     [t]
   );
 
+  const catalog = useMemo(
+    () => assignments.filter((row) => (view === 'archive' ? row.status === 'archived' : row.status !== 'archived')),
+    [assignments, view]
+  );
+
   const people = useMemo(() => {
     const map = new Map<string, string>();
-    for (const row of assignments) {
-      if (view === 'archive' ? row.status !== 'archived' : row.status === 'archived') continue;
+    for (const row of catalog) {
       if (row.assignee_id) map.set(row.assignee_id, row.assignee_name);
     }
     return [...map.entries()]
       .map(([id, label]) => ({ id, label }))
       .sort((a, b) => a.label.localeCompare(b.label, locale));
-  }, [assignments, locale, view]);
+  }, [catalog, locale]);
 
   const visible = useMemo(() => {
     return sortWorkCardsByUrgency(
-      assignments.filter((row) => {
-        if (view === 'archive' ? row.status !== 'archived' : row.status === 'archived') return false;
-        if (stream && row.stream !== stream) return false;
-        if (person && row.assignee_id !== person) return false;
-        if (urgency && row.urgency !== urgency) return false;
-        return true;
-      })
+      filterWorkAssignments(
+        assignments,
+        {
+          q: query,
+          stream,
+          person,
+          urgency,
+          status: statusFilter,
+          archive: view === 'archive',
+        },
+        (row) => ({
+          stream: streamLabels[row.stream],
+          status: statusLabels[row.status],
+          urgency: urgencyLabels[row.urgency],
+        })
+      )
     );
-  }, [assignments, stream, person, urgency, view]);
+  }, [assignments, query, stream, person, urgency, statusFilter, view, streamLabels, statusLabels, urgencyLabels]);
+
+  const hits = useMemo(
+    () =>
+      visible.slice(0, 8).map((row) => ({
+        id: row.id,
+        title: row.title,
+        subtitle: [row.assignee_name || t('ops.asignaciones.unassigned'), streamLabels[row.stream], statusLabels[row.status]]
+          .filter(Boolean)
+          .join(' · '),
+      })),
+    [visible, streamLabels, statusLabels, t]
+  );
+
+  const buscadorGroups = useMemo<OpsBuscadorGroup[]>(() => {
+    const streamCounts = tallyFilterValues(catalog, (row) => row.stream);
+    const personCounts = tallyFilterValues(catalog, (row) => row.assignee_id);
+    const urgencyCounts = tallyFilterValues(catalog, (row) => row.urgency);
+    const statusCounts = tallyFilterValues(catalog, (row) => row.status);
+    const groups: OpsBuscadorGroup[] = [
+      {
+        id: 'stream',
+        label: t('ops.asignaciones.stream'),
+        options: WORK_STREAMS.map((id) => ({
+          value: id,
+          label: streamLabels[id],
+          count: streamCounts.get(id) || 0,
+        })),
+      },
+      {
+        id: 'person',
+        label: t('ops.asignaciones.assignee'),
+        options: people.map((row) => ({
+          value: row.id,
+          label: row.label,
+          count: personCounts.get(row.id) || 0,
+        })),
+      },
+      {
+        id: 'urgency',
+        label: t('ops.asignaciones.urgency'),
+        options: WORK_URGENCIES.map((id) => ({
+          value: id,
+          label: urgencyLabels[id],
+          count: urgencyCounts.get(id) || 0,
+        })),
+      },
+    ];
+    if (view !== 'archive') {
+      groups.push({
+        id: 'status',
+        label: t('ops.asignaciones.statusFilter'),
+        options: WORK_BOARD_COLUMNS.map((id) => ({
+          value: id,
+          label: statusLabels[id],
+          count: statusCounts.get(id) || 0,
+        })),
+      });
+    }
+    return groups;
+  }, [catalog, people, streamLabels, urgencyLabels, statusLabels, t, view]);
+
+  const buscadorValues = useMemo<OpsBuscadorValues>(
+    () => ({
+      stream,
+      person,
+      urgency,
+      status: statusFilter,
+    }),
+    [stream, person, urgency, statusFilter]
+  );
+
+  function onBuscadorChange(groupId: string, value: string | string[]) {
+    const next = Array.isArray(value) ? value[0] || '' : value;
+    if (groupId === 'stream') {
+      setStream(next);
+      writeBoardUrl({ stream: next });
+    } else if (groupId === 'person') {
+      setPerson(next);
+      writeBoardUrl({ person: next });
+    } else if (groupId === 'urgency') {
+      setUrgency(next);
+      writeBoardUrl({ urgency: next });
+    } else if (groupId === 'status') {
+      setStatusFilter(next);
+      writeBoardUrl({ status: next });
+    }
+  }
+
+  function clearBuscador() {
+    setQuery('');
+    setStream('');
+    setPerson('');
+    setUrgency('');
+    setStatusFilter('');
+    writeBoardUrl({ q: '', stream: '', person: '', urgency: '', status: '' });
+  }
 
   const selected = visible.find((row) => row.id === selectedId) ?? assignments.find((row) => row.id === selectedId);
 
@@ -238,78 +380,82 @@ export default function OpsWorkBoard({
   return (
     <div className="min-w-0 space-y-4">
       {ghost}
-      <div className="flex flex-wrap items-center gap-2">
-        <Select size="sm" className="w-auto min-w-40" value={stream} onChange={(e) => setStream(e.target.value)}>
-          <option value="">{t('ops.asignaciones.allStreams')}</option>
-          {WORK_STREAMS.map((id) => (
-            <option key={id} value={id}>
-              {streamLabels[id]}
-            </option>
-          ))}
-        </Select>
-        <Select size="sm" className="w-auto min-w-40" value={person} onChange={(e) => setPerson(e.target.value)}>
-          <option value="">{t('ops.asignaciones.allPeople')}</option>
-          {people.map((row) => (
-            <option key={row.id} value={row.id}>
-              {row.label}
-            </option>
-          ))}
-        </Select>
-        <Select size="sm" className="w-auto min-w-40" value={urgency} onChange={(e) => setUrgency(e.target.value)}>
-          <option value="">{t('ops.asignaciones.allUrgencies')}</option>
-          {WORK_URGENCIES.map((id) => (
-            <option key={id} value={id}>
-              {urgencyLabels[id]}
-            </option>
-          ))}
-        </Select>
-        <div className="flex rounded-lg border border-zinc-200 p-0.5">
-          <button
-            type="button"
-            className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'board' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
-            onClick={() => setView('board')}
-          >
-            {t('ops.asignaciones.viewBoard')}
-          </button>
-          <button
-            type="button"
-            className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'list' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
-            onClick={() => setView('list')}
-          >
-            {t('ops.asignaciones.viewList')}
-          </button>
-          <button
-            type="button"
-            className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'archive' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
-            onClick={() => setView('archive')}
-          >
-            {t('ops.asignaciones.viewArchive')}
-          </button>
-        </div>
-        {view === 'board' ? (
-          <div className="flex rounded-lg border border-zinc-200 p-0.5">
-            <button
-              type="button"
-              className={`rounded-md px-3 py-1.5 text-xs font-medium ${density === 'compact' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
-              onClick={() => setDensity('compact')}
-            >
-              {t('ops.asignaciones.cardsCompact')}
+      <OpsBuscador
+        query={query}
+        onQueryChange={(value) => {
+          setQuery(value);
+          writeBoardUrl({ q: value });
+        }}
+        placeholder={t('ops.asignaciones.searchPlaceholder')}
+        groups={buscadorGroups}
+        values={buscadorValues}
+        onChange={onBuscadorChange}
+        onClearAll={clearBuscador}
+        catalogCount={catalog.length}
+        matchedCount={visible.length}
+        noun={t('ops.buscador.nouns.assignments')}
+        nounOne={t('ops.buscador.nouns.assignment')}
+        hits={query.trim() ? hits : []}
+        onHitSelect={selectAssignment}
+        empty={
+          <EmptyState>
+            {t('ops.buscador.undoQueryHint', { noun: t('ops.buscador.nouns.assignments') })}{' '}
+            <button type="button" className="font-medium text-codiva-primary" onClick={clearBuscador}>
+              {t('ops.buscador.clearQuery')}
             </button>
-            <button
-              type="button"
-              className={`rounded-md px-3 py-1.5 text-xs font-medium ${density === 'expanded' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
-              onClick={() => setDensity('expanded')}
-            >
-              {t('ops.asignaciones.cardsExpanded')}
-            </button>
-          </div>
-        ) : null}
-        {canManage ? (
-          <Button size="xs" className="ml-auto" onClick={() => setCreateOpen(true)}>
-            {t('ops.asignaciones.create')}
-          </Button>
-        ) : null}
-      </div>
+          </EmptyState>
+        }
+        actions={
+          <>
+            <div className="flex rounded-lg border border-zinc-200 p-0.5">
+              <button
+                type="button"
+                className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'board' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+                onClick={() => setView('board')}
+              >
+                {t('ops.asignaciones.viewBoard')}
+              </button>
+              <button
+                type="button"
+                className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'list' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+                onClick={() => setView('list')}
+              >
+                {t('ops.asignaciones.viewList')}
+              </button>
+              <button
+                type="button"
+                className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'archive' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+                onClick={() => setView('archive')}
+              >
+                {t('ops.asignaciones.viewArchive')}
+              </button>
+            </div>
+            {view === 'board' ? (
+              <div className="flex rounded-lg border border-zinc-200 p-0.5">
+                <button
+                  type="button"
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${density === 'compact' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+                  onClick={() => setDensity('compact')}
+                >
+                  {t('ops.asignaciones.cardsCompact')}
+                </button>
+                <button
+                  type="button"
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${density === 'expanded' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+                  onClick={() => setDensity('expanded')}
+                >
+                  {t('ops.asignaciones.cardsExpanded')}
+                </button>
+              </div>
+            ) : null}
+            {canManage ? (
+              <Button size="xs" className="ml-auto" onClick={() => setCreateOpen(true)}>
+                {t('ops.asignaciones.create')}
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
       {view === 'board' ? (
         <div

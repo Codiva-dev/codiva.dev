@@ -6,7 +6,10 @@ import {
   canRequestWorkSubtaskEdit,
   clampWorkProgress,
   dwellMsSince,
+  filterWorkAssignments,
   filterMentionableStaff,
+  workAssignmentHaystack,
+  workBoardSearch,
   formatDwellDuration,
   mentionedStaffIds,
   mentionPlainText,
@@ -352,6 +355,54 @@ describe('work-board mentions', () => {
     ];
     expect(filterMentionableStaff(staff, 'jea').map((s) => s.id)).toEqual(['1']);
     expect(filterMentionableStaff(staff, '', '1').map((s) => s.id)).toEqual(['2']);
+  });
+});
+
+describe('work-board search', () => {
+  const row = {
+    id: 'a',
+    title: 'Portal NIRC',
+    description: 'Sprints y auth',
+    stream: 'delivery' as const,
+    urgency: 'high' as const,
+    status: 'build' as const,
+    assignee_id: 'jean',
+    assignee_name: 'Jean Claude',
+    due_at: null,
+    progress_pct: 0,
+    process_kind: 'project' as const,
+    process_id: 'p1',
+    process_label: 'NIRC',
+    process_href: '/projects/nirc',
+    status_entered_at: '2026-01-01T00:00:00.000Z',
+    created_at: '2026-01-01T00:00:00.000Z',
+    created_by: null,
+    subtasks: [{ id: 's1', assignment_id: 'a', title: 'Migrar RLS', status: 'open' as const, sort_order: 0, due_at: null }],
+    stage_events: [],
+    comments: [],
+    files: [],
+    subtask_edit_request: null,
+    unread_mention_count: 0,
+  };
+
+  it('builds a shareable query string', () => {
+    expect(workBoardSearch({ q: ' nirc ', stream: 'delivery', id: 'a' })).toBe(
+      '?id=a&q=nirc&stream=delivery'
+    );
+    expect(workBoardSearch({})).toBe('');
+  });
+
+  it('filters by query chips together', () => {
+    const labels = () => ({ stream: 'Entrega', status: 'Desarrollo', urgency: 'Alta' });
+    expect(
+      filterWorkAssignments([row], { q: 'migrar rls', stream: 'delivery', person: '', urgency: '', status: '', archive: false }, labels).map(
+        (item) => item.id
+      )
+    ).toEqual(['a']);
+    expect(
+      filterWorkAssignments([row], { q: 'nirc', stream: 'people', person: '', urgency: '', status: '', archive: false }, labels)
+    ).toEqual([]);
+    expect(workAssignmentHaystack(row, labels())).toContain('Migrar RLS');
   });
 });
 

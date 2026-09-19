@@ -1,11 +1,9 @@
-import Link from 'next/link';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
 import ToastForm from '@/components/ops/ToastForm';
-import StatusBadge, { leadTone } from '@/components/ops/StatusBadge';
 import Button from '@/components/ui/Button';
 import Card, { SectionTitle } from '@/components/ui/Card';
-import { DataTable, EmptyRow, THead, Td, Th, Tr } from '@/components/ui/DataTable';
 import Input, { Select, Textarea } from '@/components/ui/Input';
+import OpsLeadsTable from '@/components/ops/search/OpsLeadsTable';
 import { requireCapability } from '@/lib/ops/auth';
 import { createLead } from '@/lib/ops/actions';
 import { labelsFor } from '@/lib/ops/labels';
@@ -93,43 +91,22 @@ export default async function LeadsPage() {
         </ToastForm>
       </Card>
 
-      <DataTable>
-        <THead>
-          <tr>
-            <Th>{t('ops.leadsPage.colCompany')}</Th>
-            <Th>{t('ops.leadsPage.colContact')}</Th>
-            <Th>{t('ops.leadsPage.colSource')}</Th>
-            <Th>{t('ops.leadsPage.colStatus')}</Th>
-            <Th>{t('ops.leadsPage.colDate')}</Th>
-          </tr>
-        </THead>
-        <tbody>
-          {(leads ?? []).map((lead) => (
-            <Tr key={lead.id}>
-              <Td>
-                <Link href={`/leads/${lead.id}`} className="font-medium hover:text-codiva-primary">
-                  {lead.end_client_company || lead.company || lead.partner_company || EMPTY_LABEL}
-                </Link>
-                {lead.partner_company && lead.company && lead.partner_company !== lead.company && (
-                  <div className="text-xs text-zinc-500">
-                    {t('ops.leadsPage.viaPartner', { company: lead.partner_company })}
-                  </div>
-                )}
-              </Td>
-              <Td>
-                <div>{lead.name}</div>
-                <div className="text-zinc-500">{lead.email}</div>
-              </Td>
-              <Td className="text-zinc-500">{LEAD_SOURCE_LABELS[lead.source] || lead.source}</Td>
-              <Td>
-                <StatusBadge label={LEAD_STATUS_LABELS[lead.status]} tone={leadTone(lead.status)} />
-              </Td>
-              <Td className="text-zinc-500">{formatDate(lead.created_at)}</Td>
-            </Tr>
-          ))}
-          {!leads?.length && <EmptyRow colSpan={5}>{t('ops.leadsPage.empty')}</EmptyRow>}
-        </tbody>
-      </DataTable>
+      <OpsLeadsTable
+        leads={(leads ?? []).map((lead) => ({
+          id: lead.id,
+          name: lead.name,
+          company: lead.company,
+          email: lead.email,
+          status: lead.status,
+          source: lead.source,
+          partner_company: lead.partner_company,
+          end_client_company: lead.end_client_company,
+          createdAtLabel: formatDate(lead.created_at),
+        }))}
+        emptyLabel={EMPTY_LABEL}
+        sourceLabels={LEAD_SOURCE_LABELS}
+        statusLabels={LEAD_STATUS_LABELS}
+      />
     </div>
   );
 }

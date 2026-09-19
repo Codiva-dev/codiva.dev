@@ -41,11 +41,19 @@ function asKind(value: string): WorkProcessKind {
 export default async function AsignacionesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{
+    id?: string;
+    q?: string;
+    stream?: string;
+    person?: string;
+    urgency?: string;
+    status?: string;
+  }>;
 }) {
   const { supabase, staff } = await requireCapability('assignments');
   const t = await getT();
-  const { id: initialAssignmentId } = await searchParams;
+  const params = await searchParams;
+  const initialAssignmentId = params.id;
   const canManage = can(staff, 'assignments_manage');
 
   const assignmentSelect =
@@ -289,6 +297,11 @@ export default async function AsignacionesPage({
         currentUserId={staff.id}
         locale={t.locale === 'en' ? 'en' : 'es'}
         initialAssignmentId={initialAssignmentId}
+        initialQuery={params.q || ''}
+        initialStream={params.stream || ''}
+        initialPerson={params.person || ''}
+        initialUrgency={params.urgency || ''}
+        initialStatus={params.status || ''}
       />
     </div>
   );

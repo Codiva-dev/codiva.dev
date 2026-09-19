@@ -1,3 +1,5 @@
+import { textMatches } from '@/lib/ops/search-text';
+
 export const WORK_STREAMS = ['internal', 'commercial', 'delivery', 'production', 'evolution', 'people'] as const;
 export const WORK_STATUSES = [
   'backlog',
@@ -741,13 +743,79 @@ export function filterMentionableStaff(
   query: string,
   excludeUserId?: string
 ) {
-  const q = String(query || '').trim().toLowerCase();
   const exclude = String(excludeUserId || '').trim();
   return staff.filter((row) => {
     if (!row.id || row.id === exclude) return false;
-    if (!q) return true;
-    const hay = `${row.full_name || ''} ${row.email || ''}`.toLowerCase();
-    return hay.includes(q);
+    if (!String(query || '').trim()) return true;
+    return textMatches(`${row.full_name || ''} ${row.email || ''}`, query);
+  });
+}
+
+export type WorkBoardQuery = {
+  id?: string;
+  q?: string;
+  stream?: string;
+  person?: string;
+  urgency?: string;
+  status?: string;
+};
+
+export type WorkBoardFilterState = {
+  q: string;
+  stream: string;
+  person: string;
+  urgency: string;
+  status: string;
+};
+
+export function workBoardSearch(query: WorkBoardQuery = {}): string {
+  const params = new URLSearchParams();
+  const id = String(query.id || '').trim();
+  const q = String(query.q || '').trim();
+  const stream = String(query.stream || '').trim();
+  const person = String(query.person || '').trim();
+  const urgency = String(query.urgency || '').trim();
+  const status = String(query.status || '').trim();
+  if (id) params.set('id', id);
+  if (q) params.set('q', q);
+  if (stream) params.set('stream', stream);
+  if (person) params.set('person', person);
+  if (urgency) params.set('urgency', urgency);
+  if (status) params.set('status', status);
+  const qs = params.toString();
+  return qs ? `?${qs}` : '';
+}
+
+export function workAssignmentHaystack(
+  row: WorkAssignment,
+  labels: { stream?: string; status?: string; urgency?: string }
+): string {
+  const subtasks = row.subtasks.map((sub) => sub.title).join(' ');
+  return [
+    row.title,
+    row.description,
+    row.assignee_name,
+    row.process_label,
+    subtasks,
+    labels.stream || row.stream,
+    labels.status || row.status,
+    labels.urgency || row.urgency,
+  ].join(' ');
+}
+
+export function filterWorkAssignments(
+  rows: WorkAssignment[],
+  filters: WorkBoardFilterState & { archive: boolean },
+  labelsFor: (row: WorkAssignment) => { stream?: string; status?: string; urgency?: string }
+): WorkAssignment[] {
+  return rows.filter((row) => {
+    if (filters.archive ? row.status !== 'archived' : row.status === 'archived') return false;
+    if (filters.stream && row.stream !== filters.stream) return false;
+    if (filters.person && row.assignee_id !== filters.person) return false;
+    if (filters.urgency && row.urgency !== filters.urgency) return false;
+    if (filters.status && row.status !== filters.status) return false;
+    if (filters.q.trim() && !textMatches(workAssignmentHaystack(row, labelsFor(row)), filters.q)) return false;
+    return true;
   });
 }
 

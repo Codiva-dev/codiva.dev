@@ -1,13 +1,9 @@
-import Link from 'next/link';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
-import PreviewPopupLink from '@/components/ops/PreviewPopupLink';
 import ToastForm from '@/components/ops/ToastForm';
-import PortalClientUrl from '@/components/ops/PortalClientUrl';
-import StatusBadge, { projectTone } from '@/components/ops/StatusBadge';
 import Button from '@/components/ui/Button';
 import Card, { SectionTitle } from '@/components/ui/Card';
-import { DataTable, EmptyRow, THead, Td, Th, Tr } from '@/components/ui/DataTable';
 import Input, { Textarea } from '@/components/ui/Input';
+import OpsProjectsTable from '@/components/ops/search/OpsProjectsTable';
 import { listVisibleProjectIds, requireStaff } from '@/lib/ops/auth';
 import { createProject } from '@/lib/ops/actions';
 import { can } from '@/lib/ops/permissions';
@@ -79,52 +75,22 @@ export default async function ProjectsPage() {
         </Card>
       )}
 
-      <DataTable>
-        <THead>
-          <tr>
-            <Th>{t('ops.projectsPage.colProject')}</Th>
-            <Th>{t('ops.projectsPage.colClient')}</Th>
-            <Th>{t('ops.projectsPage.colStatus')}</Th>
-            <Th>{t('ops.projectsPage.colPortal')}</Th>
-            <Th>{t('ops.projectsPage.colDelivery')}</Th>
-          </tr>
-        </THead>
-        <tbody>
-          {(projects ?? []).map((p) => (
-            <Tr key={p.id}>
-              <Td>
-                <Link href={opsProjectPath(p.slug)} className="font-medium hover:text-codiva-primary">
-                  {p.name}
-                </Link>
-                <div className="text-xs text-zinc-500">
-                  {t('ops.projectsPage.progressPct', { pct: p.progress_percent })}
-                </div>
-              </Td>
-              <Td>{(p.organizations as { name?: string })?.name || EMPTY_LABEL}</Td>
-              <Td>
-                <StatusBadge label={PROJECT_STATUS_LABELS[p.status]} tone={projectTone(p.status)} />
-              </Td>
-              <Td>
-                <div className="flex flex-col items-start gap-1.5">
-                  <PreviewPopupLink href={staffPortalPreviewPath(p.slug)} className="text-codiva-primary hover:underline">
-                    {t('ops.projectsPage.preview')}
-                  </PreviewPopupLink>
-                  <PortalClientUrl slug={p.slug} />
-                  {!p.client_visible && (
-                    <span className="text-[11px] text-amber-700">{t('ops.projectsPage.hidden')}</span>
-                  )}
-                </div>
-              </Td>
-              <Td className="text-zinc-500">{formatDate(p.target_delivery_date)}</Td>
-            </Tr>
-          ))}
-          {!(projects ?? []).length && (
-            <EmptyRow colSpan={5}>
-              {can(staff, 'projects_all') ? t('ops.projectsPage.empty') : t('ops.projectsPage.emptyAssigned')}
-            </EmptyRow>
-          )}
-        </tbody>
-      </DataTable>
+      <OpsProjectsTable
+        projects={(projects ?? []).map((p) => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          status: p.status,
+          progress_percent: p.progress_percent,
+          client_visible: p.client_visible,
+          deliveryLabel: formatDate(p.target_delivery_date),
+          organizationName: (p.organizations as { name?: string })?.name || '',
+          previewHref: staffPortalPreviewPath(p.slug),
+        }))}
+        emptyLabel={EMPTY_LABEL}
+        statusLabels={PROJECT_STATUS_LABELS}
+        emptyMessage={can(staff, 'projects_all') ? t('ops.projectsPage.empty') : t('ops.projectsPage.emptyAssigned')}
+      />
     </div>
   );
 }

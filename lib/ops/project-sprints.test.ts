@@ -129,6 +129,11 @@ describe('searchSprintItems', () => {
   it('returns nothing for a blank query', () => {
     expect(searchSprintItems(nirc, items, '  ', nameOf)).toEqual([]);
   });
+
+  it('requires every token', () => {
+    expect(searchSprintItems(nirc, items, 'migrar rls', nameOf).map((hit) => hit.item.id)).toEqual(['i1']);
+    expect(searchSprintItems(nirc, items, 'migrar kiosk', nameOf)).toEqual([]);
+  });
 });
 
 describe('projectSprintsSearch', () => {

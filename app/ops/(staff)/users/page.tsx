@@ -1,11 +1,9 @@
-import Link from 'next/link';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
-import StatusBadge from '@/components/ops/StatusBadge';
 import ToastForm from '@/components/ops/ToastForm';
 import Button from '@/components/ui/Button';
 import Card, { SectionTitle } from '@/components/ui/Card';
-import EmptyState from '@/components/ui/EmptyState';
 import Input, { Select } from '@/components/ui/Input';
+import OpsPortalUsersList from '@/components/ops/search/OpsPortalUsersList';
 import { listVisibleProjectIds, projectIdInFilter, requireCapability } from '@/lib/ops/auth';
 import { invitePortalUser } from '@/lib/ops/actions';
 import { getAcceptanceStatus } from '@/lib/ops/legal/acceptances';
@@ -138,36 +136,16 @@ export default async function PortalUsersPage() {
 
         <section className="space-y-3">
           <SectionTitle>{t('ops.portalUsers.listTitle')}</SectionTitle>
-          <ul className="space-y-2">
-            {[...byUser.entries()].map(([userId, info]) => (
-              <li key={userId}>
-                <Link
-                  href={`/users/${userId}`}
-                  className="block rounded-xl border border-zinc-200 bg-white px-4 py-3 no-underline hover:border-codiva-primary/30 hover:no-underline"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-zinc-900">{emails.get(userId) ?? userId.slice(0, 8)}</p>
-                      <p className="text-sm text-zinc-500">
-                        {info.projects.map((p) => p.name).join(' · ') || t('ops.portalUsers.noProjects')}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {hubIds.has(userId) ? (
-                        <StatusBadge label={t('ops.portalUsers.hubBadge')} tone="info" />
-                      ) : null}
-                      <StatusBadge label={[...info.roles].join(', ')} />
-                      <StatusBadge
-                        label={info.allComplete ? t('ops.portalUsers.legalOk') : t('ops.portalUsers.legalPending')}
-                        tone={info.allComplete ? 'success' : 'warning'}
-                      />
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-            {!byUser.size && <EmptyState>{t('ops.portalUsers.empty')}</EmptyState>}
-          </ul>
+          <OpsPortalUsersList
+            users={[...byUser.entries()].map(([userId, info]) => ({
+              userId,
+              email: emails.get(userId) ?? userId.slice(0, 8),
+              projectNames: info.projects.map((p) => p.name).join(' · '),
+              roles: [...info.roles].join(', '),
+              hub: hubIds.has(userId),
+              legalComplete: info.allComplete,
+            }))}
+          />
         </section>
       </div>
     </div>

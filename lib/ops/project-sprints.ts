@@ -1,3 +1,5 @@
+import { foldText, textMatches } from '@/lib/ops/search-text';
+
 export const OPS_CALENDAR_TZ = 'America/Mexico_City';
 export const SPRINT_STATUS_FILTERS = ['planned', 'active', 'completed'] as const;
 
@@ -112,15 +114,8 @@ export function resolveSelectedSprintId(
   return defaultSprintId(visible, today);
 }
 
-function foldText(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/\p{M}+/gu, '')
-    .toLowerCase();
-}
-
 export function normalizeSprintSearch(query: string | null | undefined): string {
-  return foldText(String(query || '').trim());
+  return foldText(query);
 }
 
 export function searchSprintItems(
@@ -136,10 +131,8 @@ export function searchSprintItems(
   for (const item of items) {
     const sprint = byId.get(item.sprint_id);
     if (!sprint) continue;
-    const haystack = foldText(
-      `${item.title} ${item.details} ${sprint.name} ${sprint.goal} ${assigneeName(item.assignee_id)}`
-    );
-    if (haystack.includes(needle)) hits.push({ item, sprint });
+    const haystack = `${item.title} ${item.details} ${sprint.name} ${sprint.goal} ${assigneeName(item.assignee_id)}`;
+    if (textMatches(haystack, query)) hits.push({ item, sprint });
   }
   return hits;
 }

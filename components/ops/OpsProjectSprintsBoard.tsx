@@ -3,9 +3,11 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import ToastForm from '@/components/ops/ToastForm';
 import StatusBadge from '@/components/ops/StatusBadge';
 import Input, { Select, Textarea } from '@/components/ui/Input';
+import OpsBuscador from '@/components/ops/search/OpsBuscador';
 import { TabLink, Tabs } from '@/components/ui/Tabs';
 import { labelsFor } from '@/lib/ops/labels';
 import { opsProjectPath } from '@/lib/ops/project-path';
@@ -70,6 +72,7 @@ export default function OpsProjectSprintsBoard({
   onUpdateItem: (formData: FormData) => Promise<unknown>;
 }) {
   const { t } = useTranslation();
+  const router = useRouter();
   const { formatDate, SPRINT_ITEM_STATUS_LABELS, SPRINT_STATUS_LABELS } = labelsFor(locale);
   const [query, setQuery] = useState(searchQuery);
   const statusFilter = parseSprintStatusFilter(sprintStatus);
@@ -149,17 +152,35 @@ export default function OpsProjectSprintsBoard({
             </Tabs>
 
             <div>
-              <label htmlFor="sprint-search" className="mb-1 block text-sm font-medium">
-                {t('ops.sprints.searchLabel')}
-              </label>
-              <Input
-                id="sprint-search"
-                type="search"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
+              <OpsBuscador
+                query={query}
+                onQueryChange={setQuery}
                 placeholder={t('ops.sprints.searchPlaceholder')}
-                size="sm"
-                autoComplete="off"
+                searchAriaLabel={t('ops.sprints.searchLabel')}
+                catalogCount={visibleItems.length}
+                matchedCount={hits.length}
+                noun={t('ops.buscador.nouns.items')}
+                nounOne={t('ops.buscador.nouns.item')}
+                hits={
+                  searching
+                    ? hits.slice(0, 8).map((hit) => ({
+                        id: hit.item.id,
+                        title: hit.item.title,
+                        subtitle: hit.sprint.name,
+                      }))
+                    : []
+                }
+                onHitSelect={(id) => {
+                  const hit = hits.find((row) => row.item.id === id);
+                  if (!hit) return;
+                  setQuery('');
+                  router.push(href({ sprint: hit.sprint.id, sprintStatus: 'all', q: null }));
+                }}
+                empty={
+                  searching ? (
+                    <p className="text-sm text-zinc-500">{t('ops.sprints.emptySearch', { query: query.trim() })}</p>
+                  ) : null
+                }
               />
             </div>
 

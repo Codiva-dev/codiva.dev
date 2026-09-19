@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Menu, PanelLeft, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import OpsSidebar from '@/components/ops/OpsSidebar';
+import OpsCommandPalette from '@/components/ops/search/OpsCommandPalette';
 import { writeOpsSidebarOpenCookie } from '@/lib/ops/sidebar-pref';
 import type { PermissionSubject } from '@/lib/ops/permissions';
 
@@ -142,11 +143,16 @@ export default function OpsStaffShell({
             </button>
           ) : null}
         </div>
+        <div className="pointer-events-none absolute right-3 top-3 z-20">
+          <div className="pointer-events-auto">
+            <OpsCommandPalette />
+          </div>
+        </div>
 
         <main
           className={[
             'flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8',
-            'max-lg:pt-16',
+            'pt-16',
             desktopOpen ? '' : 'lg:pl-16',
           ].join(' ')}
         >

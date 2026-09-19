@@ -22,6 +22,7 @@ import { canAny, type Capability, type PermissionSubject } from '@/lib/ops/permi
 import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import CodivaWordmarkMark from '@/components/CodivaWordmarkMark';
+import OpsThemeSwitcher from '@/components/ops/OpsThemeSwitcher';
 
 const NAV: {
   href: string;
@@ -131,8 +132,9 @@ export default function OpsSidebar({
         })}
       </nav>
       <div className="space-y-2 border-t border-zinc-200 p-3">
-        <div className="flex justify-center py-1">
+        <div className="flex items-center justify-center gap-2 py-1">
           <LanguageSwitcher />
+          <OpsThemeSwitcher />
         </div>
         <button
           type="button"
