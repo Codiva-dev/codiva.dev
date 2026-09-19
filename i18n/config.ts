@@ -17,6 +17,10 @@ export function resolveLocale(value: unknown): Locale {
   return DEFAULT_LOCALE;
 }
 
+export function pickLocaleMessages<T>(locale: Locale, es: T, en: T): T {
+  return locale === 'en' ? en : es;
+}
+
 export function localeFromAcceptLanguage(header: string | null | undefined): Locale {
   if (!header) return DEFAULT_LOCALE;
   const parts = header.split(',').map((part) => {
