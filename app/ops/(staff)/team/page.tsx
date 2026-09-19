@@ -63,9 +63,15 @@ export default async function TeamPage({
   const { EMPTY_LABEL, formatCurrency, formatDate } = labelsFor(t.locale);
   const { OPS_ROLE_LABELS, WORK_MODALITY_LABELS, OFFER_STATUS_LABELS } = offerLabelsFor(t.locale);
   const ROLE_LABELS = OPS_ROLE_LABELS;
-  const admin = createAdminClient();
 
   const empty = { data: [] as never[] };
+  const loadMembers = tab === 'miembros' && canManageTeam;
+  const loadOffers = tab === 'ofertas' || tab === 'miembros' || tab === 'bolsa';
+  const loadJobs = tab === 'bolsa' || tab === 'entrevistadores';
+  const loadBolsaExtras = tab === 'bolsa';
+  const loadPartners = tab === 'entrevistadores' || loadBolsaExtras;
+  const loadPartnerEmails = tab === 'entrevistadores';
+
   const [
     { data: staffRows },
     { data: offers },
@@ -76,52 +82,63 @@ export default async function TeamPage({
     { data: allProjects },
     { data: staffAssignments },
   ] = await Promise.all([
-    canManageTeam
+    loadMembers
       ? supabase
           .from('staff_profiles')
           .select('id, full_name, role, active, created_at, capabilities')
           .order('created_at', { ascending: true })
       : Promise.resolve(empty),
-    supabase
-      .from('ops_personnel_offers')
-      .select(
-        'id, full_name, email, career_email, position_title, ops_role, monthly_compensation, currency, work_modality, status, issued_at, created_at, staff_id'
-      )
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('ops_job_postings')
-      .select('id, slug, title, location, employment_type, status, updated_at, careers_pipeline, requires_hunt, asks_discipline')
-      .order('updated_at', { ascending: false }),
-    supabase
-      .from('ops_job_applications')
-      .select(
-        'id, job_posting_id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline, asks_discipline)'
-      )
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('ops_job_assessment_attempts')
-      .select(
-        'id, job_posting_id, catalog_key, full_name, email, status, score_pct, passed, duration_ms, blur_count, started_at, completed_at, timezone, attempt_number, ip_hash, user_agent'
-      )
-      .order('created_at', { ascending: false })
-      .limit(200),
-    supabase
-      .from('ops_hunt_reports')
-      .select(
-        'id, full_name, email, page_url, title, description, expected, matched_seed_id, discipline, assessment_attempt_id, review_status, evidence_paths, created_at'
-      )
-      .order('created_at', { ascending: false })
-      .limit(80),
-    canManageTeam
+    canManageTeam && loadOffers
+      ? supabase
+          .from('ops_personnel_offers')
+          .select(
+            'id, full_name, email, career_email, position_title, ops_role, monthly_compensation, currency, work_modality, status, issued_at, created_at, staff_id'
+          )
+          .order('created_at', { ascending: false })
+      : Promise.resolve(empty),
+    loadJobs
+      ? supabase
+          .from('ops_job_postings')
+          .select('id, slug, title, location, employment_type, status, updated_at, careers_pipeline, requires_hunt, asks_discipline')
+          .order('updated_at', { ascending: false })
+      : Promise.resolve(empty),
+    loadJobs
+      ? supabase
+          .from('ops_job_applications')
+          .select(
+            'id, job_posting_id, full_name, email, phone, discipline, status, created_at, personnel_offer_id, original_filename, assessment_attempt_id, cover_letter, ops_job_postings(title, slug, careers_pipeline, asks_discipline)'
+          )
+          .order('created_at', { ascending: false })
+      : Promise.resolve(empty),
+    loadBolsaExtras
+      ? supabase
+          .from('ops_job_assessment_attempts')
+          .select(
+            'id, job_posting_id, catalog_key, full_name, email, status, score_pct, passed, duration_ms, blur_count, started_at, completed_at, timezone, attempt_number, ip_hash, user_agent'
+          )
+          .order('created_at', { ascending: false })
+          .limit(200)
+      : Promise.resolve(empty),
+    loadBolsaExtras
+      ? supabase
+          .from('ops_hunt_reports')
+          .select(
+            'id, full_name, email, page_url, title, description, expected, matched_seed_id, discipline, assessment_attempt_id, review_status, evidence_paths, created_at'
+          )
+          .order('created_at', { ascending: false })
+          .limit(80)
+      : Promise.resolve(empty),
+    loadMembers
       ? supabase.from('projects').select('id, name, slug, organizations(name)').order('name')
       : Promise.resolve(empty),
-    canManageTeam
+    loadMembers
       ? supabase.from('project_staff').select('project_id, staff_id, role_on_project')
       : Promise.resolve(empty),
   ]);
 
   const emails = new Map<string, string>();
-  if (canManageTeam) {
+  if (loadMembers) {
+    const admin = createAdminClient();
     await Promise.all(
       (staffRows ?? []).map(async (row) => {
         const { data } = await admin.auth.admin.getUserById(row.id);
@@ -177,7 +194,6 @@ export default async function TeamPage({
         .order('created_at', { ascending: true })
     : { data: [] as never[] };
 
-  const loadPartners = tab === 'entrevistadores' || loadInterviews;
   const [
     { data: recruitingPartners },
     { data: recruitingMembers },
@@ -202,11 +218,14 @@ export default async function TeamPage({
   ]);
 
   const partnerEmails = new Map<string, string>();
-  if (tab === 'entrevistadores') {
-    for (const member of recruitingMembers ?? []) {
-      const { data } = await admin.auth.admin.getUserById(member.user_id);
-      if (data.user?.email) partnerEmails.set(member.id, data.user.email);
-    }
+  if (loadPartnerEmails) {
+    const admin = createAdminClient();
+    await Promise.all(
+      (recruitingMembers ?? []).map(async (member) => {
+        const { data } = await admin.auth.admin.getUserById(member.user_id);
+        if (data.user?.email) partnerEmails.set(member.id, data.user.email);
+      })
+    );
   }
   const partnerOptions = (recruitingMembers ?? [])
     .filter((row) => row.active)

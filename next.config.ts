@@ -1,7 +1,14 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 import { nextSecurityHeaderSources } from './lib/security-headers';
 
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: projectRoot,
+  },
   serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core'],
   outputFileTracingIncludes: {
     '*': ['./public/client-packs/**/*'],
