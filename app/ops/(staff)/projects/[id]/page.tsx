@@ -153,7 +153,7 @@ export default async function ProjectDetailPage({
           .order('created_at', { ascending: false })
           .limit(20)
       : Promise.resolve(empty),
-    loadQuotes && project.organization_id
+    loadAccess && project.organization_id
       ? supabase
           .from('projects')
           .select('id, name')
