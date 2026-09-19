@@ -32,6 +32,7 @@ const TECHNICAL = [
   /invalid uuid|uuid.*invalid/i,
   /bad credentials|validation failed/i,
   /missing_token|unauthorized/i,
+  /body exceeded|payload too large|request entity too large/i,
 ];
 
 const SNAKE_CODE = /^[a-z][a-z0-9]*(_[a-z0-9]+)+$/;
@@ -44,6 +45,10 @@ export function isTechnicalErrorMessage(message: string): boolean {
   return TECHNICAL.some((re) => re.test(trimmed));
 }
 
+export function isBodyTooLargeError(message: string) {
+  return /body exceeded|payload too large|request entity too large/i.test(message);
+}
+
 export function toUserErrorMessage(err: unknown, fallback: string): string {
   const msg =
     typeof err === 'string' ? err : err instanceof Error && err.message ? err.message : '';
@@ -51,7 +56,7 @@ export function toUserErrorMessage(err: unknown, fallback: string): string {
   return msg;
 }
 
-type Translate = (key: string) => string;
+type Translate = (key: string, options?: Record<string, string>) => string;
 
 /** Mapea mensajes de Supabase Auth a copy de producto. */
 export function authErrorMessage(raw: string, t: Translate): string {
