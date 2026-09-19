@@ -1,12 +1,18 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 import { nextSecurityHeaderSources } from './lib/security-headers';
 
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 const clientPackTextFiles = [
   './public/client-packs/**/*.html',
   './public/client-packs/**/*.md',
 ];
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: projectRoot,
+  },
   serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core'],
   // Pack HTML is read from disk with a dynamic path (NFT cannot see it).
   // PDFs/images are never loaded as utf8 — keep them out of every function.
@@ -21,11 +27,11 @@ const nextConfig: NextConfig = {
       process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   transpilePackages: ['docx-preview', 'pptxviewjs'],
-  serverActions: {
-    bodySizeLimit: '10mb',
-  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
   async redirects() {
     return [
