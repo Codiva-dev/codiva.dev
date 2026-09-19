@@ -1,0 +1,11 @@
+{
+  "ops": {
+    "preview": {
+      "staff": "Staff preview",
+      "body": "This is how the client sees the portal for",
+      "noLegal": "Legal acceptances are not recorded in this mode.",
+      "back": "Back to project",
+      "popupTitle": "Preview"
+    }
+  }
+}
