@@ -1,7 +1,14 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { NextConfig } from 'next';
 import { nextSecurityHeaderSources } from './lib/security-headers';
 
+const projectRoot = path.dirname(fileURLToPath(import.meta.url));
+
 const nextConfig: NextConfig = {
+  turbopack: {
+    root: projectRoot,
+  },
   serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core'],
   outputFileTracingIncludes: {
     '*': ['./public/client-packs/**/*'],
@@ -11,11 +18,11 @@ const nextConfig: NextConfig = {
       process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
   },
   transpilePackages: ['docx-preview', 'pptxviewjs', 'chart.js'],
-  serverActions: {
-    bodySizeLimit: '10mb',
-  },
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
   },
   async redirects() {
     return [
