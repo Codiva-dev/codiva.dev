@@ -15,9 +15,9 @@ import ConfirmDialog from '@/components/ops/ConfirmDialog';
 import ToastForm from '@/components/ops/ToastForm';
 import { toUserErrorMessage } from '@/lib/user-error';
 import { formatBytes } from '@/lib/format-bytes';
+import { uploadWorkAssignmentFiles } from '@/lib/ops/work-file-client';
 import {
   addWorkAssignmentComment,
-  addWorkAssignmentFiles,
   createWorkAssignment,
   deleteWorkAssignment,
   deleteWorkAssignmentFile,
@@ -981,7 +981,10 @@ function CreateModal({
         className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"
         success={t('ops.asignaciones.created')}
         action={async (fd) => {
-          await createWorkAssignment(fd, filesRef.current);
+          const created = await createWorkAssignment(fd);
+          if (filesRef.current.length) {
+            await uploadWorkAssignmentFiles(created.id, filesRef.current, t);
+          }
           filesRef.current = [];
           onClose();
         }}
@@ -1195,8 +1198,7 @@ function DetailModal({
             className="space-y-3"
             success={t('ops.asignaciones.saved')}
             action={async (fd) => {
-              await updateWorkAssignment(assignment.id, fd, filesRef.current);
-              filesRef.current = [];
+              await updateWorkAssignment(assignment.id, fd);
               onRefresh();
             }}
           >
@@ -1282,7 +1284,7 @@ function DetailModal({
                 filesRef.current.length ? null : t('ops.asignaciones.fileRequired')
               }
               action={async () => {
-                await addWorkAssignmentFiles(assignment.id, filesRef.current);
+                await uploadWorkAssignmentFiles(assignment.id, filesRef.current, t);
                 filesRef.current = [];
                 onRefresh();
               }}
