@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import dynamic from 'next/dynamic';
 import Button from '@/components/ui/Button';
 import Modal, { ModalHeader } from '@/components/ui/Modal';
 import {
@@ -9,7 +10,20 @@ import {
   workFilePreviewMode,
   type WorkFile,
 } from '@/lib/ops/work-board';
-import WorkOfficePreview from './WorkOfficePreview';
+
+function OfficePreviewFallback() {
+  const { t } = useTranslation();
+  return (
+    <p className="m-auto max-w-md px-6 py-10 text-center text-sm text-zinc-600">
+      {t('ops.asignaciones.previewLoading')}
+    </p>
+  );
+}
+
+const WorkOfficePreview = dynamic(() => import('./WorkOfficePreview'), {
+  ssr: false,
+  loading: () => <OfficePreviewFallback />,
+});
 
 function WorkEmbedPreview({ href, title }: { href: string; title: string }) {
   const { t } = useTranslation();
