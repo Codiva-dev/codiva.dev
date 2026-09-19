@@ -1,0 +1,11 @@
+{
+  "ops": {
+    "preview": {
+      "staff": "Vista previa staff",
+      "body": "Así ve el cliente el portal de",
+      "noLegal": "No se registran aceptaciones legales en este modo.",
+      "back": "Volver al proyecto",
+      "popupTitle": "Vista previa"
+    }
+  }
+}

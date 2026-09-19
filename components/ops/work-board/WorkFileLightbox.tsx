@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useId, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
 import Modal, { ModalHeader } from '@/components/ui/Modal';
@@ -9,7 +10,8 @@ import {
   workFilePreviewMode,
   type WorkFile,
 } from '@/lib/ops/work-board';
-import WorkOfficePreview from './WorkOfficePreview';
+
+const WorkOfficePreview = dynamic(() => import('./WorkOfficePreview'), { ssr: false });
 
 function WorkEmbedPreview({ href, title }: { href: string; title: string }) {
   const { t } = useTranslation();

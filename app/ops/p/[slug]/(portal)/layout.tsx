@@ -4,6 +4,13 @@ import { requirePortalMemberWithAcceptances } from '@/lib/ops/auth';
 import { getPortalVisibility, withQuoteNav } from '@/lib/ops/portal-visibility';
 import Link from 'next/link';
 import { getT } from '@/i18n/locale';
+import OpsChromeI18n from '@/i18n/OpsChromeI18n';
+import OpsPortalI18n from '@/i18n/OpsPortalI18n';
+import { loadOpsSurface } from '@/i18n/load-ops-surface';
+import enChrome from '@/i18n/locales/en/ops-chrome.json';
+import enPortal from '@/i18n/locales/en/ops-portal.json';
+import esChrome from '@/i18n/locales/es/ops-chrome.json';
+import esPortal from '@/i18n/locales/es/ops-portal.json';
 
 export default async function PortalLayout({
   children,
@@ -26,36 +33,42 @@ export default async function PortalLayout({
     : { count: 0 };
   const visibility = withQuoteNav(baseVisibility, (quoteCanvasCount ?? 0) > 0);
   const t = await getT();
+  const portal = await loadOpsSurface(esPortal, enPortal);
+  const chrome = await loadOpsSurface(esChrome, enChrome);
 
   return (
-    <div className="min-h-screen bg-codiva-background">
-      {isStaffPreview && (
-        <StaffPortalPreviewBanner projectName={project.name} slug={slug} />
-      )}
-      <PortalNav
-        slug={slug}
-        projectName={project.name}
-        visibility={visibility}
-        showProjectsLink={!isStaffPreview}
-      />
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
-      <footer className="border-t border-zinc-200 py-6 text-center text-xs text-zinc-500">
-        <p>{t('portal.powered')}</p>
-        <p className="mt-2 flex flex-wrap items-center justify-center gap-3">
-          <Link href={`/p/${slug}/cuenta`} className="hover:text-codiva-primary hover:underline">
-            {t('portal.account.nav')}
-          </Link>
-          <Link href="/legal/terminos" className="hover:text-codiva-primary hover:underline">
-            {t('footer.terms')}
-          </Link>
-          <Link href="/legal/aviso-privacidad" className="hover:text-codiva-primary hover:underline">
-            {t('footer.privacy')}
-          </Link>
-          <Link href="/legal/nda" className="hover:text-codiva-primary hover:underline">
-            {t('legal.ndaTitle')}
-          </Link>
-        </p>
-      </footer>
-    </div>
+    <OpsPortalI18n {...portal}>
+      <OpsChromeI18n {...chrome}>
+      <div className="min-h-screen bg-codiva-background">
+        {isStaffPreview && (
+          <StaffPortalPreviewBanner projectName={project.name} slug={slug} />
+        )}
+        <PortalNav
+          slug={slug}
+          projectName={project.name}
+          visibility={visibility}
+          showProjectsLink={!isStaffPreview}
+        />
+        <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
+        <footer className="border-t border-zinc-200 py-6 text-center text-xs text-zinc-500">
+          <p>{t('portal.powered')}</p>
+          <p className="mt-2 flex flex-wrap items-center justify-center gap-3">
+            <Link href={`/p/${slug}/cuenta`} className="hover:text-codiva-primary hover:underline">
+              {t('portal.account.nav')}
+            </Link>
+            <Link href="/legal/terminos" className="hover:text-codiva-primary hover:underline">
+              {t('footer.terms')}
+            </Link>
+            <Link href="/legal/aviso-privacidad" className="hover:text-codiva-primary hover:underline">
+              {t('footer.privacy')}
+            </Link>
+            <Link href="/legal/nda" className="hover:text-codiva-primary hover:underline">
+              {t('legal.ndaTitle')}
+            </Link>
+          </p>
+        </footer>
+      </div>
+      </OpsChromeI18n>
+    </OpsPortalI18n>
   );
 }

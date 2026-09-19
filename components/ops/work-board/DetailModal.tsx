@@ -11,9 +11,9 @@ import Input, { Select, Textarea } from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ToastForm from '@/components/ops/ToastForm';
 import { toUserErrorMessage } from '@/lib/user-error';
+import { uploadWorkAssignmentFiles } from '@/lib/ops/work-file-client';
 import {
   addWorkAssignmentComment,
-  addWorkAssignmentFiles,
   updateWorkAssignment,
   updateWorkAssignmentStatus,
 } from '@/lib/ops/work-board-actions';
@@ -152,7 +152,7 @@ export function DetailModal({
             className="space-y-3"
             success={t('ops.asignaciones.saved')}
             action={async (fd) => {
-              await updateWorkAssignment(assignment.id, fd, filesRef.current);
+              await updateWorkAssignment(assignment.id, fd);
               filesRef.current = [];
               onRefresh();
             }}
@@ -239,7 +239,7 @@ export function DetailModal({
                 filesRef.current.length ? null : t('ops.asignaciones.fileRequired')
               }
               action={async () => {
-                await addWorkAssignmentFiles(assignment.id, filesRef.current);
+                await uploadWorkAssignmentFiles(assignment.id, filesRef.current, t);
                 filesRef.current = [];
                 onRefresh();
               }}

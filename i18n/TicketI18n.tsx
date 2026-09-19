@@ -1,11 +1,26 @@
 'use client';
 
-import { injectTranslationBundle } from '@/i18n/injectBundle';
-import en from '@/i18n/locales/en/ticket.json';
-import es from '@/i18n/locales/es/ticket.json';
+import SurfaceI18n from '@/i18n/SurfaceI18n';
+import type { Locale } from '@/i18n/config';
+import type { ReactNode } from 'react';
 
-injectTranslationBundle('ticket', es, en);
+const loaders = {
+  es: () => import('@/i18n/locales/es/ticket.json'),
+  en: () => import('@/i18n/locales/en/ticket.json'),
+};
 
-export default function TicketI18n({ children }: { children: React.ReactNode }) {
-  return children;
+export default function TicketI18n({
+  locale,
+  bundle,
+  children,
+}: {
+  locale: Locale;
+  bundle: object;
+  children: ReactNode;
+}) {
+  return (
+    <SurfaceI18n id="ticket" locale={locale} bundle={bundle} loaders={loaders}>
+      {children}
+    </SurfaceI18n>
+  );
 }

@@ -8,6 +8,7 @@ import Input, { Select, Textarea } from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import ToastForm from '@/components/ops/ToastForm';
 import { createWorkAssignment } from '@/lib/ops/work-board-actions';
+import { uploadWorkAssignmentFiles } from '@/lib/ops/work-file-client';
 import { WORK_STREAMS, WORK_URGENCIES } from '@/lib/ops/work-board';
 import { type MentionStaff } from './OpsMentionComposer';
 import WorkAttachmentField from './WorkAttachmentField';
@@ -46,7 +47,10 @@ export function CreateModal({
         className="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1"
         success={t('ops.asignaciones.created')}
         action={async (fd) => {
-          await createWorkAssignment(fd, filesRef.current);
+          const created = await createWorkAssignment(fd);
+          if (filesRef.current.length) {
+            await uploadWorkAssignmentFiles(created.id, filesRef.current, t);
+          }
           filesRef.current = [];
           onClose();
         }}

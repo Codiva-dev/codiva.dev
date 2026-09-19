@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
+import { needsAuthSessionRefresh } from '@/lib/supabase/session-refresh';
 import {
   isOpsHost,
   isPortalHost,
@@ -114,7 +115,10 @@ function isEntrevistasPublicPath(pathname: string) {
 export async function middleware(request: NextRequest) {
   const host = request.headers.get('host');
   const { pathname } = request.nextUrl;
-  const sessionResponse = persistLocaleCookie(request, await updateSession(request));
+  const sessionResponse = persistLocaleCookie(
+    request,
+    await updateSession(request, { refreshUser: needsAuthSessionRefresh(host, pathname) })
+  );
 
   if (pathname.startsWith('/api') || pathname.startsWith('/_next')) {
     return sessionResponse;
