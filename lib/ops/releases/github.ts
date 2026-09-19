@@ -182,6 +182,7 @@ function isProductionEnv(name: string): boolean {
 export async function listGitHubPreviews(input: {
   owner: string;
   repo: string;
+  signal?: AbortSignal;
 }): Promise<{ items: GitHubPreview[]; error: string | null }> {
   const token = githubToken();
   if (!token) {
@@ -190,10 +191,18 @@ export async function listGitHubPreviews(input: {
 
   const owner = encodeURIComponent(input.owner.trim());
   const repo = encodeURIComponent(input.repo.trim());
-  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/deployments?per_page=15`, {
-    headers: githubHeaders(token),
-    cache: 'no-store',
-  });
+  let res: Response;
+  try {
+    res = await fetch(`https://api.github.com/repos/${owner}/${repo}/deployments?per_page=15`, {
+      headers: githubHeaders(token),
+      cache: 'no-store',
+      signal: input.signal,
+    });
+  } catch (error) {
+    if (input.signal?.aborted) return { items: [], error: 'timeout' };
+    const message = error instanceof Error ? error.message : 'fetch failed';
+    return { items: [], error: message };
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -216,7 +225,16 @@ export async function listGitHubPreviews(input: {
   const settled = await Promise.all(
     candidates.slice(0, 10).map(async (d) => {
       if (!d.statuses_url) return null;
-      const st = await fetch(d.statuses_url, { headers: githubHeaders(token), cache: 'no-store' });
+      let st: Response;
+      try {
+        st = await fetch(d.statuses_url, {
+          headers: githubHeaders(token),
+          cache: 'no-store',
+          signal: input.signal,
+        });
+      } catch {
+        return null;
+      }
       if (!st.ok) return null;
       const statuses = (await st.json()) as Array<{
         environment_url?: string;

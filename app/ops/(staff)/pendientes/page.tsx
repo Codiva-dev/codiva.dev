@@ -162,26 +162,26 @@ export default async function PendientesPage({
   });
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
-      <OpsPendientesHome
-        firstName={staffFirstName(staff.full_name)}
-        greetingPeriod={opsGreetingPeriod()}
-        actions={monitor.actions}
-        timeline={monitor.timeline}
-      />
-      <OpsHomeOverview
-        showCommercial={showCommercial}
-        canInbox={can(staff, 'inbox')}
-        financeSummary={
-          showFinance ? buildFinanceSummary(charges ?? [], quotes ?? [], financeProjects ?? [], filters) : null
-        }
-        filters={filters}
-        mySprintItems={mySprintItems ?? []}
-        leads={leads ?? []}
-        inbound={inbound}
-        tickets={tickets ?? []}
-        projects={projects ?? []}
-      />
-    </div>
+    <OpsPendientesHome
+      firstName={staffFirstName(staff.full_name)}
+      greetingPeriod={opsGreetingPeriod()}
+      actions={monitor.actions}
+      timeline={monitor.timeline}
+      overview={
+        <OpsHomeOverview
+          showCommercial={showCommercial}
+          canInbox={can(staff, 'inbox')}
+          financeSummary={
+            showFinance ? buildFinanceSummary(charges ?? [], quotes ?? [], financeProjects ?? [], filters) : null
+          }
+          filters={filters}
+          mySprintItems={mySprintItems ?? []}
+          leads={leads ?? []}
+          inbound={inbound}
+          tickets={tickets ?? []}
+          projects={projects ?? []}
+        />
+      }
+    />
   );
 }

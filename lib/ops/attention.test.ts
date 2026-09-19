@@ -3,8 +3,10 @@ import {
   attentionBucket,
   attentionItemKey,
   filterAttentionItems,
+  isFinishedWorkProgress,
   isStuckAssignment,
   isStaleSince,
+  isUnscheduledInterviewAttention,
   snoozeUntilIso,
   weekStartYmd,
 } from './attention';
@@ -17,7 +19,7 @@ describe('attention helpers', () => {
     expect(isStaleSince('2026-09-21T16:00:00.000Z', 48, now)).toBe(false);
   });
 
-  it('treats blocked and aging urgent cards as stuck', () => {
+  it('treats aging urgent cards as stuck and ignores cancelled work', () => {
     expect(
       isStuckAssignment({
         status: 'blocked',
@@ -25,7 +27,7 @@ describe('attention helpers', () => {
         statusEnteredAt: '2026-09-21T16:00:00.000Z',
         now,
       })
-    ).toBe(true);
+    ).toBe(false);
     expect(
       isStuckAssignment({
         status: 'build',
@@ -39,6 +41,24 @@ describe('attention helpers', () => {
         status: 'build',
         urgency: 'normal',
         statusEnteredAt: '2026-09-01T12:00:00.000Z',
+        now,
+      })
+    ).toBe(false);
+    expect(
+      isStuckAssignment({
+        status: 'build',
+        urgency: 'high',
+        statusEnteredAt: '2026-09-01T12:00:00.000Z',
+        progressPct: 100,
+        now,
+      })
+    ).toBe(false);
+    expect(
+      isStuckAssignment({
+        status: 'blocked',
+        urgency: 'critical',
+        statusEnteredAt: '2026-09-21T16:00:00.000Z',
+        progressPct: 100,
         now,
       })
     ).toBe(false);
@@ -93,5 +113,35 @@ describe('attention helpers', () => {
     expect(attentionBucket('2026-09-25T15:00:00.000Z', now)).toBe('week');
     expect(attentionBucket('2026-10-10', now)).toBe('later');
     expect(attentionBucket('', now)).toBe('later');
+  });
+
+  it('treats 100% progress as finished work', () => {
+    expect(isFinishedWorkProgress(100)).toBe(true);
+    expect(isFinishedWorkProgress(99)).toBe(false);
+    expect(isFinishedWorkProgress(null)).toBe(false);
+  });
+
+  it('drops unscheduled interviews on closed applications', () => {
+    expect(
+      isUnscheduledInterviewAttention({
+        roundStatus: 'planned',
+        scheduledAt: null,
+        applicationStatus: 'interview',
+      })
+    ).toBe(true);
+    expect(
+      isUnscheduledInterviewAttention({
+        roundStatus: 'planned',
+        scheduledAt: null,
+        applicationStatus: 'rejected',
+      })
+    ).toBe(false);
+    expect(
+      isUnscheduledInterviewAttention({
+        roundStatus: 'planned',
+        scheduledAt: '2026-09-20T15:00:00.000Z',
+        applicationStatus: 'interview',
+      })
+    ).toBe(false);
   });
 });

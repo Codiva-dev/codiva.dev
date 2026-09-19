@@ -110,6 +110,7 @@ export type IncomingPreviewsResult = {
 function revalidateReleasePaths(projectId: string, slug?: string | null) {
   revalidatePath(`/projects/${projectId}`);
   if (slug) revalidatePath(`/projects/${slug}`);
+  revalidatePath('/pendientes');
   revalidatePath(`/p`);
   if (slug) {
     revalidatePath(`/p/${slug}`);

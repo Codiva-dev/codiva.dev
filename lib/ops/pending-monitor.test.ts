@@ -13,7 +13,7 @@ describe('buildPendingMonitor', () => {
           key: attentionItemKey('assignment_stuck', assignmentId),
           kind: 'assignment_stuck',
           title: 'Portal',
-          subtitle: 'Bloqueada',
+          subtitle: 'Urgente sin movimiento',
           href: `/asignaciones?id=${assignmentId}`,
           rank: 2,
           at: '2026-09-20T10:00:00.000Z',

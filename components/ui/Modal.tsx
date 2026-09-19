@@ -1,5 +1,6 @@
 'use client';
 
+import { X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -33,6 +34,7 @@ export default function Modal({
   onKeyDown,
   className,
   layer = 'base',
+  closeButton,
 }: {
   open: boolean;
   onClose: () => void;
@@ -48,6 +50,7 @@ export default function Modal({
   onKeyDown?: (event: KeyboardEvent) => void;
   className?: string;
   layer?: keyof typeof layers;
+  closeButton?: boolean;
 }) {
   const autoId = useId();
   const titleId = titleIdProp ?? autoId;
@@ -85,6 +88,15 @@ export default function Modal({
 
   if (!open || typeof document === 'undefined') return null;
 
+  const showClose = closeButton ?? (size === 'sm' || size === 'md');
+  const heading =
+    header ??
+    (title ? (
+      <p id={titleId} className="text-base font-semibold text-zinc-900">
+        {title}
+      </p>
+    ) : null);
+
   return createPortal(
     <div className={cn('ops-theme fixed inset-0 flex items-center justify-center p-3 sm:p-4', layers[layer])}>
       <button
@@ -104,12 +116,21 @@ export default function Modal({
           className
         )}
       >
-        {header ??
-          (title ? (
-            <p id={titleId} className="text-base font-semibold text-zinc-900">
-              {title}
-            </p>
-          ) : null)}
+        {showClose ? (
+          <div className="sticky top-0 z-20 flex items-start gap-2 bg-white">
+            <div className="min-w-0 flex-1">{heading}</div>
+            <button
+              type="button"
+              className="-mr-1.5 -mt-1.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-900"
+              aria-label={closeLabel}
+              onClick={onClose}
+            >
+              <X className="h-5 w-5" strokeWidth={2} aria-hidden />
+            </button>
+          </div>
+        ) : (
+          heading
+        )}
         {children}
         {footer}
       </div>

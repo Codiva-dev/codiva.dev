@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { Archive, Kanban, List, Plus, Rows2, Rows3, type LucideIcon } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import EmptyState from '@/components/ui/EmptyState';
 import ConfirmDialog from '@/components/ops/ConfirmDialog';
@@ -46,6 +47,34 @@ import { CreateModal } from './CreateModal';
 import { DetailModal } from './DetailModal';
 import { WorkCard } from './WorkCard';
 import { type ProcessOption } from './types';
+
+function BoardSegButton({
+  active,
+  label,
+  icon: Icon,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  icon: LucideIcon;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      aria-label={label}
+      title={label}
+      className={`inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs font-medium ${
+        active ? 'bg-codiva-primary text-white' : 'text-zinc-600'
+      }`}
+      onClick={onClick}
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
+}
 
 export type { ProcessOption } from './types';
 
@@ -382,7 +411,7 @@ export default function OpsWorkBoard({
     useWorkBoardDrag({
       onDrop: onDropStatus,
     });
-  useWorkBoardHoverScroll(scrollerRef, view === 'board' && !draggingId);
+  useWorkBoardHoverScroll(scrollerRef, (view === 'board' || view === 'archive') && !draggingId);
 
   async function confirmDelete() {
     const row = pendingDelete;
@@ -416,6 +445,25 @@ export default function OpsWorkBoard({
     }
   }
 
+  const boardLanes = useMemo(() => {
+    if (view === 'archive') {
+      return WORK_STREAMS.map((streamId) => ({
+        id: streamId,
+        title: streamLabels[streamId],
+        cards: visible.filter((row) => row.stream === streamId),
+        droppable: false,
+        hideCount: false,
+      })).filter((lane) => lane.cards.length);
+    }
+    return WORK_BOARD_COLUMNS.map((status) => ({
+      id: status,
+      title: statusLabels[status],
+      cards: visible.filter((row) => row.status === status),
+      droppable: true,
+      hideCount: status === 'done',
+    }));
+  }, [view, visible, streamLabels, statusLabels]);
+
   return (
     <div className="min-w-0 space-y-4">
       {ghost}
@@ -447,121 +495,125 @@ export default function OpsWorkBoard({
         actions={
           <>
             <div className="flex rounded-lg border border-zinc-200 p-0.5">
-              <button
-                type="button"
-                className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'board' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+              <BoardSegButton
+                active={view === 'board'}
+                label={t('ops.asignaciones.viewBoard')}
+                icon={Kanban}
                 onClick={() => setView('board')}
-              >
-                {t('ops.asignaciones.viewBoard')}
-              </button>
-              <button
-                type="button"
-                className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'list' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+              />
+              <BoardSegButton
+                active={view === 'list'}
+                label={t('ops.asignaciones.viewList')}
+                icon={List}
                 onClick={() => setView('list')}
-              >
-                {t('ops.asignaciones.viewList')}
-              </button>
-              <button
-                type="button"
-                className={`rounded-md px-3 py-1.5 text-xs font-medium ${view === 'archive' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+              />
+              <BoardSegButton
+                active={view === 'archive'}
+                label={t('ops.asignaciones.viewArchive')}
+                icon={Archive}
                 onClick={() => setView('archive')}
-              >
-                {t('ops.asignaciones.viewArchive')}
-              </button>
+              />
             </div>
-            {view === 'board' ? (
+            {view === 'board' || view === 'archive' ? (
               <div className="flex rounded-lg border border-zinc-200 p-0.5">
-                <button
-                  type="button"
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${density === 'compact' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+                <BoardSegButton
+                  active={density === 'compact'}
+                  label={t('ops.asignaciones.cardsCompact')}
+                  icon={Rows3}
                   onClick={() => setDensity('compact')}
-                >
-                  {t('ops.asignaciones.cardsCompact')}
-                </button>
-                <button
-                  type="button"
-                  className={`rounded-md px-3 py-1.5 text-xs font-medium ${density === 'expanded' ? 'bg-codiva-primary text-white' : 'text-zinc-600'}`}
+                />
+                <BoardSegButton
+                  active={density === 'expanded'}
+                  label={t('ops.asignaciones.cardsExpanded')}
+                  icon={Rows2}
                   onClick={() => setDensity('expanded')}
-                >
-                  {t('ops.asignaciones.cardsExpanded')}
-                </button>
+                />
               </div>
             ) : null}
             {canManage ? (
-              <Button size="xs" className="ml-auto" onClick={() => setCreateOpen(true)}>
-                {t('ops.asignaciones.create')}
+              <Button size="xs" className="ml-auto gap-1" onClick={() => setCreateOpen(true)}>
+                <Plus className="h-3.5 w-3.5" aria-hidden />
+                <span className="hidden sm:inline">{t('ops.asignaciones.create')}</span>
+                <span className="sm:hidden">{t('ops.asignaciones.createShort')}</span>
               </Button>
             ) : null}
           </>
         }
       />
 
-      {view === 'board' ? (
-        <div
-          ref={scrollerRef}
-          className="-mx-4 flex min-h-[28rem] min-w-0 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
-        >
-          {WORK_BOARD_COLUMNS.map((status) => {
-            const cards = visible.filter((row) => row.status === status);
-            const active = dropStatus === status;
-            return (
-              <section
-                key={status}
-                data-work-drop-status={status}
-                className={`flex max-h-[calc(100dvh-8rem)] min-h-[min(28rem,calc(100dvh-8rem))] flex-1 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
-                  density === 'compact' ? 'min-w-64' : 'min-w-72'
-                } ${active ? 'border-codiva-primary ring-2 ring-inset ring-codiva-primary/30' : 'border-zinc-200'}`}
-              >
-                <header className="mb-1.5 flex shrink-0 items-center justify-between px-1 py-0.5">
-                  <h2 className="text-sm font-semibold text-zinc-800">{statusLabels[status]}</h2>
-                  {status === 'done' ? null : (
-                    <span className="text-xs text-zinc-500">{cards.length}</span>
-                  )}
-                </header>
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto p-1">
-                  {cards.map((row) => (
-                    <WorkCard
-                      key={`${row.id}-${density}`}
-                      assignment={row}
-                      locale={locale}
-                      streamLabel={streamLabels[row.stream]}
-                      urgencyLabel={urgencyLabels[row.urgency]}
-                      collapsible
-                      compact={density === 'compact'}
-                      canEdit={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
-                      canManage={canManage}
-                      currentUserId={currentUserId}
-                      isMine={canMutateWorkAssignment(currentUserId, row.assignee_id, false)}
-                      draggable={canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)}
-                      isDragging={draggingId === row.id}
-                      onOpen={() => selectAssignment(row.id)}
-                      onToggleSubtask={onToggleSub}
-                      onRefresh={() => router.refresh()}
-                      onPointerDownCard={onCardPointerDown}
-                      consumeClickIfDragged={consumeClickIfDragged}
-                      viewers={viewersByAssignment.get(row.id) ?? []}
-                      onArchive={
-                        canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)
-                          ? () => void changeStatus(row.id, 'archived', 'detail', 'ops.asignaciones.archivedToast')
-                          : undefined
-                      }
-                    />
-                  ))}
-                  {!cards.length ? (
-                    <p className="px-1 text-xs text-zinc-400">{t('ops.asignaciones.emptyColumn')}</p>
-                  ) : null}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      ) : view === 'archive' && !visible.length ? (
-        <EmptyState>{t('ops.asignaciones.emptyArchive')}</EmptyState>
+      {view === 'board' || view === 'archive' ? (
+        view === 'archive' && !visible.length ? (
+          <EmptyState>{t('ops.asignaciones.emptyArchive')}</EmptyState>
+        ) : (
+          <div
+            ref={scrollerRef}
+            className="-mx-4 flex min-h-[28rem] min-w-0 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8"
+          >
+            {boardLanes.map((lane) => {
+              const active = lane.droppable && dropStatus === lane.id;
+              return (
+                <section
+                  key={lane.id}
+                  data-work-drop-status={lane.droppable ? lane.id : undefined}
+                  className={`flex max-h-[calc(100dvh-8rem)] min-h-[min(28rem,calc(100dvh-8rem))] flex-1 flex-col overflow-hidden rounded-2xl border bg-zinc-50/80 p-1.5 ${
+                    density === 'compact' ? 'min-w-64' : 'min-w-72'
+                  } ${active ? 'border-codiva-primary ring-2 ring-inset ring-codiva-primary/30' : 'border-zinc-200'}`}
+                >
+                  <header className="mb-1.5 flex shrink-0 items-center justify-between px-1 py-0.5">
+                    <h2 className="text-sm font-semibold text-zinc-800">{lane.title}</h2>
+                    {lane.hideCount ? null : <span className="text-xs text-zinc-500">{lane.cards.length}</span>}
+                  </header>
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 overflow-x-hidden overflow-y-auto p-1">
+                    {lane.cards.map((row) => {
+                      const canAct = canMutateWorkAssignment(currentUserId, row.assignee_id, canManage);
+                      return (
+                        <WorkCard
+                          key={`${row.id}-${density}`}
+                          assignment={row}
+                          locale={locale}
+                          streamLabel={streamLabels[row.stream]}
+                          urgencyLabel={urgencyLabels[row.urgency]}
+                          collapsible
+                          compact={density === 'compact'}
+                          canEdit={canAct}
+                          canManage={canManage}
+                          currentUserId={currentUserId}
+                          isMine={canMutateWorkAssignment(currentUserId, row.assignee_id, false)}
+                          draggable={view === 'board' && canAct}
+                          isDragging={draggingId === row.id}
+                          onOpen={() => selectAssignment(row.id)}
+                          onToggleSubtask={onToggleSub}
+                          onRefresh={() => router.refresh()}
+                          onPointerDownCard={view === 'board' ? onCardPointerDown : undefined}
+                          consumeClickIfDragged={view === 'board' ? consumeClickIfDragged : undefined}
+                          viewers={viewersByAssignment.get(row.id) ?? []}
+                          onDelete={view === 'archive' && canManage ? () => setPendingDelete(row) : undefined}
+                          onArchive={
+                            view === 'board' && canAct
+                              ? () => void changeStatus(row.id, 'archived', 'detail', 'ops.asignaciones.archivedToast')
+                              : undefined
+                          }
+                          onRestore={
+                            view === 'archive' && canAct
+                              ? () => void changeStatus(row.id, 'done', 'detail', 'ops.asignaciones.restored')
+                              : undefined
+                          }
+                        />
+                      );
+                    })}
+                    {!lane.cards.length ? (
+                      <p className="px-1 text-xs text-zinc-400">{t('ops.asignaciones.emptyColumn')}</p>
+                    ) : null}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )
       ) : (
         <div className="space-y-6">
           {WORK_STREAMS.map((streamId) => {
             const rows = visible.filter((row) => row.stream === streamId);
-            if (view === 'archive' && !rows.length) return null;
             return (
               <section key={streamId}>
                 <h2 className="mb-2 text-sm font-semibold text-zinc-800">{streamLabels[streamId]}</h2>
@@ -588,11 +640,6 @@ export default function OpsWorkBoard({
                         onArchive={
                           canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)
                             ? () => void changeStatus(row.id, 'archived', 'detail', 'ops.asignaciones.archivedToast')
-                            : undefined
-                        }
-                        onRestore={
-                          canMutateWorkAssignment(currentUserId, row.assignee_id, canManage)
-                            ? () => void changeStatus(row.id, 'done', 'detail', 'ops.asignaciones.restored')
                             : undefined
                         }
                       />

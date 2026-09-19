@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   formatVercelApiError,
   isVercelProductionTarget,
+  listVercelPreviews,
   promoteVercelDeployment,
   deleteVercelDeployment,
 } from './vercel';
@@ -121,6 +122,86 @@ describe('promoteVercelDeployment', () => {
       expect(result.mode).toBe('alias');
       expect(result.url).toBe('https://nirc-codiva-dev.vercel.app');
     }
+  });
+});
+
+describe('listVercelPreviews', () => {
+  const prevToken = process.env.VERCEL_RELEASES_TOKEN;
+
+  beforeEach(() => {
+    process.env.VERCEL_RELEASES_TOKEN = 'tok';
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    if (prevToken === undefined) delete process.env.VERCEL_RELEASES_TOKEN;
+    else process.env.VERCEL_RELEASES_TOKEN = prevToken;
+  });
+
+  it('lists READY previews without alias lookups in lite mode', async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      expect(url).not.toContain('/aliases');
+      expect(url).toContain('/v6/deployments');
+      expect(url).toContain('state=READY');
+      return jsonResponse(200, {
+        deployments: [
+          {
+            uid: 'dpl_prod',
+            url: 'nirc-prod.vercel.app',
+            target: 'production',
+            meta: { githubCommitSha: 'ffffffff', githubCommitRef: 'preview/ops-release' },
+          },
+          {
+            uid: 'dpl_main',
+            url: 'nirc-main.vercel.app',
+            target: 'preview',
+            meta: { githubCommitSha: 'eeeeeeee', githubCommitRef: 'main' },
+          },
+          {
+            uid: 'dpl_dirty',
+            url: 'nirc-dirty.vercel.app',
+            target: 'preview',
+            meta: { githubCommitSha: 'dddddddd', githubCommitRef: 'preview/ops-release', gitDirty: '1' },
+          },
+          {
+            uid: 'dpl_ok',
+            url: 'nirc-preview.vercel.app',
+            target: 'preview',
+            createdAt: Date.parse('2026-09-19T18:00:00.000Z'),
+            inspectorUrl: 'https://vercel.com/codiva/nirc/dpl_ok',
+            meta: {
+              githubCommitSha: 'aaaaaaaa',
+              githubCommitRef: 'preview/ops-release',
+              githubCommitMessage: 'feat: landing',
+            },
+          },
+        ],
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const listed = await listVercelPreviews({
+      projectId: 'prj_nirc',
+      teamId: 'team_abc',
+      includeAliases: false,
+    });
+
+    expect(listed.error).toBeNull();
+    expect(listed.items).toEqual([
+      {
+        deploymentId: 'dpl_ok',
+        previewUrl: 'https://nirc-preview.vercel.app',
+        inspectUrl: 'https://vercel.com/codiva/nirc/dpl_ok',
+        sha: 'aaaaaaaa',
+        message: 'feat: landing',
+        author: null,
+        branch: 'preview/ops-release',
+        createdAt: '2026-09-19T18:00:00.000Z',
+        dirty: false,
+        hasGitAlias: false,
+      },
+    ]);
   });
 });
 

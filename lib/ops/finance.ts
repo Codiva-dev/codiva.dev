@@ -1,4 +1,5 @@
 import { chargeAmountNumber } from '@/lib/ops/charges';
+import { textMatches } from '@/lib/ops/search-text';
 
 export type FinanceChargeRow = {
   id: string;
@@ -305,4 +306,23 @@ export function buildFinanceSummary(
       .map(([id, name]) => ({ id, name }))
       .sort((a, b) => a.name.localeCompare(b.name, 'es')),
   };
+}
+
+export function filterFinanceOrgsByQuery(orgs: FinanceOrgBucket[], query: string): FinanceOrgBucket[] {
+  const needle = query.trim();
+  if (!needle) return orgs;
+  return orgs.flatMap((org) => {
+    if (textMatches(org.orgName, needle)) return [org];
+    const projects = org.projects.flatMap((project) => {
+      const projectHay = `${project.projectName} ${project.projectStatus}`;
+      if (textMatches(projectHay, needle)) return [project];
+      const charges = project.charges.filter((charge) =>
+        textMatches(`${charge.title} ${charge.kind} ${charge.status}`, needle)
+      );
+      if (!charges.length) return [];
+      return [{ ...project, charges }];
+    });
+    if (!projects.length) return [];
+    return [{ ...org, projects }];
+  });
 }

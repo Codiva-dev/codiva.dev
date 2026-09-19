@@ -109,19 +109,33 @@ export function isStaleSince(iso: string | null | undefined, hours: number, now 
   return Number.isFinite(t) && now.getTime() - t >= hours * 60 * 60 * 1000;
 }
 
+export function isFinishedWorkProgress(progress: number | null | undefined) {
+  return Number(progress) >= 100;
+}
+
 export function isStuckAssignment(opts: {
   status: string;
   urgency: string;
   statusEnteredAt: string | null | undefined;
+  progressPct?: number | null;
   now?: Date;
 }) {
   const now = opts.now ?? new Date();
-  if (opts.status === 'done' || opts.status === 'archived') return false;
-  if (opts.status === 'blocked') return isStaleSince(opts.statusEnteredAt, 8, now);
+  if (opts.status === 'done' || opts.status === 'archived' || opts.status === 'blocked') return false;
+  if (isFinishedWorkProgress(opts.progressPct)) return false;
   if (opts.urgency === 'critical' || opts.urgency === 'high') {
     return isStaleSince(opts.statusEnteredAt, 24, now);
   }
   return false;
+}
+
+export function isUnscheduledInterviewAttention(opts: {
+  roundStatus: string;
+  scheduledAt: string | null | undefined;
+  applicationStatus: string | null | undefined;
+}) {
+  if (opts.roundStatus !== 'planned' || opts.scheduledAt) return false;
+  return opts.applicationStatus !== 'rejected' && opts.applicationStatus !== 'hired';
 }
 
 export function weekStartYmd(now = new Date(), timeZone = 'America/Mexico_City') {

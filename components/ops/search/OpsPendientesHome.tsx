@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import {
@@ -80,7 +80,7 @@ function timeLabel(at: string, t: (key: string, opts?: Record<string, unknown>) 
   return t('ops.pendientes.time.in', { count: stamp.days });
 }
 
-function cardAccent(item: PendingMonitorItem) {
+function rowAccent(item: PendingMonitorItem) {
   const bucket = attentionBucket(item.at);
   if (bucket === 'overdue' || item.kind === 'charge_overdue') return 'border-l-red-500';
   if (item.kind === 'mention' || item.kind === 'edit_request') return 'border-l-codiva-primary';
@@ -88,33 +88,33 @@ function cardAccent(item: PendingMonitorItem) {
   return 'border-l-zinc-200';
 }
 
-function MonitorCard({ item }: { item: PendingMonitorItem }) {
+function MonitorRow({ item }: { item: PendingMonitorItem }) {
   const { t } = useTranslation();
   const Icon = KIND_ICON[item.kind];
   return (
-    <article
-      className={cn(
-        'relative isolate z-0 flex gap-3 rounded-2xl border border-zinc-200 border-l-4 bg-white p-4 shadow-sm transition hover:border-zinc-300 hover:shadow-md',
-        cardAccent(item)
-      )}
-    >
-      <Link href={item.href} className="absolute inset-0 rounded-2xl" aria-label={item.title} />
+    <article className={cn('relative isolate z-0 flex items-center gap-3 border-l-2 px-3 py-2.5 hover:bg-zinc-50', rowAccent(item))}>
+      <Link href={item.href} className="absolute inset-0" aria-label={item.title} />
       <span
-        className={cn('relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl', KIND_WRAP[item.kind])}
+        className={cn('relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg', KIND_WRAP[item.kind])}
         aria-hidden
       >
-        <Icon className="h-4 w-4" strokeWidth={2} />
+        <Icon className="h-3.5 w-3.5" strokeWidth={2} />
       </span>
       <div className="relative z-10 min-w-0 flex-1 pointer-events-none">
-        <p className="flex flex-wrap items-center gap-x-2 text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-          <span>{kindLabel(item.kind, t)}</span>
-          <span aria-hidden>·</span>
-          <span className="normal-case tracking-normal">{timeLabel(item.at, t)}</span>
+        <p className="truncate text-sm font-medium text-zinc-900">{item.title}</p>
+        <p className="truncate text-[11px] text-zinc-500">
+          {kindLabel(item.kind, t)}
+          <span aria-hidden> · </span>
+          {timeLabel(item.at, t)}
+          {item.subtitle ? (
+            <>
+              <span aria-hidden> · </span>
+              {item.subtitle}
+            </>
+          ) : null}
         </p>
-        <p className="mt-1 font-semibold text-zinc-900">{item.title}</p>
-        {item.subtitle ? <p className="mt-1 line-clamp-2 text-sm text-zinc-600">{item.subtitle}</p> : null}
       </div>
-      <div className="relative z-10 flex shrink-0 flex-col items-end justify-center gap-2">
+      <div className="relative z-10 flex shrink-0 items-center gap-1">
         {item.mentionId ? (
           <MarkMentionReadButton
             mentionId={item.mentionId}
@@ -125,13 +125,31 @@ function MonitorCard({ item }: { item: PendingMonitorItem }) {
         {item.snoozeKey ? (
           <ToastForm success={t('ops.dashboard.attentionSnoozed')} action={snoozeAttentionItem}>
             <input type="hidden" name="item_key" value={item.snoozeKey} />
-            <Button type="submit" size="xs" variant="secondary">
+            <Button type="submit" size="xs" variant="ghost">
               {t('ops.dashboard.attentionSnooze')}
             </Button>
           </ToastForm>
         ) : null}
       </div>
     </article>
+  );
+}
+
+function MonitorGroup({ title, items }: { title: string; items: PendingMonitorItem[] }) {
+  if (!items.length) return null;
+  return (
+    <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <h2 className="border-b border-zinc-100 bg-zinc-50 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+        {title}
+      </h2>
+      <ul className="divide-y divide-zinc-100">
+        {items.map((item) => (
+          <li key={item.key}>
+            <MonitorRow item={item} />
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -154,7 +172,7 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition',
         active
           ? 'border-zinc-900 bg-zinc-900 text-white'
           : danger && count > 0
@@ -165,7 +183,7 @@ function FilterChip({
       {label}
       <span
         className={cn(
-          'rounded-full px-1.5 py-0.5 text-[11px] font-semibold tabular-nums',
+          'rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
           active ? 'bg-white/15 text-white' : danger && count > 0 ? 'bg-red-50 text-red-700' : 'bg-zinc-100 text-zinc-600'
         )}
       >
@@ -180,16 +198,28 @@ export default function OpsPendientesHome({
   greetingPeriod,
   actions,
   timeline,
+  overview,
 }: {
   firstName: string;
   greetingPeriod: OpsGreetingPeriod;
   actions: PendingMonitorItem[];
   timeline: PendingMonitorItem[];
+  overview?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<PendingHomeFilter>('all');
+  const [panel, setPanel] = useState<'queue' | 'overview'>('queue');
   const counts = useMemo(() => pendingFilterCounts(actions, timeline), [actions, timeline]);
+
+  useEffect(() => {
+    function syncHash() {
+      if (window.location.hash === '#resumen') setPanel('overview');
+    }
+    syncHash();
+    window.addEventListener('hashchange', syncHash);
+    return () => window.removeEventListener('hashchange', syncHash);
+  }, []);
 
   const visibleActions = useMemo(
     () => actions.filter((row) => textMatches(`${kindLabel(row.kind, t)} ${row.title} ${row.subtitle}`, query)),
@@ -240,35 +270,23 @@ export default function OpsPendientesHome({
     { id: 'later', label: t('ops.pendientes.bucket.later') },
   ];
 
-  return (
-    <div className="w-full">
-      <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-codiva-primary">{t('ops.pendientes.kicker')}</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-zinc-900 sm:text-4xl">
-            {t(helloKey, { name: firstName })}
-          </h1>
-          <p className={cn('mt-2 text-sm', counts.overdue ? 'font-medium text-red-700' : 'text-zinc-600')}>{summary}</p>
-          <a href="#resumen" className="mt-3 inline-flex text-sm font-medium text-codiva-primary hover:underline">
-            {t('ops.pendientes.openDashboard')}
-          </a>
-        </div>
-        <label className="relative w-full max-w-md lg:w-80">
-          <span className="sr-only">{t('ops.pendientes.searchPlaceholder')}</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" aria-hidden />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t('ops.pendientes.searchPlaceholder')}
-            className="w-full rounded-2xl border border-zinc-200 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 outline-none transition focus:border-codiva-primary focus:ring-2 focus:ring-codiva-primary/20"
-          />
-        </label>
-      </header>
+  function showQueue() {
+    setPanel('queue');
+    if (window.location.hash === '#resumen') {
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }
 
+  function showOverview() {
+    setPanel('overview');
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#resumen`);
+  }
+
+  const queue = (
+    <div className="min-w-0 space-y-3">
       {emptyCatalog ? null : (
-        <div className="sticky top-0 z-30 -mx-4 mt-6 bg-codiva-background/95 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-          <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="sticky top-0 z-30 -mx-1 bg-codiva-background/95 px-1 py-2 backdrop-blur-md">
+          <div className="flex gap-1.5 overflow-x-auto pb-0.5">
             {chips.map((chip) => (
               <FilterChip
                 key={chip.id}
@@ -283,87 +301,117 @@ export default function OpsPendientesHome({
         </div>
       )}
 
-      <div className="mt-4 space-y-8">
-        {emptyCatalog ? (
-          <div className="rounded-3xl border border-emerald-200 bg-emerald-50/60 px-6 py-16 text-center">
-            <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" strokeWidth={1.75} aria-hidden />
-            <h2 className="mt-4 text-xl font-semibold text-zinc-900">{t('ops.pendientes.caughtUpTitle')}</h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-zinc-600">{t('ops.pendientes.caughtUpBody')}</p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button as={Link} href="/asignaciones" size="sm">
-                {t('ops.pendientes.openBoard')}
-              </Button>
-              <Button as="a" href="#resumen" size="sm" variant="secondary">
-                {t('ops.pendientes.openDashboard')}
-              </Button>
-            </div>
+      {emptyCatalog ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 px-5 py-10 text-center">
+          <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-600" strokeWidth={1.75} aria-hidden />
+          <h2 className="mt-3 text-lg font-semibold text-zinc-900">{t('ops.pendientes.caughtUpTitle')}</h2>
+          <p className="mx-auto mt-1 max-w-md text-sm text-zinc-600">{t('ops.pendientes.caughtUpBody')}</p>
+          <div className="mt-4">
+            <Button as={Link} href="/asignaciones" size="sm">
+              {t('ops.pendientes.openBoard')}
+            </Button>
           </div>
+        </div>
+      ) : null}
+
+      {emptyFilter ? (
+        <p className="text-sm text-zinc-500">
+          {query.trim()
+            ? t('ops.buscador.noMatch', { nounOne: t('ops.buscador.nouns.pendingOne') })
+            : t('ops.pendientes.filterEmpty')}
+          {query.trim() ? (
+            <>
+              {' '}
+              <button type="button" className="font-medium text-codiva-primary" onClick={() => setQuery('')}>
+                {t('ops.buscador.clearQuery')}
+              </button>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
+      {bucketFilter ? (
+        <MonitorGroup
+          title={t(`ops.pendientes.bucket.${bucketFilter}`)}
+          items={[...bucketActions, ...(visibleGroups[0]?.items ?? [])]}
+        />
+      ) : (
+        <>
+          {showActions ? <MonitorGroup title={t('ops.pendientes.actionsTitle')} items={visibleActions} /> : null}
+          {showTimeline
+            ? visibleGroups.map((group) => (
+                <MonitorGroup
+                  key={group.bucket}
+                  title={t(`ops.pendientes.bucket.${group.bucket as AttentionBucket}`)}
+                  items={group.items}
+                />
+              ))
+            : null}
+        </>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="w-full">
+      <header className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{t(helloKey, { name: firstName })}</h1>
+          <p className={cn('mt-1 text-sm', counts.overdue ? 'font-medium text-red-700' : 'text-zinc-600')}>{summary}</p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          {overview ? (
+            <div className="flex rounded-xl border border-zinc-200 bg-white p-1 lg:hidden">
+              <button
+                type="button"
+                aria-pressed={panel === 'queue'}
+                onClick={showQueue}
+                className={cn(
+                  'flex-1 rounded-lg px-3 py-1.5 text-sm font-medium',
+                  panel === 'queue' ? 'bg-zinc-900 text-white' : 'text-zinc-600'
+                )}
+              >
+                {t('ops.pendientes.tabQueue')}
+              </button>
+              <button
+                type="button"
+                aria-pressed={panel === 'overview'}
+                onClick={showOverview}
+                className={cn(
+                  'flex-1 rounded-lg px-3 py-1.5 text-sm font-medium',
+                  panel === 'overview' ? 'bg-zinc-900 text-white' : 'text-zinc-600'
+                )}
+              >
+                {t('ops.pendientes.tabOverview')}
+              </button>
+            </div>
+          ) : null}
+          <label className="relative w-full sm:w-64">
+            <span className="sr-only">{t('ops.pendientes.searchPlaceholder')}</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('ops.pendientes.searchPlaceholder')}
+              className="w-full rounded-xl border border-zinc-200 bg-white py-2 pl-9 pr-3 text-sm text-zinc-900 outline-none transition focus:border-codiva-primary focus:ring-2 focus:ring-codiva-primary/20"
+            />
+          </label>
+        </div>
+      </header>
+
+      <div className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className={cn(overview && panel === 'overview' ? 'hidden xl:block' : 'min-w-0')}>{queue}</div>
+        {overview ? (
+          <aside
+            className={cn(
+              'min-w-0 xl:sticky xl:top-0 xl:max-h-[calc(100dvh-8rem)] xl:overflow-y-auto',
+              panel === 'queue' ? 'hidden xl:block' : 'block'
+            )}
+          >
+            {overview}
+          </aside>
         ) : null}
-
-        {emptyFilter ? (
-          <p className="text-sm text-zinc-500">
-            {query.trim()
-              ? t('ops.buscador.noMatch', { nounOne: t('ops.buscador.nouns.pendingOne') })
-              : t('ops.pendientes.filterEmpty')}
-            {query.trim() ? (
-              <>
-                {' '}
-                <button type="button" className="font-medium text-codiva-primary" onClick={() => setQuery('')}>
-                  {t('ops.buscador.clearQuery')}
-                </button>
-              </>
-            ) : null}
-          </p>
-        ) : null}
-
-        {bucketFilter ? (
-          bucketActions.length || visibleGroups.length ? (
-            <section>
-              <h2 className="mb-3 text-sm font-semibold text-zinc-900">
-                {t(`ops.pendientes.bucket.${bucketFilter}`)}
-              </h2>
-              <ul className="space-y-3">
-                {[...bucketActions, ...(visibleGroups[0]?.items ?? [])].map((item) => (
-                  <li key={item.key}>
-                    <MonitorCard item={item} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          ) : null
-        ) : (
-          <>
-            {showActions && visibleActions.length ? (
-              <section>
-                <h2 className="mb-3 text-sm font-semibold text-zinc-900">{t('ops.pendientes.actionsTitle')}</h2>
-                <ul className="space-y-3">
-                  {visibleActions.map((item) => (
-                    <li key={item.key}>
-                      <MonitorCard item={item} />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ) : null}
-
-            {showTimeline
-              ? visibleGroups.map((group) => (
-                  <section key={group.bucket}>
-                    <h2 className="mb-3 text-sm font-semibold text-zinc-900">
-                      {t(`ops.pendientes.bucket.${group.bucket as AttentionBucket}`)}
-                    </h2>
-                    <ul className="space-y-3">
-                      {group.items.map((item) => (
-                        <li key={item.key}>
-                          <MonitorCard item={item} />
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ))
-              : null}
-          </>
-        )}
       </div>
     </div>
   );

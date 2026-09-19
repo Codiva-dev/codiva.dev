@@ -1,4 +1,5 @@
 import type { createClient } from '@/lib/supabase/server';
+import { isFinishedWorkProgress } from '@/lib/ops/attention';
 import { keepPendingMentions, mentionPlainText, OPEN_WORK_STATUSES } from '@/lib/ops/work-board';
 
 type Db = Awaited<ReturnType<typeof createClient>>;
@@ -61,10 +62,10 @@ export async function countWorkPending(
   staffId: string,
   canManage = false
 ): Promise<number> {
-  const [{ count: assignments }, mentionRows, requests] = await Promise.all([
+  const [{ data: assignmentCountRows }, mentionRows, requests] = await Promise.all([
     supabase
       .from('work_assignments')
-      .select('id', { count: 'exact', head: true })
+      .select('id, progress_pct')
       .eq('assignee_id', staffId)
       .in('status', [...OPEN_WORK_STATUSES]),
     unreadMentionRows(supabase, staffId),
@@ -83,7 +84,7 @@ export async function countWorkPending(
     [...mentionMeta.entries()].map(([id, row]) => [id, row.status])
   );
   return (
-    (assignments ?? 0) +
+    (assignmentCountRows ?? []).filter((row) => !isFinishedWorkProgress(row.progress_pct)).length +
     keepPendingMentions(mentionRows, mentionStatuses).length +
     (requests.count ?? 0)
   );
@@ -165,7 +166,9 @@ export async function listWorkPending(
   }));
 
   return {
-    assignments: (assignmentRows ?? []) as PendingAssignment[],
+    assignments: ((assignmentRows ?? []) as PendingAssignment[]).filter(
+      (row) => !isFinishedWorkProgress(row.progress_pct)
+    ),
     mentions,
     editRequests,
   };

@@ -159,9 +159,43 @@ type VercelDeployment = {
   meta?: Record<string, string | undefined>;
 };
 
+function mapVercelDeployment(d: VercelDeployment, aliases: string[] = []): VercelPreview {
+  const meta = d.meta ?? {};
+  const createdMs = d.createdAt ?? d.created ?? Date.now();
+  const deploymentHost = hostOnly(d.url!);
+  const previewUrl = asHttps(pickPreviewHost(deploymentHost, aliases));
+  return {
+    deploymentId: d.uid!,
+    previewUrl,
+    inspectUrl: d.inspectorUrl ?? null,
+    sha: meta.githubCommitSha ?? null,
+    message: meta.githubCommitMessage ?? null,
+    author: meta.githubCommitAuthorName ?? null,
+    branch: meta.githubCommitRef ?? null,
+    createdAt: new Date(createdMs).toISOString(),
+    dirty: false,
+    hasGitAlias: previewHasGitAlias(previewUrl, aliases),
+  };
+}
+
+function collectPreviewCandidates(deployments: VercelDeployment[] | undefined): VercelDeployment[] {
+  const candidates: VercelDeployment[] = [];
+  for (const d of deployments ?? []) {
+    if (d.target === 'production') continue;
+    if (!d.uid || !d.url) continue;
+    if (isDirtyVercelMeta(d.meta)) continue;
+    if (isIntegrationGitRef(d.meta?.githubCommitRef)) continue;
+    candidates.push(d);
+    if (candidates.length >= 20) break;
+  }
+  return candidates;
+}
+
 export async function listVercelPreviews(input: {
   projectId: string;
   teamId?: string | null;
+  includeAliases?: boolean;
+  signal?: AbortSignal;
 }): Promise<{ items: VercelPreview[]; error: string | null }> {
   const token = vercelToken();
   if (!token) {
@@ -175,7 +209,14 @@ export async function listVercelPreviews(input: {
   if (!projectId) return { items: [], error: null };
 
   const url = `https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(projectId)}&state=READY&limit=40${teamQuery(input.teamId)}`;
-  const res = await fetch(url, { headers: vercelHeaders(token), cache: 'no-store' });
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: vercelHeaders(token), cache: 'no-store', signal: input.signal });
+  } catch (error) {
+    if (input.signal?.aborted) return { items: [], error: 'timeout' };
+    const message = error instanceof Error ? error.message : 'fetch failed';
+    return { items: [], error: message };
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     return {
@@ -185,37 +226,17 @@ export async function listVercelPreviews(input: {
   }
 
   const data = (await res.json()) as { deployments?: VercelDeployment[] };
-  const candidates: VercelDeployment[] = [];
-  for (const d of data.deployments ?? []) {
-    if (d.target === 'production') continue;
-    if (!d.uid || !d.url) continue;
-    if (isDirtyVercelMeta(d.meta)) continue;
-    if (isIntegrationGitRef(d.meta?.githubCommitRef ?? d.meta?.githubCommitRef)) continue;
-    candidates.push(d);
-    if (candidates.length >= 20) break;
-  }
+  const candidates = collectPreviewCandidates(data.deployments);
+  const includeAliases = input.includeAliases !== false;
 
-  const mapped: VercelPreview[] = await Promise.all(
-    candidates.map(async (d) => {
-      const meta = d.meta ?? {};
-      const createdMs = d.createdAt ?? d.created ?? Date.now();
-      const deploymentHost = hostOnly(d.url!);
-      const aliases = await listDeploymentAliases(token, d.uid!, input.teamId);
-      const previewUrl = asHttps(pickPreviewHost(deploymentHost, aliases));
-      return {
-        deploymentId: d.uid!,
-        previewUrl,
-        inspectUrl: d.inspectorUrl ?? null,
-        sha: meta.githubCommitSha ?? null,
-        message: meta.githubCommitMessage ?? null,
-        author: meta.githubCommitAuthorName ?? null,
-        branch: meta.githubCommitRef ?? null,
-        createdAt: new Date(createdMs).toISOString(),
-        dirty: false,
-        hasGitAlias: previewHasGitAlias(previewUrl, aliases),
-      };
-    })
-  );
+  const mapped: VercelPreview[] = includeAliases
+    ? await Promise.all(
+        candidates.map(async (d) => {
+          const aliases = await listDeploymentAliases(token, d.uid!, input.teamId);
+          return mapVercelDeployment(d, aliases);
+        })
+      )
+    : candidates.map((d) => mapVercelDeployment(d));
 
   const items = dedupePreviewsBySha(mapped).slice(0, 8);
   return { items, error: null };

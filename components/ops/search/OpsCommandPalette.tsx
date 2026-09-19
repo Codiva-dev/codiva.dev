@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import { groupSearchHits, type OpsSearchGroup, type OpsSearchHit } from '@/lib/ops/global-search';
 import OpsHighlight from './OpsHighlight';
@@ -103,6 +103,7 @@ export default function OpsCommandPalette() {
         titleId={titleId}
         closeLabel={t('common.buttons.close')}
         size="md"
+        closeButton={false}
         layer="raised"
         header={
           <p id={titleId} className="sr-only">
@@ -123,8 +124,8 @@ export default function OpsCommandPalette() {
           }
         }}
       >
-        <div className="border-b border-zinc-200 p-3">
-          <div className="relative">
+        <div className="flex items-center gap-2 border-b border-zinc-200 p-3">
+          <div className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" aria-hidden />
             <input
               ref={inputRef}
@@ -135,6 +136,14 @@ export default function OpsCommandPalette() {
               className="w-full rounded-lg border border-zinc-300 bg-white py-2 pl-9 pr-3 text-sm outline-none focus:border-codiva-primary focus:ring-2 focus:ring-codiva-primary/20"
             />
           </div>
+          <button
+            type="button"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
+            aria-label={t('common.buttons.close')}
+            onClick={() => setOpen(false)}
+          >
+            <X className="h-5 w-5" strokeWidth={2} aria-hidden />
+          </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto p-2">
           {empty ? (
