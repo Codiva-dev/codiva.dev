@@ -51,7 +51,7 @@ export default async function ProjectLicenciaTab({
 }) {
   const t = await getT();
   const cincelLive = instance
-    ? await readInstanceCincelStatus(instance.instance_push_url)
+    ? await readInstanceCincelStatus(instance.instance_push_url, instance.entitlement_token)
     : null;
   if (!instance) {
     return (
@@ -83,6 +83,11 @@ export default async function ProjectLicenciaTab({
           <h3 className="font-semibold">{t('ops.license.title')}</h3>
           <p className="text-sm uppercase tracking-wide text-zinc-500">{instance.status}</p>
         </div>
+        {!instance.instance_push_url ? (
+          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            {t('ops.license.pushUrlMissing')}
+          </p>
+        ) : null}
         <div className="mb-4 flex flex-wrap gap-2">
           {LICENSE_STATUSES.map((status) => (
             <ToastForm
@@ -266,7 +271,7 @@ export default async function ProjectLicenciaTab({
                     <p className="text-sm text-zinc-600">{t('ops.license.vendorCincelHint')}</p>
                     {cincelLive ? (
                       <p className="text-xs text-zinc-500">
-                        {t('ops.license.vendorCincelLive')}: {cincelLive.expiresAt || '—'}
+                        {t('ops.license.vendorCincelLive')}: {cincelLive.expiresAt || '-'}
                         {cincelLive.lastError ? ` · ${cincelLive.lastError}` : ''}
                         {cincelLive.hasPendingOtp ? ` · ${t('ops.license.vendorOtpPending')}` : ''}
                       </p>

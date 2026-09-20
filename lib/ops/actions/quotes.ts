@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
-  requireStaff,
-  assertCapability,
+  assertCapabilityWrite,
   assertProjectAccessOrThrow,
 } from '@/lib/ops/auth';
 import { logActivity } from '@/lib/ops/activity';
@@ -17,7 +16,7 @@ import { opsProjectPathById } from '@/lib/ops/project-path';
 import { parseQuoteFormData } from '@/lib/ops/quote-form';
 
 export async function createQuote(projectId: string, formData: FormData) {
-  const access = await assertCapability('quotes');
+  const access = await assertCapabilityWrite('quotes');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
   const parsed = parseQuoteFormData(formData);
@@ -61,7 +60,7 @@ export async function createQuote(projectId: string, formData: FormData) {
 }
 
 export async function updateQuote(quoteId: string, formData: FormData) {
-  const access = await assertCapability('quotes');
+  const access = await assertCapabilityWrite('quotes');
   const { supabase } = access;
 
   const { data: existing } = await supabase
@@ -103,7 +102,7 @@ export async function updateQuote(quoteId: string, formData: FormData) {
 }
 
 export async function deleteDraftQuote(quoteId: string) {
-  const access = await assertCapability('quotes');
+  const access = await assertCapabilityWrite('quotes');
   const { supabase, user } = access;
   const t = await getT();
 
@@ -148,7 +147,7 @@ export async function deleteDraftQuote(quoteId: string) {
 }
 
 export async function sendQuote(quoteId: string, projectId: string) {
-  const access = await assertCapability('quotes');
+  const access = await assertCapabilityWrite('quotes');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
   const admin = createAdminClient();
@@ -207,7 +206,9 @@ export async function sendQuote(quoteId: string, projectId: string) {
 }
 
 export async function acceptQuote(quoteId: string, projectId: string) {
-  const { supabase, user } = await requireStaff();
+  const access = await assertCapabilityWrite('quotes');
+  await assertProjectAccessOrThrow(access, projectId);
+  const { supabase, user } = access;
   const now = new Date().toISOString();
   await supabase
     .from('quotes')

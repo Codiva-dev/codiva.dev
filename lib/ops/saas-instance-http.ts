@@ -1,4 +1,5 @@
 import { throwPublic } from '@/lib/ops/throw-db';
+import { safeOutboundOrigin } from '@/lib/ops/safe-outbound-url';
 
 export type InstanceCincelStatus = {
   expiresAt: string | null;
@@ -11,40 +12,40 @@ export type InstanceCincelStatus = {
 };
 
 export function instanceApiOrigin(pushUrl: string | null | undefined): string | null {
-  const raw = pushUrl?.trim() ?? '';
-  if (!raw) return null;
-  try {
-    return new URL(raw).origin;
-  } catch {
-    return null;
-  }
+  return safeOutboundOrigin(pushUrl);
 }
 
-async function ingestSecret(): Promise<string> {
-  const secret = process.env.CODIVA_SAAS_INGEST_SECRET?.trim() ?? '';
-  if (!secret) return await throwPublic('ops.license.errIngestSecret');
-  return secret;
+function outboundAuthorization(licenseToken?: string | null): string | null {
+  if (process.env.CODIVA_SAAS_PUSH_USE_INGEST_BEARER === '1') {
+    const secret = process.env.CODIVA_SAAS_INGEST_SECRET?.trim() ?? '';
+    return secret ? `Bearer ${secret}` : null;
+  }
+  const token = licenseToken?.trim() ?? '';
+  return token ? `Bearer ${token}` : null;
 }
 
 export async function callInstanceCincelAuth(
   pushUrl: string | null | undefined,
-  init: { method: 'GET' } | { method: 'POST'; action: 'otp_request' | 'otp_exchange' | 'jwt_watch'; code?: string }
+  init: { method: 'GET' } | { method: 'POST'; action: 'otp_request' | 'otp_exchange' | 'jwt_watch'; code?: string },
+  licenseToken?: string | null
 ): Promise<Response> {
   const origin = instanceApiOrigin(pushUrl);
   if (!origin) return await throwPublic('ops.license.errPushUrl');
-  const secret = await ingestSecret();
+  const authorization = outboundAuthorization(licenseToken);
+  if (!authorization) return await throwPublic('ops.license.errSecret');
   const url = `${origin}/api/internal/cincel-auth`;
   try {
     return await fetch(url, {
       method: init.method,
       headers: {
-        authorization: `Bearer ${secret}`,
+        authorization,
         ...(init.method === 'POST' ? { 'content-type': 'application/json' } : {}),
       },
       body:
         init.method === 'POST'
           ? JSON.stringify({ action: init.action, code: init.code })
           : undefined,
+      redirect: 'error',
       signal: AbortSignal.timeout(12_000),
       cache: 'no-store',
     });
@@ -55,14 +56,16 @@ export async function callInstanceCincelAuth(
 }
 
 export async function readInstanceCincelStatus(
-  pushUrl: string | null | undefined
+  pushUrl: string | null | undefined,
+  licenseToken?: string | null
 ): Promise<InstanceCincelStatus | null> {
   const origin = instanceApiOrigin(pushUrl);
-  const secret = process.env.CODIVA_SAAS_INGEST_SECRET?.trim() ?? '';
-  if (!origin || !secret) return null;
+  const authorization = outboundAuthorization(licenseToken);
+  if (!origin || !authorization) return null;
   try {
     const res = await fetch(`${origin}/api/internal/cincel-auth`, {
-      headers: { authorization: `Bearer ${secret}` },
+      headers: { authorization },
+      redirect: 'error',
       signal: AbortSignal.timeout(8_000),
       cache: 'no-store',
     });

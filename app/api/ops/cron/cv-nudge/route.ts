@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/ops/timing-safe-bearer';
 import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/admin';
 import { huntProgressForAttempt, postingRequiresHunt } from '@/lib/careers/hunt/progress';
 import { notifyCandidateCvNudge } from '@/lib/careers/hunt/notify-candidate';
@@ -15,9 +16,7 @@ const NUDGE_WINDOW_MS = 8 * 24 * 60 * 60 * 1000;
  * Header: Authorization: Bearer $CRON_SECRET
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  const auth = request.headers.get('authorization');
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!cronAuthorized(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   if (!isSupabaseConfigured()) {

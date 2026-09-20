@@ -468,13 +468,12 @@ export function parseCareerPostingSections(text: string | null | undefined): Car
 
 export async function assertCareerCvObjectExists(storagePath: string): Promise<boolean> {
   const admin = createAdminClient();
-  const parts = String(storagePath || '')
-    .split('/')
-    .filter(Boolean);
-  if (parts.length < 2) return false;
-  const fileName = parts.pop();
-  const dir = parts.join('/');
-  const { data, error } = await admin.storage.from(CAREER_CV_BUCKET).list(dir, { limit: 100 });
-  if (error || !Array.isArray(data) || !fileName) return false;
-  return data.some((f) => f.name === fileName);
+  const { data, error } = await admin.storage.from(CAREER_CV_BUCKET).download(storagePath);
+  if (error || !data) return false;
+  const buffer = Buffer.from(await data.arrayBuffer());
+  if (!isPdfBuffer(buffer)) {
+    await admin.storage.from(CAREER_CV_BUCKET).remove([storagePath]);
+    return false;
+  }
+  return true;
 }

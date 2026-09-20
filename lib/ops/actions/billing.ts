@@ -2,15 +2,15 @@
 
 import { revalidatePath } from 'next/cache';
 import {
-  assertCapability,
+  assertCapabilityWrite,
   assertProjectAccessOrThrow,
 } from '@/lib/ops/auth';
 import { logActivity } from '@/lib/ops/activity';
 import { optionalHttpUrl } from '@/lib/ops/requested-url';
 import { throwDb } from '@/lib/ops/throw-db';
 import { deriveSaasStatusFromCharges, isLicenseStatus } from '@/lib/ops/saas-license';
+import { loadProjectMailContext, notifySaasLicenseStatus } from '@/lib/ops/saas-notify';
 import { signAndPushSaasProject } from '@/lib/ops/saas-push';
-import { notifyStaff } from '@/lib/ops/email';
 
 function parseChargeAmount(raw: FormDataEntryValue | null): number | null {
   const text = String(raw ?? '').trim();
@@ -29,12 +29,12 @@ function parseNoticeDays(raw: FormDataEntryValue | null): number {
 }
 
 async function syncSaasStatusFromCharges(
-  supabase: Awaited<ReturnType<typeof assertCapability>>['supabase'],
+  supabase: Awaited<ReturnType<typeof assertCapabilityWrite>>['supabase'],
   projectId: string
 ) {
   const { data: instance } = await supabase
     .from('saas_instances')
-    .select('id, status')
+    .select('id, status, instance_key')
     .eq('project_id', projectId)
     .maybeSingle();
   if (!instance) return;
@@ -51,16 +51,21 @@ async function syncSaasStatusFromCharges(
     .update({ status: next, updated_at: new Date().toISOString() })
     .eq('id', instance.id);
   if (next === 'grace' || next === 'locked') {
-    await notifyStaff({
-      subject: `NIRC licencia ${next}`,
-      text: `Un cargo SaaS dejó la instancia en ${next}.`,
+    const project = await loadProjectMailContext(supabase, projectId);
+    await notifySaasLicenseStatus({
+      status: next,
+      instanceKey: instance.instance_key,
+      reason: `Un cargo SaaS vencido dejó la instancia en ${next === 'locked' ? 'bloqueada' : 'periodo de gracia'}.`,
+      projectName: project.projectName,
+      projectSlug: project.projectSlug,
     });
   }
   await signAndPushSaasProject(supabase, projectId);
+  revalidatePath('/pendientes');
 }
 
 export async function createProjectCharge(projectId: string, formData: FormData) {
-  const access = await assertCapability('charges');
+  const access = await assertCapabilityWrite('charges');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -114,7 +119,7 @@ export async function updateProjectCharge(
   projectId: string,
   formData: FormData
 ) {
-  const access = await assertCapability('charges');
+  const access = await assertCapabilityWrite('charges');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -159,7 +164,7 @@ export async function updateProjectCharge(
 }
 
 export async function deleteProjectCharge(chargeId: string, projectId: string) {
-  const access = await assertCapability('charges');
+  const access = await assertCapabilityWrite('charges');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -183,7 +188,7 @@ export async function deleteProjectCharge(chargeId: string, projectId: string) {
 }
 
 export async function updateProjectSiteUrls(projectId: string, formData: FormData) {
-  const access = await assertCapability('site_access');
+  const access = await assertCapabilityWrite('site_access');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -217,7 +222,7 @@ export async function updateProjectSiteUrls(projectId: string, formData: FormDat
 }
 
 export async function createSiteAccess(projectId: string, formData: FormData) {
-  const access = await assertCapability('site_access');
+  const access = await assertCapabilityWrite('site_access');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -262,7 +267,7 @@ export async function createSiteAccess(projectId: string, formData: FormData) {
 }
 
 export async function updateSiteAccess(accessId: string, projectId: string, formData: FormData) {
-  const access = await assertCapability('site_access');
+  const access = await assertCapabilityWrite('site_access');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -311,7 +316,7 @@ export async function updateSiteAccess(accessId: string, projectId: string, form
 }
 
 export async function deleteSiteAccess(accessId: string, projectId: string) {
-  const access = await assertCapability('site_access');
+  const access = await assertCapabilityWrite('site_access');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 

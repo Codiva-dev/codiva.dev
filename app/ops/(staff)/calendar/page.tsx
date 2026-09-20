@@ -169,7 +169,7 @@ export default async function CalendarPage({
 
   const prevWeek = addDaysYmd(monday, -7);
   const nextWeek = addDaysYmd(monday, 7);
-  const weekLabel = `${formatDate(`${monday}T18:00:00.000Z`)} – ${formatDate(`${days[6]}T18:00:00.000Z`)}`;
+  const weekLabel = `${formatDate(`${monday}T18:00:00.000Z`)} - ${formatDate(`${days[6]}T18:00:00.000Z`)}`;
 
   return (
     <div>

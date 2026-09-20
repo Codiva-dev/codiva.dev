@@ -1556,7 +1556,7 @@
     "license": {
       "title": "Licencia de instancia",
       "emptyTitle": "Aún no hay licencia",
-      "emptyHint": "Crea el registro SaaS de este proyecto. El cobro mensual y de consumo sigue en Pagos.",
+      "emptyHint": "Crea el registro SaaS de este proyecto. La vigencia inicial es de un año. El cobro mensual y de consumo sigue en Pagos.",
       "create": "Crear licencia",
       "created": "Licencia creada",
       "saved": "Licencia guardada",
@@ -1566,6 +1566,7 @@
       "save": "Guardar",
       "instanceKey": "Clave de instancia",
       "pushUrl": "URL de empuje (NIRC)",
+      "pushUrlMissing": "Falta la URL de empuje. El JWT se guarda en Ops, pero NIRC no lo recibe y puede quedar en solo lectura con una vigencia vieja.",
       "periodStart": "Inicio de periodo",
       "periodEnd": "Fin de periodo",
       "graceUntil": "Gracia hasta",
@@ -1646,6 +1647,9 @@
       "preview": "Vista previa",
       "quoteSent": "Cotización enviada",
       "sendQuote": "Enviar al intermediario / contacto",
+      "revokeLink": "Revocar enlace",
+      "revokeLinkConfirm": "El enlace público dejará de abrir esta cotización.",
+      "linkRevoked": "Enlace público revocado",
       "noQuotes": "Sin cotizaciones. Crea la primera arriba.",
       "hourlyRateValue": "{{amount}} / hora"
     },

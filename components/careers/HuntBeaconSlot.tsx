@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { HUNT_SESSION_EVENT, isHuntToken } from '@/lib/careers/hunt/cookie';
-import { readHuntCookie, readHuntContext } from '@/components/careers/hunt-context';
+import { readHuntContext } from '@/components/careers/hunt-context';
 
 const HuntBeacon = dynamic(() => import('@/components/careers/HuntBeacon'), { ssr: false });
 
 function huntTokenActive() {
-  return isHuntToken(readHuntCookie() || readHuntContext()?.token);
+  return isHuntToken(readHuntContext()?.token);
 }
 
 /** Loads HuntBeacon only after a hunt session exists, so marketing JS stays small. */

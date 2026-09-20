@@ -142,7 +142,10 @@ export async function associatePartnerPortalUsers(opts: {
   return invited;
 }
 
-export async function syncHubUserPartnerProjects(userId: string): Promise<string[]> {
+export async function syncHubUserPartnerProjects(
+  userId: string,
+  allowedProjectIds?: string[] | null
+): Promise<string[]> {
   const admin = createAdminClient();
   const { data: authUser } = await admin.auth.admin.getUserById(userId);
   const email = authUser.user?.email?.toLowerCase();
@@ -170,6 +173,7 @@ export async function syncHubUserPartnerProjects(userId: string): Promise<string
       hubUsers: [{ email, displayName: profile.display_name, isHub: true }],
     });
     if (!emails.includes(email)) continue;
+    if (allowedProjectIds && !allowedProjectIds.includes(project.id)) continue;
     ids.push(project.id);
   }
   if (!ids.length) return [];

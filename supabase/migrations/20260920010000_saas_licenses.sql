@@ -1,4 +1,4 @@
--- SaaS instance licenses (NIRC). Staff-only. No prices here — charges stay on project_charges.
+-- SaaS instance licenses (NIRC). Staff-only. No prices here; charges stay on project_charges.
 
 CREATE TABLE IF NOT EXISTS public.saas_instances (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

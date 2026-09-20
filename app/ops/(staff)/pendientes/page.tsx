@@ -147,7 +147,7 @@ export default async function PendientesPage({
       id: row.id,
       assignmentId: row.assignment_id,
       title: row.assignment_title,
-      subtitle: [t('ops.pendientes.mentionedBy', { name: row.author_name }), row.preview].filter(Boolean).join(' — '),
+      subtitle: [t('ops.pendientes.mentionedBy', { name: row.author_name }), row.preview].filter(Boolean).join(' · '),
       at: row.created_at,
     })),
     editRequests: editRequests.map((row) => ({
@@ -156,7 +156,7 @@ export default async function PendientesPage({
       title: row.assignment_title,
       subtitle: [t('ops.pendientes.editRequestedBy', { name: row.requested_by_name }), row.payload]
         .filter(Boolean)
-        .join(' — '),
+        .join(' · '),
       at: row.created_at,
     })),
   });

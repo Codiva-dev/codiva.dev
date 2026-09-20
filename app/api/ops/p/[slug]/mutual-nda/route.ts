@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { requirePortalAccess } from '@/lib/ops/auth';
+import { getAcceptanceStatus } from '@/lib/ops/legal/acceptances';
 import {
   buildMutualNdaHtml,
   mutualNdaFilename,
@@ -9,49 +10,16 @@ type RouteContext = { params: Promise<{ slug: string }> };
 
 export async function GET(_request: Request, context: RouteContext) {
   const { slug } = await context.params;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const access = await requirePortalAccess(slug);
 
-  if (!user) {
-    return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
-  }
-
-  const { data: staff } = await supabase
-    .from('staff_profiles')
-    .select('id')
-    .eq('id', user.id)
-    .eq('active', true)
-    .maybeSingle();
-
-  let projectQuery = supabase
-    .from('projects')
-    .select('id, name, slug, description, client_visible, organizations(name)')
-    .eq('slug', slug);
-
-  if (!staff) {
-    projectQuery = projectQuery.eq('client_visible', true);
-  }
-
-  const { data: project } = await projectQuery.maybeSingle();
-  if (!project) {
-    return NextResponse.json({ error: 'Proyecto no encontrado' }, { status: 404 });
-  }
-
-  if (!staff) {
-    const { data: membership } = await supabase
-      .from('project_members')
-      .select('id')
-      .eq('project_id', project.id)
-      .eq('user_id', user.id)
-      .maybeSingle();
-
-    if (!membership) {
-      return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+  if (!access.isStaffPreview) {
+    const status = getAcceptanceStatus(access.membership);
+    if (!status.complete) {
+      return new NextResponse('Acepta los documentos legales para ver este material.', { status: 403 });
     }
   }
 
+  const project = access.project;
   const org = project.organizations as { name?: string } | { name?: string }[] | null;
   const orgName = Array.isArray(org) ? org[0]?.name : org?.name;
   const clientName = orgName?.trim() || project.name;

@@ -220,16 +220,18 @@ export default function CareerAssessment({
           full_name: fullName.trim(),
           email: email.trim(),
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          token: readAttemptToken(jobPostingId, discipline) || undefined,
         }),
       });
       const data = await res.json();
       if (!res.ok) {
         if (data?.error === 'retry_cooldown') throw new Error('retry_cooldown');
         if (data?.error === 'max_attempts') throw new Error('max_attempts');
+        if (data?.error === 'session_in_progress') throw new Error('session_in_progress');
         throw new Error(data?.error || 'start_failed');
       }
       const s = data.session as Session;
-      writeAttemptToken(jobPostingId, s.token, discipline);
+      if (s?.token) writeAttemptToken(jobPostingId, s.token, discipline);
       if (data.already_passed) {
         setSession(s);
         setResult({ passed: true, score_pct: s.score_pct });
@@ -247,6 +249,7 @@ export default function CareerAssessment({
       const code = err instanceof Error ? err.message : '';
       if (code === 'retry_cooldown') setError(t('career.assessment_cooldown'));
       else if (code === 'max_attempts') setError(t('career.assessment_max_attempts'));
+      else if (code === 'session_in_progress') setError(t('career.assessment_in_progress'));
       else setError(t('career.assessment_error'));
     } finally {
       setLoading(false);

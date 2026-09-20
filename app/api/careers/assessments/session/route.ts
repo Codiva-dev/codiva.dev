@@ -54,13 +54,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 });
   }
   const row = await expireIfNeeded(found);
+  const completedAt = row.completed_at ? new Date(row.completed_at).getTime() : 0;
+  const completedStale =
+    row.status === 'completed' && completedAt > 0 && Date.now() - completedAt > 48 * 3600 * 1000;
   const catalog = getAssessmentCatalog(row.catalog_key);
   const questions =
     row.status === 'started' && catalog
       ? publicQuestionsForAttempt(catalog, row.question_ids, parseOptionOrders(row.option_orders))
       : [];
   const hunt =
-    row.status === 'completed' && row.passed
+    row.status === 'completed' && row.passed && !completedStale
       ? await huntProgressForAttempt({
           email: row.email,
           catalogKey: row.catalog_key,
@@ -76,16 +79,16 @@ export async function POST(request: Request) {
         job_posting_id: row.job_posting_id,
         catalog_key: row.catalog_key,
         status: row.status,
-        full_name: row.full_name,
-        email: row.email,
+        full_name: completedStale ? '' : row.full_name,
+        email: completedStale ? '' : row.email,
         attempt_number: row.attempt_number,
         remaining_ms: row.status === 'started' ? remainingMs(row.expires_at) : 0,
         time_limit_sec: row.time_limit_sec,
         passed: row.passed,
-        score_pct: row.status === 'completed' ? row.score_pct : null,
+        score_pct: row.status === 'completed' && !completedStale ? row.score_pct : null,
         title: catalog?.title ?? 'Prueba',
         questions,
-        answers: row.answers ?? {},
+        answers: completedStale ? {} : (row.answers ?? {}),
         ...toPublicHuntSession(hunt),
       },
     }),

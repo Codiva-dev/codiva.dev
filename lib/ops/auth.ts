@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { chargeAmountNumber } from '@/lib/ops/charges';
@@ -17,7 +18,7 @@ import { loadInterviewMemberById, readInterviewViewAsMemberId } from '@/lib/ops/
 import { safeNextPath } from '@/lib/ops/safe-path';
 
 const PROJECT_SELECT =
-  'id, name, slug, status, client_visible, organization_id, progress_percent, description, target_delivery_date, portal_show_quote, portal_show_costs, site_preview_url, site_production_url';
+  'id, name, slug, status, client_visible, organization_id, progress_percent, description, target_delivery_date, portal_show_quote, portal_show_costs, site_preview_url, site_production_url, organizations(name)';
 
 const MEMBER_SELECT =
   'id, role, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version, nda_accepted_at, nda_version';
@@ -95,6 +96,19 @@ export async function assertCapability(capability: Capability) {
   return access;
 }
 
+/** Tras chequear auth, escribe con service_role (PostgREST authenticated no tiene GRANT de write). */
+export function withAdminClient<T extends { supabase: StaffAccess['supabase'] }>(access: T): T {
+  return { ...access, supabase: createAdminClient() as T['supabase'] };
+}
+
+export async function requireStaffWrite() {
+  return withAdminClient(await requireStaff());
+}
+
+export async function assertCapabilityWrite(capability: Capability) {
+  return withAdminClient(await assertCapability(capability));
+}
+
 export function staffRole(access: StaffAccess): StaffRole {
   return access.staff.role as StaffRole;
 }
@@ -158,6 +172,12 @@ export async function assertProjectAccessOrThrow(
   }
 }
 
+export async function requireStaffProjectCapability(capability: Capability, projectId: string) {
+  const access = await assertCapability(capability);
+  await assertProjectAccessOrThrow(access, projectId);
+  return access;
+}
+
 async function getActiveStaff(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string
@@ -195,10 +215,21 @@ export async function requirePortalAccess(slug: string) {
   const { data: project } = await projectQuery.maybeSingle();
 
   if (!project) {
-    redirect(`/p/${slug}/login?error=not_found`);
+    redirect(`/p/${slug}/login?error=no_access`);
   }
 
   if (staff) {
+    if (!can(staff, 'projects_all')) {
+      const { data: assigned } = await supabase
+        .from('project_staff')
+        .select('project_id')
+        .eq('project_id', project.id)
+        .eq('staff_id', user.id)
+        .maybeSingle();
+      if (!assigned) {
+        redirect(`/p/${slug}/login?error=no_access`);
+      }
+    }
     return {
       user,
       project,

@@ -31,16 +31,18 @@ export async function partnerCanReadApplication(opts: {
   return allowed.includes(opts.application.id);
 }
 
-export async function partnerCanReadJobPosting(opts: {
+export async function partnerCanReadFailedAttempt(opts: {
   memberId: string;
-  jobPostingId: string;
+  attempt: { email: string; job_posting_id: string };
 }): Promise<boolean> {
   const admin = createAdminClient();
-  const { data: assignments } = await admin
-    .from('ops_interview_assignments')
-    .select('job_posting_id')
-    .eq('member_id', opts.memberId)
-    .eq('job_posting_id', opts.jobPostingId)
-    .limit(1);
-  return Boolean(assignments?.length);
+  const { data: apps } = await admin
+    .from('ops_job_applications')
+    .select('id, job_posting_id')
+    .eq('job_posting_id', opts.attempt.job_posting_id)
+    .ilike('email', opts.attempt.email);
+  for (const application of apps ?? []) {
+    if (await partnerCanReadApplication({ memberId: opts.memberId, application })) return true;
+  }
+  return false;
 }

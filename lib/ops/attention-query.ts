@@ -14,6 +14,7 @@ import {
   weekStartYmd,
   type AttentionItem,
 } from '@/lib/ops/attention';
+import { licenseAttentionAt } from '@/lib/ops/saas-license';
 import {
   DEFAULT_RELEASE_ATTENTION_COPY,
   RELEASE_ATTENTION_FETCH_MS,
@@ -327,7 +328,12 @@ export async function loadAttentionQueue(opts: {
         subtitle: project.name || 'Licencia',
         href: project.slug ? opsProjectPath(project.slug, '?tab=licencia') : '/projects',
         rank: locked ? ATTENTION_RANK.license_locked : ATTENTION_RANK.license_grace,
-        at: row.grace_until || row.period_end || row.updated_at,
+        at: licenseAttentionAt({
+          status: row.status,
+          graceUntil: row.grace_until,
+          periodEnd: row.period_end,
+          updatedAt: row.updated_at,
+        }),
       });
     }
 

@@ -5,6 +5,7 @@ export {
   updateLeadDetails,
   createLeadQuote,
   sendLeadQuote,
+  revokeQuotePublicLink,
   updateInboxStatus,
   updateInboxLane,
   deleteInboxMessage,

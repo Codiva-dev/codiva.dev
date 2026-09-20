@@ -23,7 +23,7 @@ SELECT
   'Codiva.dev',
   'codiva',
   'active',
-  E'Producto interno de Codiva: sitio público, Ops, portal de clientes, bolsa, tickets y entrevistas.\n\nUn solo repo Next.js; el host decide la superficie.\n• codiva.dev — marketing y cotiza\n• ops.codiva.dev — staff\n• portal.codiva.dev — clientes\n• career.codiva.dev — bolsa\n• ticket.codiva.dev — tickets\n• interviews.codiva.dev — entrevistas',
+  E'Producto interno de Codiva: sitio público, Ops, portal de clientes, bolsa, tickets y entrevistas.\n\nUn solo repo Next.js; el host decide la superficie.\n• codiva.dev: marketing y cotiza\n• ops.codiva.dev: staff\n• portal.codiva.dev: clientes\n• career.codiva.dev: bolsa\n• ticket.codiva.dev: tickets\n• interviews.codiva.dev: entrevistas',
   '2025-06-19',
   'https://codiva.dev',
   false,

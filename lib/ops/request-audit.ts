@@ -5,29 +5,30 @@ export type RequestAudit = {
   userAgent: string | null;
 };
 
+function clientIpFromHeaders(h: Headers): string | null {
+  const vercel = h.get('x-vercel-forwarded-for')?.split(',')[0]?.trim();
+  if (vercel) return vercel;
+  const real = h.get('x-real-ip')?.trim();
+  if (real) return real;
+  const cf = h.get('cf-connecting-ip')?.trim();
+  if (cf) return cf;
+  const forwarded = h.get('x-forwarded-for');
+  if (!forwarded) return null;
+  const hops = forwarded.split(',').map((s) => s.trim()).filter(Boolean);
+  return hops.at(-1) || null;
+}
+
 export async function getRequestAudit(): Promise<RequestAudit> {
   const h = await headers();
-  const forwarded = h.get('x-forwarded-for');
-  const ip =
-    forwarded?.split(',')[0]?.trim() ||
-    h.get('x-real-ip') ||
-    h.get('cf-connecting-ip') ||
-    null;
   return {
-    ip,
+    ip: clientIpFromHeaders(h),
     userAgent: h.get('user-agent'),
   };
 }
 
 export function requestAuditFromHeaders(h: Headers): RequestAudit {
-  const forwarded = h.get('x-forwarded-for');
-  const ip =
-    forwarded?.split(',')[0]?.trim() ||
-    h.get('x-real-ip') ||
-    h.get('cf-connecting-ip') ||
-    null;
   return {
-    ip,
+    ip: clientIpFromHeaders(h),
     userAgent: h.get('user-agent'),
   };
 }

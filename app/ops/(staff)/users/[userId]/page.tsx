@@ -25,11 +25,7 @@ export default async function PortalUserDetailPage({
   const { supabase, user, staff } = await requireCapability('portal_users');
   const t = await getT();
   const { formatDate } = labelsFor(t.locale);
-  const admin = createAdminClient();
   const visibleIds = projectIdInFilter(await listVisibleProjectIds(supabase, user.id, staff));
-
-  const { data: authUser, error: userError } = await admin.auth.admin.getUserById(userId);
-  if (userError || !authUser.user) notFound();
 
   let membershipsQuery = supabase
     .from('project_members')
@@ -48,7 +44,11 @@ export default async function PortalUserDetailPage({
     membershipsQuery,
     allProjectsQuery,
   ]);
-  if (visibleIds && !(memberships ?? []).length && !(allProjects ?? []).length) notFound();
+  if (visibleIds && !(memberships ?? []).length) notFound();
+
+  const admin = createAdminClient();
+  const { data: authUser, error: userError } = await admin.auth.admin.getUserById(userId);
+  if (userError || !authUser.user) notFound();
 
   const assignedIds = new Set((memberships ?? []).map((m) => m.project_id));
   const available = (allProjects ?? []).filter((p) => !assignedIds.has(p.id));

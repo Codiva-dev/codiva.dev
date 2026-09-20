@@ -9,6 +9,8 @@ import {
 } from '@/lib/ops/storage';
 import { logActivity } from '@/lib/ops/activity';
 import { requestAuditFromHeaders } from '@/lib/ops/request-audit';
+import { listVisibleProjectIds } from '@/lib/ops/auth';
+import { getAcceptanceStatus } from '@/lib/ops/legal/acceptances';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -37,24 +39,48 @@ export async function GET(request: Request) {
 
   const { data: staff } = await supabase
     .from('staff_profiles')
-    .select('id')
+    .select('id, role, capabilities')
     .eq('id', user.id)
     .eq('active', true)
     .maybeSingle();
 
   let logProjectId = projectId;
 
-  if (!staff) {
+  if (staff) {
+    const visibleIds = await listVisibleProjectIds(supabase, user.id, staff);
+    if (projectId) {
+      if (visibleIds && !visibleIds.includes(projectId)) {
+        return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+      }
+    } else if (organizationId) {
+      if (visibleIds) {
+        const { data: orgProjects } = await supabase
+          .from('projects')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .in('id', visibleIds.length ? visibleIds : ['00000000-0000-0000-0000-000000000000']);
+        if (!orgProjects?.length) {
+          return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+        }
+        logProjectId = orgProjects[0].id;
+      }
+    }
+  } else {
     if (projectId) {
       const { data: membership } = await supabase
         .from('project_members')
-        .select('id')
+        .select(
+          'id, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version, nda_accepted_at, nda_version'
+        )
         .eq('project_id', projectId)
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!membership) {
         return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+      }
+      if (!getAcceptanceStatus(membership).complete) {
+        return NextResponse.json({ error: 'Acepta los documentos legales' }, { status: 403 });
       }
     } else if (organizationId) {
       const { data: orgProjects } = await supabase
@@ -67,7 +93,9 @@ export async function GET(request: Request) {
       }
       const { data: membership } = await supabase
         .from('project_members')
-        .select('id, project_id')
+        .select(
+          'id, project_id, terms_accepted_at, terms_version, privacy_accepted_at, privacy_version, nda_accepted_at, nda_version'
+        )
         .eq('user_id', user.id)
         .in('project_id', ids)
         .limit(1)
@@ -75,32 +103,56 @@ export async function GET(request: Request) {
       if (!membership) {
         return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
       }
+      if (!getAcceptanceStatus(membership).complete) {
+        return NextResponse.json({ error: 'Acepta los documentos legales' }, { status: 403 });
+      }
       logProjectId = membership.project_id;
     }
   }
 
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from('documents')
+    .select('id, file_path, visible_to_client, disposed_at, scan_status, project_id')
+    .eq('file_path', path)
+    .maybeSingle();
+
   if (documentId && /^[0-9a-f-]{36}$/i.test(documentId)) {
-    const admin = createAdminClient();
-    const { data: doc } = await admin
-      .from('documents')
-      .select('disposed_at, scan_status')
-      .eq('id', documentId)
-      .maybeSingle();
-    if (doc?.disposed_at) {
-      return NextResponse.json({ error: 'Documento eliminado por retención' }, { status: 410 });
+    if (!doc || doc.id !== documentId || doc.file_path !== path) {
+      return NextResponse.json({ error: 'Documento no coincide' }, { status: 403 });
     }
-    if (doc?.scan_status === 'infected') {
-      return NextResponse.json({ error: 'Documento bloqueado' }, { status: 403 });
+  }
+
+  if (doc?.disposed_at) {
+    return NextResponse.json({ error: 'Documento eliminado por retención' }, { status: 410 });
+  }
+  if (doc?.scan_status === 'infected') {
+    return NextResponse.json({ error: 'Documento bloqueado' }, { status: 403 });
+  }
+
+  if (!staff) {
+    if (doc) {
+      if (!doc.visible_to_client) {
+        return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+      }
+    } else {
+      const { data: deliverable } = await admin
+        .from('deliverables')
+        .select('id, visible_to_client, project_id')
+        .eq('file_path', path)
+        .maybeSingle();
+      if (!deliverable?.visible_to_client) {
+        return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+      }
     }
   }
 
   try {
     const signedUrl = await createOpsSignedUrl(path);
-    const admin = createAdminClient();
 
     await admin.from('file_access_log').insert({
       project_id: logProjectId,
-      document_id: documentId && /^[0-9a-f-]{36}$/i.test(documentId) ? documentId : null,
+      document_id: doc?.id ?? (documentId && /^[0-9a-f-]{36}$/i.test(documentId) ? documentId : null),
       file_path: path,
       action: 'download',
       actor_id: user.id,
@@ -117,7 +169,7 @@ export async function GET(request: Request) {
         project_id: logProjectId,
         organization_id: organizationId,
         file_path: path,
-        document_id: documentId,
+        document_id: doc?.id ?? documentId,
         via: 'api/ops/file',
         ip: audit.ip,
         user_agent: audit.userAgent,

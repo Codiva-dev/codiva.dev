@@ -22,6 +22,8 @@ import {
 } from '@/lib/ops/storage';
 import { scanUploadedBytes } from '@/lib/ops/malware-scan';
 import { findUserIdByEmail } from '@/lib/ops/auth-users';
+import { opsAuthCallbackUrl } from '@/lib/ops/auth-urls';
+import { generateInviteRecoveryLink } from '@/lib/ops/invite-recovery-link';
 
 const STAFF_ROLE_LABELS: Record<string, string> = {
   admin: 'Administrador',
@@ -47,19 +49,20 @@ async function provisionStaffUser(input: {
 
   let userId = await findUserIdByEmail(email);
   let isNew = false;
-  let tempPassword: string | undefined;
+  let activateUrl = opsLoginUrl();
 
   if (!userId) {
-    tempPassword = crypto.randomUUID();
+    const bootstrapPassword = crypto.randomUUID();
     const { data: created, error } = await admin.auth.admin.createUser({
       email,
-      password: tempPassword,
+      password: bootstrapPassword,
       email_confirm: true,
       user_metadata: fullName ? { full_name: fullName } : undefined,
     });
     if (error || !created?.user) throw await throwDb(error);
     userId = created.user.id;
     isNew = true;
+    activateUrl = await generateInviteRecoveryLink(email, opsAuthCallbackUrl('/reset-password'));
   }
 
   const { error: profileError } = await admin.from('staff_profiles').upsert(
@@ -77,7 +80,7 @@ async function provisionStaffUser(input: {
   const roleLabel = STAFF_ROLE_LABELS[role] ?? role;
   const loginUrl = opsLoginUrl();
   const html = isNew
-    ? templateStaffInviteNewUser(fullName || email, email, tempPassword!, loginUrl, roleLabel)
+    ? templateStaffInviteNewUser(fullName || email, email, activateUrl, loginUrl, roleLabel)
     : templateStaffInviteExistingUser(fullName || email, loginUrl, roleLabel);
 
   const mail = await sendClientEmail({

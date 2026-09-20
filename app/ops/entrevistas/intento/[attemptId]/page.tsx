@@ -9,7 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { redirect, notFound } from 'next/navigation';
 import { getT } from '@/i18n/locale';
 import { isInterviewUuid } from '@/lib/ops/interview-partner';
-import { partnerCanReadJobPosting } from '@/lib/ops/interview-file-access';
+import { partnerCanReadFailedAttempt } from '@/lib/ops/interview-file-access';
 import { interviewsHref } from '@/lib/ops/interview-view-as';
 import { loadInterviewPartnerBriefFromAttempt } from '@/lib/ops/interview-brief';
 import { isFailedAssessmentAttempt } from '@/lib/careers/recruiting-stage';
@@ -37,9 +37,9 @@ export default async function InterviewsFailedAttemptPage({
   if (!isFailedAssessmentAttempt(attempt)) notFound();
 
   if (access.member) {
-    const allowed = await partnerCanReadJobPosting({
+    const allowed = await partnerCanReadFailedAttempt({
       memberId: access.member.id,
-      jobPostingId: attempt.job_posting_id,
+      attempt: { email: attempt.email, job_posting_id: attempt.job_posting_id },
     });
     if (!allowed) notFound();
   } else if (!access.isStaffPreview) {

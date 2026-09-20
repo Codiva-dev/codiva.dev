@@ -3,23 +3,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { HUNT_PROGRESS_EVENT, HUNT_SESSION_EVENT } from '@/lib/careers/hunt/cookie';
-import {
-  readHuntContext,
-  readHuntCookie,
-  writeHuntCookie,
-} from '@/components/careers/hunt-context';
+import { readHuntContext } from '@/components/careers/hunt-context';
 import HuntCraftTracker, { type HuntCraftPublic } from '@/components/careers/HuntCraftTracker';
 
 function huntToken(): string {
-  const fromCookie = readHuntCookie();
-  if (fromCookie.length >= 16) return fromCookie;
   return readHuntContext()?.token || '';
 }
 
 function ping(pathname: string) {
   const token = huntToken();
   if (token.length < 16) return;
-  writeHuntCookie(token);
   const body = JSON.stringify({
     token,
     path: pathname || '/',

@@ -85,31 +85,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Archivo inválido' }, { status: 400 });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
+  const loaded = await loadStaff();
+  if ('error' in loaded && loaded.error === 'unauth') {
     return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
   }
-
-  const { data: staff } = await supabase
-    .from('staff_profiles')
-    .select('id')
-    .eq('id', user.id)
-    .eq('active', true)
-    .maybeSingle();
-  if (!staff) {
+  if ('error' in loaded) {
     return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
   }
+  const { supabase, staff } = loaded;
 
   const { data: file } = await supabase
     .from('work_assignment_files')
-    .select('file_path, file_name, content_type')
+    .select('file_path, file_name, content_type, assignment_id')
     .eq('id', id)
     .maybeSingle();
-  if (!file?.file_path?.startsWith('assignments/')) {
+  if (!file?.file_path?.startsWith('assignments/') || !file.assignment_id) {
     return NextResponse.json({ error: 'Archivo no disponible' }, { status: 404 });
+  }
+
+  const mutable = await loadMutableAssignment(supabase, staff, file.assignment_id);
+  if ('error' in mutable) {
+    return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
   }
 
   const admin = createAdminClient();

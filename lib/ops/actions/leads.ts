@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { assertCapability } from '@/lib/ops/auth';
+import { assertCapabilityWrite } from '@/lib/ops/auth';
 import { logActivity } from '@/lib/ops/activity';
 import {
   sendClientEmail,
@@ -16,13 +16,14 @@ import {
 } from '@/lib/ops/email-templates';
 import { isInboxLane } from '@/lib/ops/inbox-lane';
 import {
-  ensureQuoteAccessToken,
+  rotateQuoteAccessToken,
+  revokeQuoteAccessTokens,
   publicQuoteUrl,
 } from '@/lib/ops/quote-tokens';
 import { parseQuoteFormData } from '@/lib/ops/quote-form';
 
 export async function createLead(formData: FormData) {
-  const { supabase, user } = await assertCapability('leads');
+  const { supabase, user } = await assertCapabilityWrite('leads');
 
   const name = String(formData.get('name') || '').trim();
   const email = String(formData.get('email') || '').trim();
@@ -84,7 +85,7 @@ export async function createLead(formData: FormData) {
 }
 
 export async function convertInboxToLead(messageId: string) {
-  const { supabase, user } = await assertCapability('inbox');
+  const { supabase, user } = await assertCapabilityWrite('inbox');
 
   const { data: message, error: msgError } = await supabase
     .from('inbox_messages')
@@ -134,7 +135,7 @@ export async function convertInboxToLead(messageId: string) {
 }
 
 export async function updateLeadStatus(leadId: string, status: string) {
-  const { supabase, user } = await assertCapability('leads');
+  const { supabase, user } = await assertCapabilityWrite('leads');
   const { error } = await supabase.from('leads').update({ status }).eq('id', leadId);
   if (error) throw await throwDb(error);
   await logActivity({
@@ -151,7 +152,7 @@ export async function updateLeadStatus(leadId: string, status: string) {
 }
 
 export async function updateLeadDetails(leadId: string, formData: FormData) {
-  const { supabase, user } = await assertCapability('leads');
+  const { supabase, user } = await assertCapabilityWrite('leads');
 
   const assignedTo = String(formData.get('assignedTo') || '').trim();
 
@@ -184,7 +185,7 @@ export async function updateLeadDetails(leadId: string, formData: FormData) {
 }
 
 export async function createLeadQuote(leadId: string, formData: FormData) {
-  const { supabase, user } = await assertCapability('quotes');
+  const { supabase, user } = await assertCapabilityWrite('quotes');
   const parsed = parseQuoteFormData(formData);
 
   const { data: last } = await supabase
@@ -226,7 +227,7 @@ export async function createLeadQuote(leadId: string, formData: FormData) {
 }
 
 export async function sendLeadQuote(quoteId: string, leadId: string) {
-  const { supabase, user } = await assertCapability('quotes');
+  const { supabase, user } = await assertCapabilityWrite('quotes');
   const admin = createAdminClient();
 
   const { error } = await supabase
@@ -239,7 +240,7 @@ export async function sendLeadQuote(quoteId: string, leadId: string) {
   const { data: lead } = await admin.from('leads').select('*').eq('id', leadId).single();
   if (!lead) throw new Error('Lead no encontrado');
 
-  const token = await ensureQuoteAccessToken(quoteId);
+  const token = await rotateQuoteAccessToken(quoteId);
   const quoteUrl = publicQuoteUrl(token);
   const recipient = lead.partner_email || lead.email;
   const subjectLabel =
@@ -267,8 +268,22 @@ export async function sendLeadQuote(quoteId: string, leadId: string) {
   revalidatePath(`/leads/${leadId}`);
 }
 
+export async function revokeQuotePublicLink(quoteId: string, leadId: string) {
+  await assertCapabilityWrite('quotes');
+  const admin = createAdminClient();
+  const { data: quote } = await admin
+    .from('quotes')
+    .select('id')
+    .eq('id', quoteId)
+    .eq('lead_id', leadId)
+    .maybeSingle();
+  if (!quote) throw new Error('Cotización no encontrada');
+  await revokeQuoteAccessTokens(quoteId);
+  revalidatePath(`/leads/${leadId}`);
+}
+
 export async function updateInboxStatus(messageId: string, status: string) {
-  const { supabase } = await assertCapability('inbox');
+  const { supabase } = await assertCapabilityWrite('inbox');
   const { error } = await supabase.from('inbox_messages').update({ status }).eq('id', messageId);
   if (error) throw await throwDb(error);
   revalidatePath('/inbox');
@@ -276,7 +291,7 @@ export async function updateInboxStatus(messageId: string, status: string) {
 }
 
 export async function updateInboxLane(messageId: string, lane: string) {
-  const { supabase, user } = await assertCapability('inbox');
+  const { supabase, user } = await assertCapabilityWrite('inbox');
   if (!isInboxLane(lane)) throw new Error('Carril inválido');
   const { error } = await supabase
     .from('inbox_messages')
@@ -295,7 +310,7 @@ export async function updateInboxLane(messageId: string, lane: string) {
 }
 
 export async function deleteInboxMessage(messageId: string) {
-  const { supabase, user } = await assertCapability('inbox');
+  const { supabase, user } = await assertCapabilityWrite('inbox');
 
   const { data: message, error: fetchError } = await supabase
     .from('inbox_messages')

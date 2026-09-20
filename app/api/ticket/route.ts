@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/admin';
 import {
   PUBLIC_RL_FORM,
@@ -22,6 +23,8 @@ import {
   TICKET_PRIORITY_UI,
   type TicketPriorityUi,
 } from '@/lib/ops/ticket-constants';
+import { can } from '@/lib/ops/permissions';
+import { inspectTicketAttachment } from '@/lib/ops/ticket-files';
 import { resolveTicketProject } from '@/lib/ops/tickets';
 
 const toStr = (v: FormDataEntryValue | null) => (typeof v === 'string' ? v : (v ?? '').toString());
@@ -97,9 +100,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `Archivo ${oversized.name} excede 10MB` }, { status: 400 });
     }
 
+    const inspected: Array<{ buffer: Buffer; mime: string; name: string }> = [];
+    for (const f of files) {
+      const checked = await inspectTicketAttachment(f);
+      if ('error' in checked) {
+        return NextResponse.json({ error: checked.error }, { status: 400 });
+      }
+      inspected.push(checked);
+    }
+
+    const authorizedProjectId = await authorizeTicketProjectId(body.projectId);
     const admin = createAdminClient();
     const linked = await resolveTicketProject({
-      projectId: body.projectId,
+      projectId: authorizedProjectId,
       email: body.email,
     });
 
@@ -122,13 +135,14 @@ export async function POST(req: Request) {
     if (ticketError) throw ticketError;
 
     const uploaded = await Promise.allSettled(
-      files.map(async (f) => {
-        const stored = await uploadOpsFile(f, `tickets/${ticket.id}`);
+      inspected.map(async (f) => {
+        const blob = new File([new Uint8Array(f.buffer)], f.name, { type: f.mime });
+        const stored = await uploadOpsFile(blob, `tickets/${ticket.id}`);
         return {
           ticket_id: ticket.id,
           file_path: stored.path,
           file_url: stored.url || stored.path,
-          file_name: f.name || 'attachment',
+          file_name: f.name,
         };
       })
     );
@@ -200,7 +214,41 @@ export async function POST(req: Request) {
     );
   } catch (err) {
     console.error('POST /api/ticket:', err);
-    const message = err instanceof Error && err.message ? err.message : 'Error inesperado';
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: 'Error inesperado' }, { status: 500 });
   }
+}
+
+async function authorizeTicketProjectId(projectId: string | null): Promise<string | null> {
+  if (!projectId || !/^[0-9a-f-]{36}$/i.test(projectId)) return null;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: staff } = await supabase
+    .from('staff_profiles')
+    .select('id, role, capabilities')
+    .eq('id', user.id)
+    .eq('active', true)
+    .maybeSingle();
+
+  if (staff) {
+    if (can(staff, 'projects_all')) return projectId;
+    const { data: assigned } = await supabase
+      .from('project_staff')
+      .select('project_id')
+      .eq('staff_id', user.id)
+      .eq('project_id', projectId)
+      .maybeSingle();
+    return assigned ? projectId : null;
+  }
+
+  const { data: membership } = await supabase
+    .from('project_members')
+    .select('id')
+    .eq('project_id', projectId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+  return membership ? projectId : null;
 }

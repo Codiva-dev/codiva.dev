@@ -48,8 +48,13 @@ export default function AuthCallbackClient() {
     const code = searchParams.get('code');
 
     void (async () => {
+      const hasCredential = Boolean(
+        (tokenHash && typeRaw && OTP_TYPES.has(typeRaw)) || code || window.location.hash.includes('access_token')
+      );
       const { data: existing } = await supabase.auth.getSession();
-      if (existing.session) {
+      if (existing.session && hasCredential) {
+        await supabase.auth.signOut();
+      } else if (existing.session) {
         succeed();
         return;
       }

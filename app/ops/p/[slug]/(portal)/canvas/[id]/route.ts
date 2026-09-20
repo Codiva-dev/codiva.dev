@@ -42,6 +42,8 @@ export async function GET(request: Request, context: RouteContext) {
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'no-referrer',
         'X-Frame-Options': 'SAMEORIGIN',
+        'Content-Security-Policy':
+          "default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src data: https:; connect-src https://cdn.jsdelivr.net; frame-ancestors 'self'",
       },
     });
   }
@@ -51,8 +53,8 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.redirect(new URL(fileHref, request.url));
   }
 
-  if (deliverable.url && !deliverable.url.startsWith('/')) {
-    return NextResponse.redirect(deliverable.url);
+  if (deliverable.url && deliverable.url.startsWith('/')) {
+    return NextResponse.redirect(new URL(deliverable.url, request.url));
   }
 
   return new NextResponse(html, {

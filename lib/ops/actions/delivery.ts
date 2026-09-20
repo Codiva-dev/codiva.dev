@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import {
-  requireStaff,
-  assertCapability,
+  requireStaffWrite,
+  assertCapabilityWrite,
   assertProjectAccessOrThrow,
 } from '@/lib/ops/auth';
 import { can } from '@/lib/ops/permissions';
@@ -11,7 +11,7 @@ import { logActivity } from '@/lib/ops/activity';
 import { throwDb } from '@/lib/ops/throw-db';
 
 export async function createProjectSprint(projectId: string, formData: FormData) {
-  const access = await assertCapability('sprints_plan');
+  const access = await assertCapabilityWrite('sprints_plan');
   await assertProjectAccessOrThrow(access, projectId);
 
   const name = String(formData.get('name') || '').trim();
@@ -32,7 +32,7 @@ export async function createProjectSprint(projectId: string, formData: FormData)
 }
 
 export async function updateProjectSprint(sprintId: string, projectId: string, formData: FormData) {
-  const access = await assertCapability('sprints_plan');
+  const access = await assertCapabilityWrite('sprints_plan');
   await assertProjectAccessOrThrow(access, projectId);
 
   const { error } = await access.supabase
@@ -52,7 +52,7 @@ export async function updateProjectSprint(sprintId: string, projectId: string, f
 }
 
 export async function createSprintItem(sprintId: string, projectId: string, formData: FormData) {
-  const access = await assertCapability('sprints_plan');
+  const access = await assertCapabilityWrite('sprints_plan');
   await assertProjectAccessOrThrow(access, projectId);
 
   const title = String(formData.get('title') || '').trim();
@@ -74,7 +74,7 @@ export async function createSprintItem(sprintId: string, projectId: string, form
 }
 
 export async function updateSprintItem(itemId: string, projectId: string, formData: FormData) {
-  const access = await requireStaff();
+  const access = await requireStaffWrite();
   await assertProjectAccessOrThrow(access, projectId);
 
   const { data: item } = await access.supabase
@@ -114,7 +114,7 @@ export async function updateSprintItem(itemId: string, projectId: string, formDa
 }
 
 export async function updateOrganization(orgId: string, formData: FormData) {
-  const { supabase, user } = await assertCapability('organizations');
+  const { supabase, user } = await assertCapabilityWrite('organizations');
 
   const name = String(formData.get('name') || '').trim();
   if (!name) throw new Error('Nombre requerido');
@@ -142,7 +142,7 @@ export async function updateOrganization(orgId: string, formData: FormData) {
 }
 
 export async function createOrganization(formData: FormData) {
-  const { supabase, user } = await assertCapability('organizations');
+  const { supabase, user } = await assertCapabilityWrite('organizations');
 
   const name = String(formData.get('name') || '').trim();
   if (!name) throw new Error('Nombre requerido');
@@ -171,7 +171,7 @@ export async function createOrganization(formData: FormData) {
 }
 
 export async function createTimeEntry(projectId: string, formData: FormData) {
-  const access = await assertCapability('time_entries');
+  const access = await assertCapabilityWrite('time_entries');
   await assertProjectAccessOrThrow(access, projectId);
 
   const hours = Number(String(formData.get('hours') || '').replace(/,/g, ''));
@@ -201,7 +201,7 @@ export async function createTimeEntry(projectId: string, formData: FormData) {
 }
 
 export async function deleteTimeEntry(entryId: string, projectId: string) {
-  const access = await assertCapability('time_entries');
+  const access = await assertCapabilityWrite('time_entries');
   await assertProjectAccessOrThrow(access, projectId);
 
   let query = access.supabase.from('time_entries').delete().eq('id', entryId).eq('project_id', projectId);

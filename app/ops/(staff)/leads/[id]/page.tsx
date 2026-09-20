@@ -14,6 +14,7 @@ import {
   convertLeadToProject,
   createLeadQuote,
   sendLeadQuote,
+  revokeQuotePublicLink,
   deleteDraftQuote,
 } from '@/lib/ops/actions';
 import { labelsFor } from '@/lib/ops/labels';
@@ -71,13 +72,18 @@ export default async function LeadDetailPage({
       if (q.status === 'sent' || q.status === 'accepted' || q.status === 'rejected') {
         const { data: tokenRow } = await admin
           .from('quote_access_tokens')
-          .select('token')
+          .select('token, expires_at')
           .eq('quote_id', q.id)
           .is('revoked_at', null)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
-        if (tokenRow?.token) publicLinks[q.id] = publicQuoteUrl(tokenRow.token);
+        if (
+          tokenRow?.token &&
+          (!tokenRow.expires_at || new Date(tokenRow.expires_at) > new Date())
+        ) {
+          publicLinks[q.id] = publicQuoteUrl(tokenRow.token);
+        }
       }
     }
   }
@@ -260,8 +266,23 @@ export default async function LeadDetailPage({
               </p>
               {q.sent_at && <p className="mt-1 text-xs text-zinc-500">{t('ops.leadDetail.sentOn', { date: formatDate(q.sent_at) })}</p>}
               {publicLinks[q.id] && (
-                <div className="mt-2">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
                   <CopyableUrl href={publicLinks[q.id]} />
+                  <ToastForm
+                    success={t('ops.leadDetail.linkRevoked')}
+                    confirmTitle={t('ops.leadDetail.revokeLink')}
+                    confirmMessage={t('ops.leadDetail.revokeLinkConfirm')}
+                    confirmLabel={t('ops.leadDetail.revokeLink')}
+                    confirmTone="danger"
+                    action={async () => {
+                      'use server';
+                      await revokeQuotePublicLink(q.id, id);
+                    }}
+                  >
+                    <button type="submit" className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50">
+                      {t('ops.leadDetail.revokeLink')}
+                    </button>
+                  </ToastForm>
                 </div>
               )}
               <div className="mt-4 flex flex-wrap gap-2">

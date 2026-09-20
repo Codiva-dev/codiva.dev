@@ -107,7 +107,7 @@ export async function signInstanceLicense(
     periodEnd: claims.periodEnd,
     graceUntil: claims.graceUntil,
     iat: claims.iat ?? now,
-    exp: claims.exp ?? now + 60 * 60 * 24 * 45,
+    exp: claims.exp ?? licenseJwtExpUnix(claims.periodEnd, claims.graceUntil, claims.iat ?? now),
   };
   const body = `${JWT_HEADER}.${b64UrlUtf8(JSON.stringify(payload))}`;
   const sig = await hmacSha256(secret, body);
@@ -151,19 +151,66 @@ export function deriveSaasStatusFromCharges(
   const unpaid = charges.filter(
     (row) =>
       (row.kind === 'saas_monthly' || row.kind === 'saas_usage') &&
-      (row.status === 'pending' || row.status === 'overdue')
+      (row.status === 'pending' || row.status === 'overdue') &&
+      Boolean(row.due_date)
   );
   if (unpaid.length === 0) return 'active';
   const today = now.toISOString().slice(0, 10);
   let worst: LicenseStatus = 'active';
   for (const row of unpaid) {
-    const due = row.due_date || today;
+    const due = row.due_date;
+    if (!due) continue;
     const notice = Number.isFinite(Number(row.notice_days)) ? Number(row.notice_days) : 30;
     const lockDate = addDays(due, notice);
     if (today >= lockDate) worst = 'locked';
     else if (today >= due && worst !== 'locked') worst = 'grace';
   }
   return worst;
+}
+
+/** Civil date YYYY-MM-DD → ISO. End-of-day so the last day of the period stays valid. */
+export function licensePeriodIso(ymd: string | null | undefined, bound: 'start' | 'end'): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd || '').trim());
+  if (!match) {
+    const fallback = bound === 'end' ? Date.now() + 365 * 24 * 60 * 60 * 1000 : Date.now();
+    return new Date(fallback).toISOString();
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (bound === 'start') return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0)).toISOString();
+  return new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999)).toISOString();
+}
+
+export function annualLicensePeriodUtc(now = new Date()): { start: string; end: string } {
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear() + 1, now.getUTCMonth() + 1, 0));
+  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+}
+
+/** JWT exp follows the commercial period so a 1-year license is not cut at 45 days. */
+export function licenseJwtExpUnix(
+  periodEnd: string,
+  graceUntil: string | null,
+  nowSec = Math.floor(Date.now() / 1000)
+): number {
+  const timestamps = [periodEnd, graceUntil]
+    .filter((value): value is string => Boolean(value))
+    .map((value) => Date.parse(value))
+    .filter((value) => Number.isFinite(value));
+  const latest = timestamps.reduce((max, value) => Math.max(max, value), 0);
+  const endSec = latest > 0 ? Math.floor(latest / 1000) : nowSec;
+  return Math.max(endSec, nowSec + 14 * 24 * 60 * 60);
+}
+
+export function licenseAttentionAt(row: {
+  status: string;
+  graceUntil?: string | null;
+  periodEnd?: string | null;
+  updatedAt: string;
+}): string {
+  if (row.status === 'grace' || row.status === 'locked') return row.updatedAt;
+  return row.graceUntil || row.periodEnd || row.updatedAt;
 }
 
 function addDays(ymd: string, days: number): string {

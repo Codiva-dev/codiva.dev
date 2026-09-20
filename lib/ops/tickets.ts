@@ -18,6 +18,7 @@ export function asProject(
   return value as { id?: string; name?: string; organization_id?: string | null };
 }
 
+/** `projectId` must already be authorized by the caller (portal membership or staff project access). */
 export async function resolveTicketProject({
   projectId,
   email,

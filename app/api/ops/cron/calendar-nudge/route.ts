@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/ops/timing-safe-bearer';
 import { isSupabaseConfigured } from '@/lib/supabase/admin';
 import { runCalendarReminders } from '@/lib/ops/calendar-notify';
 
@@ -10,9 +11,7 @@ export const runtime = 'nodejs';
  * Header: Authorization: Bearer $CRON_SECRET
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  const auth = request.headers.get('authorization');
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!cronAuthorized(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   if (!isSupabaseConfigured()) {

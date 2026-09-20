@@ -1,6 +1,6 @@
-import { timingSafeEqual } from 'node:crypto';
+import { timingSafeBearer } from '@/lib/ops/timing-safe-bearer';
 import { createAdminClient, isSupabaseConfigured } from '@/lib/supabase/admin';
-import { notifyStaff } from '@/lib/ops/email';
+import { notifySaasVendorDue } from '@/lib/ops/saas-notify';
 import {
   isUsageMeter,
   periodLabelFromIso,
@@ -10,12 +10,7 @@ import {
 
 export function ingestAuthorized(header: string | null): boolean {
   const expected = process.env.CODIVA_SAAS_INGEST_SECRET?.trim() ?? '';
-  if (!expected || !header?.startsWith('Bearer ')) return false;
-  const given = header.slice(7);
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
+  return timingSafeBearer(header, expected);
 }
 
 async function instanceByKey(instanceKey: string) {
@@ -108,9 +103,15 @@ export async function ingestVendorExpiry(input: {
   const becameDue =
     due && (!previous || previous.last_error !== input.lastError || !vendorSlotIsDue(previous.expires_at));
   if (becameDue || input.lastError === 'jwt_expired') {
-    await notifyStaff({
-      subject: `NIRC vendor ${input.slot}`,
-      text: `La instancia ${input.instanceKey} tiene ${input.slot} por vencer o vencido (${input.expiresAt ?? 'sin fecha'}). Renovar en Ops → proyecto → Licencia.`,
+    const { data: project } = instance.project_id
+      ? await admin.from('projects').select('name, slug').eq('id', instance.project_id).maybeSingle()
+      : { data: null };
+    await notifySaasVendorDue({
+      instanceKey: input.instanceKey,
+      slot: input.slot,
+      expiresAt: input.expiresAt,
+      projectName: project?.name ?? null,
+      projectSlug: project?.slug ?? null,
     });
   }
   return { ok: true };

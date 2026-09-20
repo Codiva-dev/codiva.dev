@@ -65,6 +65,20 @@ export async function htmlToPdf(html: string): Promise<Buffer> {
   const browser = await launchBrowser();
   try {
     const page = await browser.newPage();
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const url = req.url();
+      if (
+        url.startsWith('data:') ||
+        url.startsWith('about:') ||
+        url.startsWith('blob:') ||
+        url.startsWith('https://cdn.jsdelivr.net/')
+      ) {
+        void req.continue();
+        return;
+      }
+      void req.abort();
+    });
     await page.setContent(withInlineLogo(html), {
       waitUntil: 'load',
       timeout: 45_000,

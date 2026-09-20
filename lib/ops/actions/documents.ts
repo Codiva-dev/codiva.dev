@@ -1,12 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
-  requireStaff,
+  requireStaffWrite,
+  requireAdminStaff,
   requirePortalAccess,
-  assertCapability,
+  assertCapabilityWrite,
   assertProjectAccessOrThrow,
 } from '@/lib/ops/auth';
 import { can } from '@/lib/ops/permissions';
@@ -54,7 +54,7 @@ import {
 } from '@/lib/ops/architecture';
 
 export async function uploadDocument(projectId: string, formData: FormData) {
-  const access = await assertCapability('documents');
+  const access = await assertCapabilityWrite('documents');
   await assertProjectAccessOrThrow(access, projectId);
   const { user, supabase } = access;
   const files = formFiles(formData);
@@ -144,7 +144,7 @@ export async function uploadDocument(projectId: string, formData: FormData) {
 }
 
 export async function createDeliverable(projectId: string, formData: FormData) {
-  const access = await assertCapability('deliverables');
+  const access = await assertCapabilityWrite('deliverables');
   await assertProjectAccessOrThrow(access, projectId);
   const { user, supabase } = access;
 
@@ -207,9 +207,9 @@ export async function createDeliverable(projectId: string, formData: FormData) {
 }
 
 export async function createArchitectureCanvas(projectId: string, formData: FormData) {
-  const access = await assertCapability('deliverables');
+  const access = await assertCapabilityWrite('deliverables');
   await assertProjectAccessOrThrow(access, projectId);
-  const { supabase } = access;
+  const { supabase, user } = access;
 
   const title = String(formData.get('title') || '').trim();
   if (!title) throw new Error('Título requerido');
@@ -236,14 +236,11 @@ export async function createArchitectureCanvas(projectId: string, formData: Form
     .single();
   if (error || !deliverable) throw await throwDb(error);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   await logActivity({
     entityType: 'deliverable',
     entityId: deliverable.id,
     action: 'created',
-    actorId: user?.id,
+    actorId: user.id,
     metadata: { project_id: projectId, title, kind, source: 'ops_architecture' },
   });
 
@@ -258,9 +255,9 @@ export async function createArchitectureCanvas(projectId: string, formData: Form
 }
 
 export async function updateArchitectureCanvas(projectId: string, deliverableId: string, formData: FormData) {
-  const access = await assertCapability('deliverables');
+  const access = await assertCapabilityWrite('deliverables');
   await assertProjectAccessOrThrow(access, projectId);
-  const { supabase } = access;
+  const { supabase, user } = access;
 
   const { data: existing } = await supabase
     .from('deliverables')
@@ -296,14 +293,11 @@ export async function updateArchitectureCanvas(projectId: string, deliverableId:
     .eq('project_id', projectId);
   if (error) throw await throwDb(error);
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
   await logActivity({
     entityType: 'deliverable',
     entityId: deliverableId,
     action: 'updated',
-    actorId: user?.id,
+    actorId: user.id,
     metadata: { project_id: projectId, title, kind, visible_to_client: visibleToClient },
   });
 
@@ -313,7 +307,7 @@ export async function updateArchitectureCanvas(projectId: string, deliverableId:
 }
 
 export async function hydrateArchitectureFromPacks(projectId: string): Promise<number> {
-  const access = await requireStaff();
+  const access = await requireStaffWrite();
   await assertProjectAccessOrThrow(access, projectId);
   if (!can(access.staff, 'deliverables')) return 0;
   const { supabase } = access;
@@ -340,14 +334,11 @@ export async function hydrateArchitectureFromPacks(projectId: string): Promise<n
   }
 
   if (adopted > 0) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
     await logActivity({
       entityType: 'project',
       entityId: projectId,
       action: 'architecture_adopted',
-      actorId: user?.id,
+      actorId: access.user.id,
       metadata: { adopted },
     });
   }
@@ -356,7 +347,7 @@ export async function hydrateArchitectureFromPacks(projectId: string): Promise<n
 }
 
 export async function adoptArchitecturePacks(projectId: string) {
-  const access = await assertCapability('deliverables');
+  const access = await assertCapabilityWrite('deliverables');
   const adopted = await hydrateArchitectureFromPacks(projectId);
   revalidatePath(`/projects/${projectId}`);
   revalidatePath('/p', 'layout');
@@ -371,9 +362,9 @@ export async function adoptArchitecturePacks(projectId: string) {
 }
 
 export async function markDocumentSigned(documentId: string, projectId: string, signed = true) {
-  await requireStaff();
-  const admin = createAdminClient();
-  const { error } = await admin
+  const access = await assertCapabilityWrite('documents');
+  await assertProjectAccessOrThrow(access, projectId);
+  const { error } = await access.supabase
     .from('documents')
     .update({ signed })
     .eq('id', documentId)
@@ -387,8 +378,9 @@ export async function setDeliverableVisibility(
   deliverableId: string,
   visibleToClient: boolean
 ) {
-  const { supabase } = await requireStaff();
-  const { error } = await supabase
+  const access = await assertCapabilityWrite('deliverables');
+  await assertProjectAccessOrThrow(access, projectId);
+  const { error } = await access.supabase
     .from('deliverables')
     .update({ visible_to_client: visibleToClient })
     .eq('id', deliverableId)
@@ -403,8 +395,9 @@ export async function setQuoteVisibility(
   quoteId: string,
   visibleToClient: boolean
 ) {
-  const { supabase } = await requireStaff();
-  const { error } = await supabase
+  const access = await assertCapabilityWrite('quotes');
+  await assertProjectAccessOrThrow(access, projectId);
+  const { error } = await access.supabase
     .from('quotes')
     .update({ visible_to_client: visibleToClient })
     .eq('id', quoteId)
@@ -475,7 +468,9 @@ export async function acceptPortalLegalDocuments(slug: string, formData: FormDat
 }
 
 export async function createDocumentRequest(projectId: string, formData: FormData) {
-  const { user, supabase } = await requireStaff();
+  const access = await assertCapabilityWrite('documents');
+  await assertProjectAccessOrThrow(access, projectId);
+  const { user, supabase } = access;
   const title = String(formData.get('title') || '').trim();
   if (!title) throw new Error('Título requerido');
 
@@ -520,7 +515,7 @@ export async function createDocumentRequestFromPreset(projectId: string, presetC
   const preset = documentRequestPresetByCode(presetCode);
   if (!preset) throw new Error('Plantilla desconocida');
 
-  const access = await requireStaff();
+  const access = await requireStaffWrite();
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase } = access;
 
@@ -549,7 +544,9 @@ export async function updateDocumentRequestStatus(
   requestId: string,
   status: 'open' | 'waived' | 'cancelled'
 ) {
-  const { user, supabase } = await requireStaff();
+  const access = await assertCapabilityWrite('documents');
+  await assertProjectAccessOrThrow(access, projectId);
+  const { user, supabase } = access;
   const patch: Record<string, unknown> = {
     status,
     updated_at: new Date().toISOString(),
@@ -745,7 +742,7 @@ export async function clientUploadDocument(projectId: string, slug: string, form
 }
 
 export async function runDocumentRetentionDisposal() {
-  await requireStaff();
+  await requireAdminStaff();
   const result = await disposeExpiredDocuments(200);
   await logActivity({
     entityType: 'system',
@@ -756,46 +753,50 @@ export async function runDocumentRetentionDisposal() {
   return result;
 }
 
-export async function clientAcceptQuote(quoteId: string, projectId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('No autenticado');
+export async function clientAcceptQuote(quoteId: string, slug: string) {
+  const access = await requirePortalAccess(slug);
+  if (access.isStaffPreview) throw new Error('La vista previa staff no acepta cotizaciones');
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { data: quote } = await admin
+    .from('quotes')
+    .select('id, status, visible_to_client')
+    .eq('id', quoteId)
+    .eq('project_id', access.project.id)
+    .maybeSingle();
+  if (!quote || quote.visible_to_client === false || quote.status !== 'sent') {
+    throw new Error('Cotización no disponible');
+  }
+
+  const { error } = await admin
     .from('quotes')
     .update({
       status: 'accepted',
       accepted_at: new Date().toISOString(),
-      accepted_by: user.id,
+      accepted_by: access.user.id,
     })
     .eq('id', quoteId)
-    .eq('project_id', projectId);
-
+    .eq('project_id', access.project.id)
+    .eq('status', 'sent');
   if (error) throw await throwDb(error);
 
-  const admin = createAdminClient();
-  await admin.from('projects').update({ status: 'active' }).eq('id', projectId);
-
-  revalidatePath(`/p`);
+  await admin.from('projects').update({ status: 'active' }).eq('id', access.project.id);
+  revalidatePath(`/p/${slug}`);
 }
 
-export async function clientRejectQuote(quoteId: string, projectId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('No autenticado');
+export async function clientRejectQuote(quoteId: string, slug: string) {
+  const access = await requirePortalAccess(slug);
+  if (access.isStaffPreview) throw new Error('La vista previa staff no rechaza cotizaciones');
 
-  const { error } = await supabase
+  const admin = createAdminClient();
+  const { error } = await admin
     .from('quotes')
     .update({ status: 'rejected' })
     .eq('id', quoteId)
-    .eq('project_id', projectId);
-
+    .eq('project_id', access.project.id)
+    .eq('status', 'sent');
   if (error) throw await throwDb(error);
-  revalidatePath(`/p`);
+  revalidatePath(`/p/${slug}`);
 }
 
 /**
@@ -803,7 +804,7 @@ export async function clientRejectQuote(quoteId: string, projectId: string) {
  * a miembros de proyectos visibles cuya aceptación esté desactualizada.
  */
 export async function publishLegalVersionAndNotify(formData: FormData) {
-  const { user } = await assertCapability('legal_publish');
+  const { user } = await assertCapabilityWrite('legal_publish');
   const admin = createAdminClient();
   const versionCode = String(formData.get('versionCode') || LEGAL_DOCS_VERSION).trim();
   const changelog = String(formData.get('changelog') || '').trim();

@@ -15,7 +15,7 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ['@sparticuz/chromium-min', 'puppeteer-core', 'web-push'],
   // Pack HTML is read from disk with a dynamic path (NFT cannot see it).
-  // PDFs/images are never loaded as utf8 — keep them out of every function.
+  // PDFs/images are never loaded as utf8: keep them out of every function.
   outputFileTracingIncludes: {
     '/ops/p/[slug]/canvas/[id]': clientPackTextFiles,
     '/ops/p/[slug]/canvas/[id]/pdf': clientPackTextFiles,

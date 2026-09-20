@@ -13,22 +13,56 @@ export async function ensureQuoteAccessToken(quoteId: string): Promise<string> {
 
   const { data: existing } = await admin
     .from('quote_access_tokens')
-    .select('token')
+    .select('token, expires_at')
     .eq('quote_id', quoteId)
     .is('revoked_at', null)
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (existing?.token) return existing.token;
+  if (existing?.token && (!existing.expires_at || new Date(existing.expires_at) > new Date())) {
+    return existing.token;
+  }
+
+  const { data: quote } = await admin
+    .from('quotes')
+    .select('valid_until')
+    .eq('id', quoteId)
+    .maybeSingle();
 
   const token = randomToken();
+  const validUntil = quote?.valid_until ? new Date(quote.valid_until) : null;
+  const expiresAt =
+    validUntil && !Number.isNaN(validUntil.getTime())
+      ? new Date(validUntil.getTime() + 14 * 24 * 3600 * 1000).toISOString()
+      : new Date(Date.now() + 90 * 24 * 3600 * 1000).toISOString();
   const { error } = await admin.from('quote_access_tokens').insert({
     quote_id: quoteId,
     token,
+    expires_at: expiresAt,
   });
   if (error) await throwDb(error);
   return token;
+}
+
+export async function rotateQuoteAccessToken(quoteId: string): Promise<string> {
+  const admin = createAdminClient();
+  await admin
+    .from('quote_access_tokens')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('quote_id', quoteId)
+    .is('revoked_at', null);
+  return ensureQuoteAccessToken(quoteId);
+}
+
+export async function revokeQuoteAccessTokens(quoteId: string): Promise<void> {
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from('quote_access_tokens')
+    .update({ revoked_at: new Date().toISOString() })
+    .eq('quote_id', quoteId)
+    .is('revoked_at', null);
+  if (error) await throwDb(error);
 }
 
 export type PublicQuotePayload = {
@@ -80,10 +114,11 @@ export async function getPublicQuoteByToken(token: string): Promise<PublicQuoteP
       'id, title, scope, service_type, project_state, deliverables, considerations, optional_extras, line_items, phases, total_amount, hourly_rate, currency, valid_until, version, status, created_at, lead_id, project_id'
     )
     .eq('id', access.quote_id)
-    .in('status', ['sent', 'accepted', 'rejected', 'expired'])
+    .in('status', ['sent', 'accepted'])
     .maybeSingle();
 
   if (!quote) return null;
+  if (quote.valid_until && new Date(quote.valid_until) < new Date()) return null;
 
   let lead: PublicQuotePayload['lead'] = null;
   if (quote.lead_id) {

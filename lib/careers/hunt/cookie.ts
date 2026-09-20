@@ -14,6 +14,7 @@ export function serializeHuntCookie(token: string, hostname: string, secure: boo
     'Path=/',
     `Max-Age=${HUNT_COOKIE_MAX_AGE_SEC}`,
     'SameSite=Lax',
+    'HttpOnly',
   ];
   const host = hostname.split(':')[0].toLowerCase();
   if (host === 'codiva.dev' || host.endsWith('.codiva.dev')) {

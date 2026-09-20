@@ -89,7 +89,7 @@ flowchart LR
   </pre>
   <div class="note">Este documento se edita en Ops. El cliente lo ve en la pestaña Propuesta cuando está visible.</div>
   <script>
-    mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'loose' });
+    mermaid.initialize({ startOnLoad: true, theme: 'neutral', securityLevel: 'strict' });
   </script>
 </body>
 </html>

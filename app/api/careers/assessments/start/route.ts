@@ -27,7 +27,7 @@ import {
   type AssessmentAttemptRow,
 } from '@/lib/careers/assessments/server';
 import { EMPTY_HUNT_PROGRESS, huntProgressForAttempt, toPublicHuntSession, type HuntProgress } from '@/lib/careers/hunt/progress';
-import { applyHuntCookie } from '@/lib/careers/hunt/events';
+import { applyHuntCookie, readHuntTokenFromRequest } from '@/lib/careers/hunt/events';
 
 export const runtime = 'nodejs';
 
@@ -122,11 +122,37 @@ export async function POST(request: Request) {
   }
 
   const rows = ((recent ?? []) as AssessmentAttemptRow[]).filter((r) => r.catalog_key === catalog.key);
+  const presentedToken = readHuntTokenFromRequest(
+    request,
+    safeCareerStr(body.token ?? body.public_token, 80)
+  );
   const passSince = Date.now() - ASSESSMENT_PASS_WINDOW_DAYS * 24 * 3600 * 1000;
   const passed = rows.find(
     (r) => r.passed && r.status === 'completed' && new Date(r.completed_at || r.started_at).getTime() >= passSince
   );
   if (passed) {
+    if (presentedToken !== passed.public_token) {
+      return NextResponse.json({
+        ok: true,
+        already_passed: true,
+        session: {
+          token: '',
+          job_posting_id: posting.id,
+          catalog_key: catalog.key,
+          status: 'completed',
+          full_name: '',
+          email: '',
+          attempt_number: passed.attempt_number,
+          remaining_ms: 0,
+          time_limit_sec: passed.time_limit_sec,
+          passed: true,
+          score_pct: null,
+          title: catalog.title,
+          questions: [],
+          answers: {},
+        },
+      });
+    }
     const hunt = await huntProgressForAttempt({
       email: passed.email,
       catalogKey: passed.catalog_key,
@@ -146,6 +172,9 @@ export async function POST(request: Request) {
 
   const open = rows.find((r) => r.status === 'started' && new Date(r.expires_at).getTime() > Date.now());
   if (open) {
+    if (presentedToken !== open.public_token) {
+      return NextResponse.json({ ok: false, error: 'session_in_progress' }, { status: 409 });
+    }
     await recordAssessmentEvent({
       attemptId: open.id,
       eventType: 'resumed',

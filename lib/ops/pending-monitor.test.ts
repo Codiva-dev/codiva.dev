@@ -95,6 +95,33 @@ describe('groupMonitorByTime', () => {
       ['later', ['Después', 'Sin fecha']],
     ]);
   });
+
+  it('puts a grace license in today when dated on the status change', () => {
+    const groups = groupMonitorByTime(
+      [
+        {
+          key: 'license_grace:nirc',
+          kind: 'license_grace',
+          title: 'nirc',
+          subtitle: 'NIRC MVP Fase 1',
+          href: '/projects/nirc?tab=licencia',
+          at: '2026-09-22T15:00:00.000Z',
+        },
+      ],
+      now
+    );
+    expect(groups).toEqual([
+      {
+        bucket: 'today',
+        items: [
+          expect.objectContaining({
+            kind: 'license_grace',
+            title: 'nirc',
+          }),
+        ],
+      },
+    ]);
+  });
 });
 
 describe('monitorTimeKind', () => {

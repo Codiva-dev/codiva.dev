@@ -47,6 +47,7 @@ export async function startInterviewPartnerViewAs(formData: FormData) {
   jar.set(INTERVIEW_VIEW_AS_COOKIE, loaded.member.id, {
     httpOnly: true,
     sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: INTERVIEW_VIEW_AS_MAX_AGE,
   });
@@ -59,6 +60,7 @@ export async function stopInterviewPartnerViewAs() {
   jar.set(INTERVIEW_VIEW_AS_COOKIE, '', {
     httpOnly: true,
     sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: 0,
   });

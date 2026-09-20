@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { createAdminClient } from '@/lib/supabase/admin';
 import {
   requireStaff,
   requireAdminStaff,
@@ -201,7 +202,8 @@ export async function assignProjectStaff(projectId: string, formData: FormData) 
   if (!staffId) throw new Error('Staff requerido');
   if (!['pm', 'dev', 'member'].includes(roleOnProject)) throw new Error('Rol de proyecto inválido');
 
-  const { error } = await access.supabase.from('project_staff').upsert({
+  const admin = createAdminClient();
+  const { error } = await admin.from('project_staff').upsert({
     project_id: projectId,
     staff_id: staffId,
     role_on_project: roleOnProject,
@@ -222,7 +224,7 @@ export async function removeProjectStaff(projectId: string, staffId: string) {
     await assertProjectAccessOrThrow(access, projectId);
   }
 
-  const { error } = await access.supabase
+  const { error } = await createAdminClient()
     .from('project_staff')
     .delete()
     .eq('project_id', projectId)

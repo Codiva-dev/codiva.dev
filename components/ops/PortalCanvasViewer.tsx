@@ -225,8 +225,8 @@ export default function PortalCanvasViewer({ items }: { items: PortalCanvasItem[
               // Scripts for Mermaid; block popups / top navigation so vendor docs can't escape the canvas.
               sandbox={
                 preferHtml
-                  ? 'allow-scripts allow-same-origin allow-downloads'
-                  : 'allow-scripts allow-same-origin allow-downloads allow-popups'
+                  ? 'allow-scripts allow-downloads'
+                  : 'allow-scripts allow-downloads allow-popups'
               }
               referrerPolicy="no-referrer"
             />

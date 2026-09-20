@@ -269,7 +269,7 @@ export function WorkCard({
               initials ? 'text-zinc-700' : 'text-zinc-400'
             }`}
           >
-            {initials || '–'}
+            {initials || '-'}
           </span>
           <p className="min-w-0 flex-1 truncate text-[11px] text-zinc-600">{meta.join(' · ')}</p>
           {assignment.urgency === 'normal' ? null : (

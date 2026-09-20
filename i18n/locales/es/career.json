@@ -67,6 +67,7 @@
     "assessment_error": "No se pudo cargar o enviar la prueba. Intenta de nuevo.",
     "assessment_cooldown": "Ya usaste un intento reciente. Espera un poco antes de repetir.",
     "assessment_max_attempts": "Llegaste al máximo de intentos de esta semana para esta vacante.",
+    "assessment_in_progress": "Ya hay un intento abierto en este dispositivo. Continúa desde la misma sesión.",
     "assessment_pick_title": "Elige el oficio de la prueba",
     "assessment_pick_body": "Son testers con especialidad. Cada oficio tiene su prueba de criterio. Los hallazgos plantados son de tres tipos: funcional, de API y de seguridad.",
     "assessment_required_error": "Hay que aprobar la prueba con el mismo correo antes de postular.",

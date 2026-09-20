@@ -97,13 +97,13 @@ export default async function PortalQuotePage({
   async function onAccept(formData: FormData) {
     'use server';
     const quoteId = String(formData.get('quoteId'));
-    await clientAcceptQuote(quoteId, project.id);
+    await clientAcceptQuote(quoteId, slug);
   }
 
   async function onReject(formData: FormData) {
     'use server';
     const quoteId = String(formData.get('quoteId'));
-    await clientRejectQuote(quoteId, project.id);
+    await clientRejectQuote(quoteId, slug);
   }
 
   if (!preferred && quoteCanvases.length === 0) {

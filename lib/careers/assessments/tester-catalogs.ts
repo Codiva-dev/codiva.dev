@@ -779,7 +779,7 @@ export const TESTER_SECURITY: AssessmentCatalog = catalog(
 export const TESTER_GENERAL: AssessmentCatalog = catalog(
   'tester-general',
   'Tester Integral',
-  'Examen de criterio — selección múltiple. 8 preguntas · tiempo estimado: 15 minutos. Al aprobar, reportas un hallazgo de cada tipo de prueba en el sitio (funcional, de API y de seguridad). El tablero muestra lo encontrado y lo que falta. Sin las dos partes no se habilita el CV.',
+  'Examen de criterio · selección múltiple. 8 preguntas · tiempo estimado: 15 minutos. Al aprobar, reportas un hallazgo de cada tipo de prueba en el sitio (funcional, de API y de seguridad). El tablero muestra lo encontrado y lo que falta. Sin las dos partes no se habilita el CV.',
   [
     {
       id: 'ti-tipos-prueba',
@@ -840,17 +840,17 @@ export const TESTER_GENERAL: AssessmentCatalog = catalog(
         {
           key: 'a',
           label:
-            '1. Descuento habitual — precio 100, porcentaje 10 → precio final 90',
+            '1. Descuento habitual: precio 100, porcentaje 10 → precio final 90',
         },
         {
           key: 'b',
           label:
-            '1. Descuento habitual — precio 100, porcentaje 10 → precio final 90\n2. Sin descuento (límite inferior) — precio 100, porcentaje 0 → precio final 100\n3. Descuento total (límite superior) — precio 100, porcentaje 100 → precio final 0\n4. Otro valor válido — precio 50, porcentaje 50 → precio final 25\n5. Precio inválido (cero) — precio 0, porcentaje 10 → rechazo / error\n6. Precio inválido (negativo) — precio -10, porcentaje 10 → rechazo / error\n7. Porcentaje por debajo del rango — precio 100, porcentaje -5 → rechazo / error\n8. Porcentaje por encima del rango — precio 100, porcentaje 101 → rechazo / error',
+            '1. Descuento habitual: precio 100, porcentaje 10 → precio final 90\n2. Sin descuento (límite inferior): precio 100, porcentaje 0 → precio final 100\n3. Descuento total (límite superior): precio 100, porcentaje 100 → precio final 0\n4. Otro valor válido: precio 50, porcentaje 50 → precio final 25\n5. Precio inválido (cero): precio 0, porcentaje 10 → rechazo / error\n6. Precio inválido (negativo): precio -10, porcentaje 10 → rechazo / error\n7. Porcentaje por debajo del rango: precio 100, porcentaje -5 → rechazo / error\n8. Porcentaje por encima del rango: precio 100, porcentaje 101 → rechazo / error',
         },
         {
           key: 'c',
           label:
-            '1. Descuento habitual — precio 100, porcentaje 10 → precio final 90\n2. Mismo escenario otra vez — precio 100, porcentaje 10 → precio final 90\n3. Flujo de compra en pantalla — el usuario abre la tienda, agrega un producto y aplica un cupón → la compra muestra descuento',
+            '1. Descuento habitual: precio 100, porcentaje 10 → precio final 90\n2. Mismo escenario otra vez: precio 100, porcentaje 10 → precio final 90\n3. Flujo de compra en pantalla: el usuario abre la tienda, agrega un producto y aplica un cupón → la compra muestra descuento',
         },
       ],
       correct: ['b'],

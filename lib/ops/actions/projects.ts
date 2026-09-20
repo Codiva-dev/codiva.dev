@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
-  requireStaff,
-  assertCapability,
+  requireStaffWrite,
+  assertCapabilityWrite,
   assertProjectAccessOrThrow,
 } from '@/lib/ops/auth';
 import { logActivity } from '@/lib/ops/activity';
@@ -13,7 +13,7 @@ import { throwDb } from '@/lib/ops/throw-db';
 import { associatePartnerPortalUsers } from '@/lib/ops/portal-hub';
 
 export async function convertLeadToProject(leadId: string) {
-  const { supabase, user, staff } = await assertCapability('leads');
+  const { supabase, user, staff } = await assertCapabilityWrite('leads');
   const admin = createAdminClient();
 
   const { data: lead, error: leadError } = await supabase
@@ -81,7 +81,7 @@ export async function convertLeadToProject(leadId: string) {
 }
 
 export async function createProject(formData: FormData) {
-  const { user, staff } = await assertCapability('projects_create');
+  const { user, staff } = await assertCapabilityWrite('projects_create');
   const admin = createAdminClient();
 
   const name = String(formData.get('name') || '').trim();
@@ -129,7 +129,7 @@ export async function createProject(formData: FormData) {
 }
 
 export async function updateProject(projectId: string, formData: FormData) {
-  const access = await requireStaff();
+  const access = await requireStaffWrite();
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -163,7 +163,7 @@ export async function updateProject(projectId: string, formData: FormData) {
 }
 
 export async function createMilestone(projectId: string, formData: FormData) {
-  const access = await assertCapability('milestones_write');
+  const access = await assertCapabilityWrite('milestones_write');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -197,7 +197,7 @@ export async function createMilestone(projectId: string, formData: FormData) {
 }
 
 export async function updateMilestone(milestoneId: string, projectId: string, formData: FormData) {
-  const access = await assertCapability('milestones_write');
+  const access = await assertCapabilityWrite('milestones_write');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -225,7 +225,7 @@ export async function updateMilestone(milestoneId: string, projectId: string, fo
 }
 
 export async function addMilestoneUpdate(milestoneId: string, projectId: string, body: string) {
-  const access = await assertCapability('milestones_write');
+  const access = await assertCapabilityWrite('milestones_write');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
   const { error } = await supabase.from('milestone_updates').insert({

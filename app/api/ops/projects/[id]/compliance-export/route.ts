@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { listVisibleProjectIds } from '@/lib/ops/auth';
 
 export async function GET(
   _request: Request,
@@ -19,11 +20,16 @@ export async function GET(
 
   const { data: staff } = await supabase
     .from('staff_profiles')
-    .select('id')
+    .select('id, role, capabilities')
     .eq('id', user.id)
     .eq('active', true)
     .maybeSingle();
   if (!staff) return NextResponse.json({ error: 'Solo staff' }, { status: 403 });
+
+  const visibleIds = await listVisibleProjectIds(supabase, user.id, staff);
+  if (visibleIds && !visibleIds.includes(projectId)) {
+    return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
+  }
 
   const admin = createAdminClient();
 

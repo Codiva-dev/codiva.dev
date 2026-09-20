@@ -5,7 +5,7 @@ import { loadActiveInterviewMember } from '@/lib/ops/auth';
 import { logActivity } from '@/lib/ops/activity';
 import { htmlToPdf } from '@/lib/ops/html-to-pdf';
 import { canAny } from '@/lib/ops/permissions';
-import { getActiveStaffForApi, partnerCanReadApplication, partnerCanReadJobPosting } from '@/lib/ops/interview-file-access';
+import { getActiveStaffForApi, partnerCanReadApplication, partnerCanReadFailedAttempt } from '@/lib/ops/interview-file-access';
 import { loadRecruitingDossierForApplication } from '@/lib/ops/interview-brief';
 import { requestAuditFromHeaders } from '@/lib/ops/request-audit';
 import { isInterviewUuid } from '@/lib/ops/interview-partner';
@@ -61,17 +61,17 @@ export async function GET(request: Request) {
   let metadata: Record<string, unknown>;
 
   if (attemptId) {
-    const { data: attempt } = await admin
-      .from('ops_job_assessment_attempts')
-      .select('id, job_posting_id')
-      .eq('id', attemptId)
-      .maybeSingle();
-    if (!attempt) return NextResponse.json({ error: 'Intento no encontrado' }, { status: 404 });
-    if (loaded) {
-      const allowed = await partnerCanReadJobPosting({
-        memberId: loaded.member.id,
-        jobPostingId: attempt.job_posting_id,
-      });
+      const { data: attempt } = await admin
+        .from('ops_job_assessment_attempts')
+        .select('id, job_posting_id, email')
+        .eq('id', attemptId)
+        .maybeSingle();
+      if (!attempt) return NextResponse.json({ error: 'Intento no encontrado' }, { status: 404 });
+      if (loaded) {
+        const allowed = await partnerCanReadFailedAttempt({
+          memberId: loaded.member.id,
+          attempt: { email: attempt.email, job_posting_id: attempt.job_posting_id },
+        });
       if (!allowed) return NextResponse.json({ error: 'Sin acceso' }, { status: 403 });
     }
     dossier = await loadRecruitingDossier(attemptId);

@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import {
   assertCapability,
   assertProjectAccessOrThrow,
+  listVisibleProjectIds,
 } from '@/lib/ops/auth';
 import { sendClientEmail } from '@/lib/ops/email';
 import { throwDb } from '@/lib/ops/throw-db';
@@ -62,18 +63,39 @@ export async function inviteProjectMember(projectId: string, formData: FormData)
   }
 }
 
+async function assertPortalUserInScope(userId: string) {
+  const access = await assertCapability('portal_users');
+  const visibleIds = await listVisibleProjectIds(access.supabase, access.user.id, access.staff);
+  if (visibleIds === null) return { access, visibleIds: null as string[] | null };
+  const { data: memberships } = await access.supabase
+    .from('project_members')
+    .select('id')
+    .eq('user_id', userId)
+    .in('project_id', visibleIds.length ? visibleIds : ['00000000-0000-0000-0000-000000000000'])
+    .limit(1);
+  if (!memberships?.length) throw new Error('No tienes acceso a este usuario');
+  return { access, visibleIds };
+}
+
 export async function resendPortalInvite(userId: string) {
-  await assertCapability('portal_users');
+  const { visibleIds } = await assertPortalUserInScope(userId);
   const admin = createAdminClient();
 
   const { data: authUser, error: userError } = await admin.auth.admin.getUserById(userId);
   if (userError || !authUser.user?.email) throw new Error('Usuario no encontrado');
 
   const email = authUser.user.email.toLowerCase();
-  const { data: memberships } = await admin
+  let membershipsQuery = admin
     .from('project_members')
     .select('project_id, projects(id, name)')
     .eq('user_id', userId);
+  if (visibleIds) {
+    membershipsQuery = membershipsQuery.in(
+      'project_id',
+      visibleIds.length ? visibleIds : ['00000000-0000-0000-0000-000000000000']
+    );
+  }
+  const { data: memberships } = await membershipsQuery;
 
   const names = (memberships ?? [])
     .map((m) => {
@@ -134,19 +156,19 @@ export async function addPortalUserProjects(userId: string, formData: FormData) 
 }
 
 export async function setPortalUserHub(userId: string, formData: FormData) {
-  await assertCapability('portal_users');
+  const { visibleIds } = await assertPortalUserInScope(userId);
   const isHub = formData.get('isHub') === 'on';
   const displayName = String(formData.get('displayName') || '').trim() || null;
   await upsertPortalHubProfile(userId, { isHub, displayName });
-  const ids = isHub ? await syncHubUserPartnerProjects(userId) : [];
+  const ids = isHub ? await syncHubUserPartnerProjects(userId, visibleIds) : [];
   revalidatePath('/users');
   revalidatePath(`/users/${userId}`);
   for (const id of ids) revalidatePath(`/projects/${id}`);
 }
 
 export async function syncPortalHubProjects(userId: string) {
-  await assertCapability('portal_users');
-  const ids = await syncHubUserPartnerProjects(userId);
+  const { visibleIds } = await assertPortalUserInScope(userId);
+  const ids = await syncHubUserPartnerProjects(userId, visibleIds);
   revalidatePath('/users');
   revalidatePath(`/users/${userId}`);
   for (const id of ids) revalidatePath(`/projects/${id}`);

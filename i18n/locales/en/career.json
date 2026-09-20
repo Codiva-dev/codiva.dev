@@ -67,6 +67,7 @@
     "assessment_error": "We could not load or submit the test. Try again.",
     "assessment_cooldown": "You already used a recent attempt. Wait a bit before retrying.",
     "assessment_max_attempts": "You reached this week’s attempt limit for this role.",
+    "assessment_in_progress": "You already have an open attempt on this device. Continue from that session.",
     "assessment_pick_title": "Choose the craft for this test",
     "assessment_pick_body": "These are specialist testers. Each craft has its own judgment test. Planted findings come in three types: functional, API, and security.",
     "assessment_required_error": "You must pass the test with the same email before applying.",

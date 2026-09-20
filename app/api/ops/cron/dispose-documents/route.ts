@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/ops/timing-safe-bearer';
 import { disposeExpiredDocuments } from '@/lib/ops/document-ingest';
 import { logActivity } from '@/lib/ops/activity';
 
@@ -8,9 +9,7 @@ import { logActivity } from '@/lib/ops/activity';
  * Header: Authorization: Bearer $CRON_SECRET
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET?.trim();
-  const auth = request.headers.get('authorization');
-  if (!secret || auth !== `Bearer ${secret}`) {
+  if (!cronAuthorized(request.headers.get('authorization'))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

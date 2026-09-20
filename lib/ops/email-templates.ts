@@ -262,7 +262,7 @@ export function templatePortalInviteNewUser(
   projectName: string,
   email: string,
   tempPassword: string,
-  loginUrl: string,
+  _loginUrl: string,
   options?: QuoteEmailContext,
   locale: Locale = DEFAULT_LOCALE
 ): string {
@@ -282,17 +282,10 @@ export function templatePortalInviteNewUser(
       ${projectAccessBlock(projectName, locale)}
       ${clientLine}
       <p style="margin:0 0 12px;">${tSync(locale, 'email.portalInviteNew.body')}</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;width:100%;background:${BRAND.background};border-radius:8px;">
-        <tr>
-          <td style="padding:16px;font-family:${FONT_BODY};font-size:14px;line-height:1.6;">
-            <p style="margin:0 0 8px;"><strong>${tSync(locale, 'email.portalInviteNew.email')}</strong> ${escapeHtml(email)}</p>
-            <p style="margin:0;"><strong>${tSync(locale, 'email.portalInviteNew.tempPassword')}</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${escapeHtml(tempPassword)}</code></p>
-          </td>
-        </tr>
-      </table>
+      <p style="margin:0 0 12px;"><strong>${tSync(locale, 'email.portalInviteNew.email')}</strong> ${escapeHtml(email)}</p>
       <p style="margin:0;color:${BRAND.muted};font-size:14px;">${tSync(locale, 'email.portalInviteNew.changeHint')}</p>
     `,
-    cta: { label: tSync(locale, 'email.portalInviteNew.cta'), href: loginUrl },
+    cta: { label: tSync(locale, 'email.portalInviteNew.cta'), href: tempPassword },
   });
 }
 
@@ -328,7 +321,7 @@ export function templateStaffInviteNewUser(
   fullName: string,
   email: string,
   tempPassword: string,
-  loginUrl: string,
+  _loginUrl: string,
   roleLabel: string
 ): string {
   const hello = fullName ? greeting(fullName) : '';
@@ -338,17 +331,10 @@ export function templateStaffInviteNewUser(
     bodyHtml: `
       ${hello}
       <p style="margin:0 0 12px;">Se creó tu acceso a <strong>${escapeHtml(BRAND_NAME)}</strong> con rol <strong>${escapeHtml(roleLabel)}</strong>.</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;width:100%;background:${BRAND.background};border-radius:8px;">
-        <tr>
-          <td style="padding:16px;font-family:${FONT_BODY};font-size:14px;line-height:1.6;">
-            <p style="margin:0 0 8px;"><strong>Email:</strong> ${escapeHtml(email)}</p>
-            <p style="margin:0;"><strong>Contraseña temporal:</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${escapeHtml(tempPassword)}</code></p>
-          </td>
-        </tr>
-      </table>
-      <p style="margin:0;color:${BRAND.muted};font-size:14px;">Cambia tu contraseña al ingresar.</p>
+      <p style="margin:0 0 12px;"><strong>Email:</strong> ${escapeHtml(email)}</p>
+      <p style="margin:0;color:${BRAND.muted};font-size:14px;">Elige tu contraseña al activar el acceso. El enlace caduca; si expira, usa “Olvidé mi contraseña”.</p>
     `,
-    cta: { label: 'Entrar a Codiva.dev', href: loginUrl },
+    cta: { label: 'Activar acceso', href: tempPassword },
   });
 }
 
@@ -374,7 +360,7 @@ export function templateInterviewInviteNewUser(
   fullName: string,
   email: string,
   tempPassword: string,
-  loginUrl: string,
+  _loginUrl: string,
   orgName: string,
   locale: Locale = DEFAULT_LOCALE
 ): string {
@@ -389,17 +375,10 @@ export function templateInterviewInviteNewUser(
         brand: BRAND_NAME,
         org: orgName,
       })}</p>
-      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;width:100%;background:${BRAND.background};border-radius:8px;">
-        <tr>
-          <td style="padding:16px;font-family:${FONT_BODY};font-size:14px;line-height:1.6;">
-            <p style="margin:0 0 8px;"><strong>${tSync(locale, 'email.interviewInviteNew.email')}</strong> ${escapeHtml(email)}</p>
-            <p style="margin:0;"><strong>${tSync(locale, 'email.interviewInviteNew.tempPassword')}</strong> <code style="background:#fff;padding:2px 6px;border-radius:4px;">${escapeHtml(tempPassword)}</code></p>
-          </td>
-        </tr>
-      </table>
+      <p style="margin:0 0 12px;"><strong>${tSync(locale, 'email.interviewInviteNew.email')}</strong> ${escapeHtml(email)}</p>
       <p style="margin:0;color:${BRAND.muted};font-size:14px;">${tSync(locale, 'email.interviewInviteNew.changeHint')}</p>
     `,
-    cta: { label: tSync(locale, 'email.interviewInviteNew.cta'), href: loginUrl },
+    cta: { label: tSync(locale, 'email.interviewInviteNew.cta'), href: tempPassword },
   });
 }
 

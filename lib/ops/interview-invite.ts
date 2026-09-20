@@ -6,7 +6,9 @@ import {
   templateInterviewInviteNewUser,
 } from '@/lib/ops/email-templates';
 import { interviewsLoginUrl } from '@/lib/ops/host';
+import { interviewsAuthCallbackUrl } from '@/lib/ops/auth-urls';
 import { findUserIdByEmail } from '@/lib/ops/auth-users';
+import { generateInviteRecoveryLink } from '@/lib/ops/invite-recovery-link';
 import { isInterviewPartnerRole, type InterviewPartnerRole } from '@/lib/ops/interview-partner';
 
 export type InterviewInviteResult = {
@@ -57,13 +59,13 @@ export async function inviteInterviewPartnerCore(opts: {
 
   let userId: string;
   let isNewUser = false;
-  let tempPassword: string | undefined;
+  let activateUrl = interviewsLoginUrl();
 
   const existingId = await findUserIdByEmail(email);
   if (existingId) {
     userId = existingId;
   } else {
-    tempPassword = crypto.randomUUID();
+    const tempPassword = crypto.randomUUID();
     const { data: created, error } = await admin.auth.admin.createUser({
       email,
       password: tempPassword,
@@ -73,6 +75,10 @@ export async function inviteInterviewPartnerCore(opts: {
     if (error || !created?.user) throw await throwDb(error);
     userId = created.user.id;
     isNewUser = true;
+    activateUrl = await generateInviteRecoveryLink(
+      email,
+      interviewsAuthCallbackUrl('/reset-password')
+    );
   }
 
   const { data: existingMember } = await admin
@@ -113,7 +119,7 @@ export async function inviteInterviewPartnerCore(opts: {
     const orgName = partner?.name || partnerName || 'Codiva';
     const loginUrl = interviewsLoginUrl();
     const html = isNewUser
-      ? templateInterviewInviteNewUser(fullName, email, tempPassword!, loginUrl, orgName)
+      ? templateInterviewInviteNewUser(fullName, email, activateUrl, loginUrl, orgName)
       : templateInterviewInviteExistingUser(fullName, loginUrl, orgName);
 
     const mail = await sendClientEmail({

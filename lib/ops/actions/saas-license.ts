@@ -1,11 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { assertCapability, assertProjectAccessOrThrow } from '@/lib/ops/auth';
+import { assertCapabilityWrite, assertProjectAccessOrThrow } from '@/lib/ops/auth';
 import { logActivity } from '@/lib/ops/activity';
 import { throwDb, throwPublic } from '@/lib/ops/throw-db';
-import { notifyStaff } from '@/lib/ops/email';
-import { isLicenseStatus, parseLicenseModules, type LicenseStatus } from '@/lib/ops/saas-license';
+import { optionalSafeOutboundUrl } from '@/lib/ops/safe-outbound-url';
+import { annualLicensePeriodUtc, isLicenseStatus, parseLicenseModules, type LicenseStatus } from '@/lib/ops/saas-license';
+import { loadProjectMailContext, notifySaasLicenseStatus } from '@/lib/ops/saas-notify';
 import { signAndPushSaasProject } from '@/lib/ops/saas-push';
 import { callInstanceCincelAuth } from '@/lib/ops/saas-instance-http';
 
@@ -18,7 +19,7 @@ async function licenseSecret(): Promise<string> {
 }
 
 async function ensureVendorSlots(
-  supabase: Awaited<ReturnType<typeof assertCapability>>['supabase'],
+  supabase: Awaited<ReturnType<typeof assertCapabilityWrite>>['supabase'],
   instanceId: string
 ) {
   for (const slot of SLOTS) {
@@ -31,7 +32,7 @@ async function ensureVendorSlots(
 }
 
 export async function ensureSaasInstance(projectId: string, slug: string) {
-  const access = await assertCapability('saas_licenses');
+  const access = await assertCapabilityWrite('saas_licenses');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
 
@@ -45,13 +46,7 @@ export async function ensureSaasInstance(projectId: string, slug: string) {
     return existing;
   }
 
-  const now = new Date();
-  const periodStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
-    .toISOString()
-    .slice(0, 10);
-  const periodEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0))
-    .toISOString()
-    .slice(0, 10);
+  const { start: periodStart, end: periodEnd } = annualLicensePeriodUtc();
   const { data, error } = await supabase
     .from('saas_instances')
     .insert({
@@ -77,8 +72,31 @@ export async function ensureSaasInstance(projectId: string, slug: string) {
   return data;
 }
 
+async function notifyLicenseIfNeeded(
+  supabase: Awaited<ReturnType<typeof assertCapabilityWrite>>['supabase'],
+  projectId: string,
+  instanceKey: string,
+  status: LicenseStatus,
+  reason: string
+) {
+  if (status !== 'grace' && status !== 'locked') return;
+  const project = await loadProjectMailContext(supabase, projectId);
+  await notifySaasLicenseStatus({
+    status,
+    instanceKey,
+    reason,
+    projectName: project.projectName,
+    projectSlug: project.projectSlug,
+  });
+}
+
+function revalidateLicense(projectId: string) {
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath('/pendientes');
+}
+
 async function loadInstance(
-  supabase: Awaited<ReturnType<typeof assertCapability>>['supabase'],
+  supabase: Awaited<ReturnType<typeof assertCapabilityWrite>>['supabase'],
   projectId: string
 ) {
   const { data, error } = await supabase
@@ -92,7 +110,7 @@ async function loadInstance(
 }
 
 export async function saveSaasInstance(projectId: string, formData: FormData) {
-  const access = await assertCapability('saas_licenses');
+  const access = await assertCapabilityWrite('saas_licenses');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
   const row = await loadInstance(supabase, projectId);
@@ -105,7 +123,12 @@ export async function saveSaasInstance(projectId: string, formData: FormData) {
   const periodEnd = String(formData.get('periodEnd') || row.period_end || '');
   const graceUntil = String(formData.get('graceUntil') || '') || null;
   const instanceKey = String(formData.get('instanceKey') || row.instance_key).trim();
-  const instancePushUrl = String(formData.get('instancePushUrl') || '').trim() || null;
+  let instancePushUrl: string | null = null;
+  try {
+    instancePushUrl = optionalSafeOutboundUrl(String(formData.get('instancePushUrl') || ''));
+  } catch (err) {
+    throw err instanceof Error ? err : new Error('URL de instancia inválida');
+  }
   const notes = String(formData.get('notes') || '');
 
   const { error } = await supabase
@@ -133,18 +156,21 @@ export async function saveSaasInstance(projectId: string, formData: FormData) {
   });
 
   if (status !== row.status && (status === 'grace' || status === 'locked')) {
-    await notifyStaff({
-      subject: `NIRC licencia ${status}`,
-      text: `La instancia ${instanceKey} pasó a ${status}.`,
-    });
+    await notifyLicenseIfNeeded(
+      supabase,
+      projectId,
+      instanceKey,
+      status,
+      `La instancia ${instanceKey} se marcó en ${status === 'locked' ? 'bloqueada' : 'periodo de gracia'}.`
+    );
   }
 
   await signAndPushSaasProject(supabase, projectId);
-  revalidatePath(`/projects/${projectId}`);
+  revalidateLicense(projectId);
 }
 
 export async function signAndPushSaasLicense(projectId: string) {
-  const access = await assertCapability('saas_licenses');
+  const access = await assertCapabilityWrite('saas_licenses');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
   await licenseSecret();
@@ -163,7 +189,7 @@ export async function signAndPushSaasLicense(projectId: string) {
 }
 
 export async function setSaasStatus(projectId: string, status: LicenseStatus) {
-  const access = await assertCapability('saas_licenses');
+  const access = await assertCapabilityWrite('saas_licenses');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase, user } = access;
   const row = await loadInstance(supabase, projectId);
@@ -180,13 +206,16 @@ export async function setSaasStatus(projectId: string, status: LicenseStatus) {
     metadata: { project_id: projectId, status },
   });
   if (status === 'grace' || status === 'locked') {
-    await notifyStaff({
-      subject: `NIRC licencia ${status}`,
-      text: `La instancia ${row.instance_key} pasó a ${status}.`,
-    });
+    await notifyLicenseIfNeeded(
+      supabase,
+      projectId,
+      row.instance_key,
+      status,
+      `La instancia ${row.instance_key} se marcó en ${status === 'locked' ? 'bloqueada' : 'periodo de gracia'}.`
+    );
   }
   await signAndPushSaasProject(supabase, projectId);
-  revalidatePath(`/projects/${projectId}`);
+  revalidateLicense(projectId);
 }
 
 export async function saveSaasVendorSlot(
@@ -194,7 +223,7 @@ export async function saveSaasVendorSlot(
   slot: string,
   formData: FormData
 ) {
-  const access = await assertCapability('saas_licenses');
+  const access = await assertCapabilityWrite('saas_licenses');
   await assertProjectAccessOrThrow(access, projectId);
   const { supabase } = access;
   const row = await loadInstance(supabase, projectId);
@@ -221,14 +250,18 @@ async function postCincelHatch(
   action: 'otp_request' | 'otp_exchange' | 'jwt_watch',
   code?: string
 ) {
-  const access = await assertCapability('saas_licenses');
+  const access = await assertCapabilityWrite('saas_licenses');
   await assertProjectAccessOrThrow(access, projectId);
   const row = await loadInstance(access.supabase, projectId);
-  const res = await callInstanceCincelAuth(row.instance_push_url, {
-    method: 'POST',
-    action,
-    code,
-  });
+  const res = await callInstanceCincelAuth(
+    row.instance_push_url,
+    {
+      method: 'POST',
+      action,
+      code,
+    },
+    row.entitlement_token
+  );
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;
     if (body?.error === 'otp_missing') await throwPublic('ops.license.errOtp');
