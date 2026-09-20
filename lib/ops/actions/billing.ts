@@ -8,6 +8,9 @@ import {
 import { logActivity } from '@/lib/ops/activity';
 import { optionalHttpUrl } from '@/lib/ops/requested-url';
 import { throwDb } from '@/lib/ops/throw-db';
+import { deriveSaasStatusFromCharges, isLicenseStatus } from '@/lib/ops/saas-license';
+import { signAndPushSaasProject } from '@/lib/ops/saas-push';
+import { notifyStaff } from '@/lib/ops/email';
 
 function parseChargeAmount(raw: FormDataEntryValue | null): number | null {
   const text = String(raw ?? '').trim();
@@ -23,6 +26,37 @@ function parseNoticeDays(raw: FormDataEntryValue | null): number {
   const n = parseInt(text, 10);
   if (!Number.isFinite(n) || n < 0) throw new Error('Días de aviso inválidos');
   return n;
+}
+
+async function syncSaasStatusFromCharges(
+  supabase: Awaited<ReturnType<typeof assertCapability>>['supabase'],
+  projectId: string
+) {
+  const { data: instance } = await supabase
+    .from('saas_instances')
+    .select('id, status')
+    .eq('project_id', projectId)
+    .maybeSingle();
+  if (!instance) return;
+  const { data: charges } = await supabase
+    .from('project_charges')
+    .select('kind, status, due_date, notice_days')
+    .eq('project_id', projectId);
+  const next = deriveSaasStatusFromCharges(charges ?? []);
+  const rank = { active: 0, grace: 1, locked: 2 } as const;
+  const current = isLicenseStatus(instance.status) ? instance.status : 'active';
+  if (rank[next] <= rank[current]) return;
+  await supabase
+    .from('saas_instances')
+    .update({ status: next, updated_at: new Date().toISOString() })
+    .eq('id', instance.id);
+  if (next === 'grace' || next === 'locked') {
+    await notifyStaff({
+      subject: `NIRC licencia ${next}`,
+      text: `Un cargo SaaS dejó la instancia en ${next}.`,
+    });
+  }
+  await signAndPushSaasProject(supabase, projectId);
 }
 
 export async function createProjectCharge(projectId: string, formData: FormData) {
@@ -71,6 +105,7 @@ export async function createProjectCharge(projectId: string, formData: FormData)
     metadata: { project_id: projectId, kind, status },
   });
 
+  await syncSaasStatusFromCharges(supabase, projectId);
   revalidatePath(`/projects/${projectId}`);
 }
 
@@ -119,6 +154,7 @@ export async function updateProjectCharge(
     metadata: { project_id: projectId, status },
   });
 
+  await syncSaasStatusFromCharges(supabase, projectId);
   revalidatePath(`/projects/${projectId}`);
 }
 
@@ -142,6 +178,7 @@ export async function deleteProjectCharge(chargeId: string, projectId: string) {
     metadata: { project_id: projectId },
   });
 
+  await syncSaasStatusFromCharges(supabase, projectId);
   revalidatePath(`/projects/${projectId}`);
 }
 

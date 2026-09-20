@@ -175,6 +175,8 @@
         "hosting": "Hosting",
         "domain": "Domain",
         "pass_through": "Client-borne expense",
+        "saas_monthly": "SaaS monthly license",
+        "saas_usage": "SaaS usage",
         "other": "Other"
       },
       "chargeStatus": {
@@ -300,6 +302,7 @@
       "site_access": "Site access",
       "tickets": "Tickets",
       "dashboard_finance": "Dashboard finance",
+      "saas_licenses": "SaaS instance licenses",
       "settings_profile": "View and update their profile",
       "assignments": "View the assignments board",
       "assignments_manage": "Create, reassign, and change the scope of internal work"
@@ -922,6 +925,9 @@
       "attentionSnoozed": "Snoozed for 24 hours",
       "attentionKind": {
         "charge_overdue": "Overdue charge",
+        "license_locked": "License locked",
+        "license_grace": "License in grace",
+        "vendor_jwt_due": "Vendor JWT due",
         "ticket_stale": "Stale ticket",
         "assignment_stuck": "Stuck assignment",
         "release_qa": "Production release",
@@ -1166,6 +1172,7 @@
       "tabArquitectura": "Architecture",
       "tabCotizaciones": "Quotes",
       "tabPagos": "Payments",
+      "tabLicencia": "License",
       "tabDocumentos": "Documents",
       "tabEntregables": "Deliverables",
       "tabAccesos": "Access",
@@ -1548,6 +1555,42 @@
         "succeeded": "OK",
         "failed": "Failed",
         "cancelled": "Cancelled"
+      }
+    },
+    "license": {
+      "title": "Instance license",
+      "emptyTitle": "No license yet",
+      "emptyHint": "Create the SaaS record for this project. Monthly and usage charges stay on Payments.",
+      "create": "Create license",
+      "created": "License created",
+      "saved": "License saved",
+      "statusSaved": "Status updated",
+      "signed": "Entitlement signed",
+      "signPush": "Sign and push to the instance",
+      "save": "Save",
+      "instanceKey": "Instance key",
+      "pushUrl": "Push URL (NIRC)",
+      "periodStart": "Period start",
+      "periodEnd": "Period end",
+      "graceUntil": "Grace until",
+      "modules": "Modules",
+      "notes": "Internal notes",
+      "lastPushed": "Last push",
+      "usage": "Usage",
+      "usageHint": "Counts the instance reports. No amounts.",
+      "usageEmpty": "No events yet.",
+      "vendors": "Vendors",
+      "vendorsHint": "JWT/PAT expiry. OTP is redeemed on the NIRC Super Admin hatch.",
+      "vendorDue": "Due soon",
+      "vendorSaved": "Vendor updated",
+      "vendorNotes": "Notes",
+      "vendorSave": "Save vendor",
+      "errSecret": "CODIVA_LICENSE_SECRET is missing in Ops.",
+      "errMissing": "Create the license first.",
+      "status": {
+        "active": "Active",
+        "grace": "Grace",
+        "locked": "Locked"
       }
     },
     "leadDetail": {

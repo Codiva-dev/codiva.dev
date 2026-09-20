@@ -87,6 +87,8 @@ export function labelsFor(locale: Locale = DEFAULT_LOCALE) {
       'hosting',
       'domain',
       'pass_through',
+      'saas_monthly',
+      'saas_usage',
       'other',
     ]),
     CHARGE_STATUS_LABELS: group(locale, 'chargeStatus', ['pending', 'paid', 'overdue', 'waived']),

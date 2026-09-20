@@ -1,5 +1,8 @@
 export const ATTENTION_KINDS = [
   'charge_overdue',
+  'license_locked',
+  'license_grace',
+  'vendor_jwt_due',
   'ticket_stale',
   'assignment_stuck',
   'release_qa',
@@ -22,12 +25,15 @@ export type AttentionItem = {
 
 export const ATTENTION_RANK: Record<AttentionKind, number> = {
   charge_overdue: 0,
-  ticket_stale: 1,
-  assignment_stuck: 2,
-  release_qa: 3,
-  interview_unscheduled: 4,
-  sprint_no_hours: 5,
-  lead_stale: 6,
+  license_locked: 0,
+  license_grace: 1,
+  vendor_jwt_due: 1,
+  ticket_stale: 2,
+  assignment_stuck: 3,
+  release_qa: 4,
+  interview_unscheduled: 5,
+  sprint_no_hours: 6,
+  lead_stale: 7,
 };
 
 export const ATTENTION_LIMIT = 12;

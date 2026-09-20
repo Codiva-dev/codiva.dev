@@ -36,6 +36,9 @@ import { cn } from '@/lib/cn';
 
 const KIND_ICON: Record<PendingMonitorItem['kind'], LucideIcon> = {
   charge_overdue: Banknote,
+  license_locked: AlertTriangle,
+  license_grace: AlertTriangle,
+  vendor_jwt_due: Timer,
   ticket_stale: Ticket,
   assignment_stuck: AlertTriangle,
   release_qa: Rocket,
@@ -49,6 +52,9 @@ const KIND_ICON: Record<PendingMonitorItem['kind'], LucideIcon> = {
 
 const KIND_WRAP: Record<PendingMonitorItem['kind'], string> = {
   charge_overdue: 'bg-red-50 text-red-700',
+  license_locked: 'bg-red-50 text-red-700',
+  license_grace: 'bg-amber-50 text-amber-800',
+  vendor_jwt_due: 'bg-amber-50 text-amber-800',
   ticket_stale: 'bg-sky-50 text-sky-700',
   assignment_stuck: 'bg-amber-50 text-amber-800',
   release_qa: 'bg-violet-50 text-violet-700',
@@ -82,7 +88,9 @@ function timeLabel(at: string, t: (key: string, opts?: Record<string, unknown>) 
 
 function rowAccent(item: PendingMonitorItem) {
   const bucket = attentionBucket(item.at);
-  if (bucket === 'overdue' || item.kind === 'charge_overdue') return 'border-l-red-500';
+  if (bucket === 'overdue' || item.kind === 'charge_overdue' || item.kind === 'license_locked') {
+    return 'border-l-red-500';
+  }
   if (item.kind === 'mention' || item.kind === 'edit_request') return 'border-l-codiva-primary';
   if (bucket === 'today') return 'border-l-amber-400';
   return 'border-l-zinc-200';

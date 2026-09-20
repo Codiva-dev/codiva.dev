@@ -309,5 +309,53 @@ export async function loadAttentionQueue(opts: {
     }
   }
 
+  if (can(opts.staff, 'saas_licenses')) {
+    let instancesQuery = opts.supabase
+      .from('saas_instances')
+      .select('id, status, instance_key, grace_until, period_end, updated_at, project_id, projects(name, slug)')
+      .in('status', ['grace', 'locked'])
+      .limit(40);
+    if (projectFilter) instancesQuery = instancesQuery.in('project_id', projectFilter);
+    const { data: licenseRows } = await instancesQuery;
+    for (const row of licenseRows ?? []) {
+      const project = joinName(row.projects);
+      const locked = row.status === 'locked';
+      items.push({
+        key: attentionItemKey(locked ? 'license_locked' : 'license_grace', row.id),
+        kind: locked ? 'license_locked' : 'license_grace',
+        title: row.instance_key,
+        subtitle: project.name || 'Licencia',
+        href: project.slug ? opsProjectPath(project.slug, '?tab=licencia') : '/projects',
+        rank: locked ? ATTENTION_RANK.license_locked : ATTENTION_RANK.license_grace,
+        at: row.grace_until || row.period_end || row.updated_at,
+      });
+    }
+
+    const { data: vendorRows } = await opts.supabase
+      .from('saas_vendor_slots')
+      .select(
+        'id, slot, expires_at, saas_instances(instance_key, project_id, projects(name, slug))'
+      )
+      .not('expires_at', 'is', null)
+      .limit(40);
+    const leadIso = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    for (const row of vendorRows ?? []) {
+      if (!row.expires_at || row.expires_at > leadIso) continue;
+      const parent = Array.isArray(row.saas_instances) ? row.saas_instances[0] : row.saas_instances;
+      const projectId = parent?.project_id as string | undefined;
+      if (projectFilter && projectId && !projectFilter.includes(projectId)) continue;
+      const project = joinName(parent?.projects);
+      items.push({
+        key: attentionItemKey('vendor_jwt_due', row.id),
+        kind: 'vendor_jwt_due',
+        title: `${parent?.instance_key || 'NIRC'} · ${row.slot}`,
+        subtitle: project.name || 'Vendor',
+        href: project.slug ? opsProjectPath(project.slug, '?tab=licencia') : '/projects',
+        rank: ATTENTION_RANK.vendor_jwt_due,
+        at: row.expires_at,
+      });
+    }
+  }
+
   return filterAttentionItems(items, snoozes ?? [], now, opts.limit);
 }

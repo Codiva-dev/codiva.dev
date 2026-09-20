@@ -175,6 +175,8 @@
         "hosting": "Alojamiento",
         "domain": "Dominio",
         "pass_through": "Gasto a cargo del cliente",
+        "saas_monthly": "Licencia mensual",
+        "saas_usage": "Consumo SaaS",
         "other": "Otro"
       },
       "chargeStatus": {
@@ -300,6 +302,7 @@
       "site_access": "Accesos al sitio",
       "tickets": "Tickets",
       "dashboard_finance": "Finanzas en el dashboard",
+      "saas_licenses": "Licencias de instancia SaaS",
       "settings_profile": "Ver y cambiar su perfil",
       "assignments": "Ver tablero de asignaciones",
       "assignments_manage": "Crear, reasignar y cambiar el alcance del trabajo interno"
@@ -922,6 +925,9 @@
       "attentionSnoozed": "Pospuesto 24 horas",
       "attentionKind": {
         "charge_overdue": "Cargo vencido",
+        "license_locked": "Licencia bloqueada",
+        "license_grace": "Licencia en gracia",
+        "vendor_jwt_due": "Vendor JWT por vencer",
         "ticket_stale": "Ticket sin avance",
         "assignment_stuck": "Asignación atorada",
         "release_qa": "Release a producción",
@@ -1166,6 +1172,7 @@
       "tabArquitectura": "Arquitectura",
       "tabCotizaciones": "Cotizaciones",
       "tabPagos": "Pagos",
+      "tabLicencia": "Licencia",
       "tabDocumentos": "Documentos",
       "tabEntregables": "Entregables",
       "tabAccesos": "Accesos",
@@ -1544,6 +1551,42 @@
         "succeeded": "OK",
         "failed": "Falló",
         "cancelled": "Cancelado"
+      }
+    },
+    "license": {
+      "title": "Licencia de instancia",
+      "emptyTitle": "Aún no hay licencia",
+      "emptyHint": "Crea el registro SaaS de este proyecto. El cobro mensual y de consumo sigue en Pagos.",
+      "create": "Crear licencia",
+      "created": "Licencia creada",
+      "saved": "Licencia guardada",
+      "statusSaved": "Estado actualizado",
+      "signed": "Entitlement firmado",
+      "signPush": "Firmar y empujar a la instancia",
+      "save": "Guardar",
+      "instanceKey": "Clave de instancia",
+      "pushUrl": "URL de empuje (NIRC)",
+      "periodStart": "Inicio de periodo",
+      "periodEnd": "Fin de periodo",
+      "graceUntil": "Gracia hasta",
+      "modules": "Módulos",
+      "notes": "Notas internas",
+      "lastPushed": "Último empuje",
+      "usage": "Consumo",
+      "usageHint": "Conteos que envía la instancia. Sin importes.",
+      "usageEmpty": "Sin eventos todavía.",
+      "vendors": "Vendors",
+      "vendorsHint": "Vencimiento de JWT/PAT. El OTP se canjea en la escotilla Super Admin de NIRC.",
+      "vendorDue": "Por vencer",
+      "vendorSaved": "Vendor actualizado",
+      "vendorNotes": "Notas",
+      "vendorSave": "Guardar vendor",
+      "errSecret": "Falta CODIVA_LICENSE_SECRET en Ops.",
+      "errMissing": "Primero crea la licencia.",
+      "status": {
+        "active": "Activa",
+        "grace": "Gracia",
+        "locked": "Bloqueada"
       }
     },
     "leadDetail": {

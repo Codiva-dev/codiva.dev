@@ -15,6 +15,7 @@ import ProjectPagosTab from '@/components/ops/project-tabs/ProjectPagosTab';
 import ProjectResumenTab from '@/components/ops/project-tabs/ProjectResumenTab';
 import ProjectSprintsTab from '@/components/ops/project-tabs/ProjectSprintsTab';
 import ProjectTicketsTab from '@/components/ops/project-tabs/ProjectTicketsTab';
+import ProjectLicenciaTab from '@/components/ops/project-tabs/ProjectLicenciaTab';
 import ProjectTimelineTab from '@/components/ops/project-tabs/ProjectTimelineTab';
 import { assertProjectAccess, requireStaff } from '@/lib/ops/auth';
 import { can } from '@/lib/ops/permissions';
@@ -79,6 +80,7 @@ export default async function ProjectDetailPage({
   const loadEquipo = tab === 'equipo';
   const loadSprints = tab === 'sprints' || tab === 'horas';
   const loadHours = tab === 'horas';
+  const loadLicense = tab === 'licencia';
   const loadStaffOptions = tab === 'equipo' || tab === 'sprints' || tab === 'horas';
 
   const [
@@ -187,6 +189,23 @@ export default async function ProjectDetailPage({
       : Promise.resolve(empty),
   ]);
 
+  const { data: saasInstance } = loadLicense
+    ? await supabase.from('saas_instances').select('*').eq('project_id', id).maybeSingle()
+    : { data: null };
+  const [{ data: saasCounters }, { data: saasVendors }] = loadLicense && saasInstance
+    ? await Promise.all([
+        supabase
+          .from('saas_usage_counters')
+          .select('period_label, meter, quantity')
+          .eq('instance_id', saasInstance.id)
+          .order('period_label', { ascending: false }),
+        supabase.from('saas_vendor_slots').select('*').eq('instance_id', saasInstance.id),
+      ])
+    : [
+        { data: [] as never[] },
+        { data: [] as never[] },
+      ];
+
   const sprintIds = (sprints ?? []).map((s) => s.id);
   const { data: sprintItems } = loadSprints && sprintIds.length
     ? await supabase
@@ -262,6 +281,7 @@ export default async function ProjectDetailPage({
     { key: 'arquitectura', labelKey: 'ops.project.tabArquitectura' },
     { key: 'cotizaciones', labelKey: 'ops.project.tabCotizaciones', capability: 'quotes' as const },
     { key: 'pagos', labelKey: 'ops.project.tabPagos', capability: 'charges' as const },
+    { key: 'licencia', labelKey: 'ops.project.tabLicencia', capability: 'saas_licenses' as const },
     { key: 'documentos', labelKey: 'ops.project.tabDocumentos' },
     { key: 'entregables', labelKey: 'ops.project.tabEntregables' },
     { key: 'accesos', labelKey: 'ops.project.tabAccesos' },
@@ -392,6 +412,16 @@ export default async function ProjectDetailPage({
 
       {tab === 'pagos' && can(staff, 'charges') && (
         <ProjectPagosTab projectId={id} charges={(charges ?? []) as never[]} />
+      )}
+
+      {tab === 'licencia' && can(staff, 'saas_licenses') && (
+        <ProjectLicenciaTab
+          projectId={id}
+          projectSlug={projectSlug}
+          instance={(saasInstance ?? null) as never}
+          counters={(saasCounters ?? []) as never[]}
+          vendors={(saasVendors ?? []) as never[]}
+        />
       )}
 
       {tab === 'documentos' && (

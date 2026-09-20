@@ -22,6 +22,7 @@ export type Capability =
   | 'site_access'
   | 'tickets'
   | 'dashboard_finance'
+  | 'saas_licenses'
   | 'settings_profile'
   | 'assignments'
   | 'assignments_manage';
@@ -48,6 +49,7 @@ export const ALL_CAPABILITIES = [
   'site_access',
   'tickets',
   'dashboard_finance',
+  'saas_licenses',
   'settings_profile',
   'assignments',
   'assignments_manage',
@@ -64,6 +66,7 @@ export const CAPABILITY_GROUPS = [
       'portal_users',
       'organizations',
       'dashboard_finance',
+      'saas_licenses',
     ] as const satisfies readonly Capability[],
   },
   {
@@ -119,6 +122,7 @@ export const ROLE_CAPABILITY_LIST: Record<StaffRole, readonly Capability[]> = {
     'settings_profile',
     'assignments',
     'assignments_manage',
+    'saas_licenses',
   ],
   dev: [
     'sprints_update_own',
