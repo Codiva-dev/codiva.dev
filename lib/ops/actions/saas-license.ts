@@ -7,7 +7,6 @@ import { throwDb, throwPublic } from '@/lib/ops/throw-db';
 import { notifyStaff } from '@/lib/ops/email';
 import { isLicenseStatus, parseLicenseModules, type LicenseStatus } from '@/lib/ops/saas-license';
 import { signAndPushSaasProject } from '@/lib/ops/saas-push';
-import { opsProjectPath } from '@/lib/ops/project-path';
 
 const SLOTS = ['cincel', 'idse', 'stp'] as const;
 
@@ -214,9 +213,5 @@ export async function saveSaasVendorSlot(
     );
   if (error) throw await throwDb(error);
   revalidatePath(`/projects/${projectId}`);
-}
-
-export function saasLicenseHref(slug: string) {
-  return opsProjectPath(slug, '?tab=licencia');
 }
 
