@@ -6,7 +6,11 @@ import {
   saveSaasVendorSlot,
   setSaasStatus,
   signAndPushSaasLicense,
+  requestInstanceCincelOtp,
+  exchangeInstanceCincelOtp,
+  watchInstanceCincelJwt,
 } from '@/lib/ops/actions/saas-license';
+import { readInstanceCincelStatus } from '@/lib/ops/saas-instance-http';
 import { LICENSE_MODULES, LICENSE_STATUSES, vendorSlotIsDue } from '@/lib/ops/saas-license';
 
 type InstanceRow = {
@@ -46,6 +50,9 @@ export default async function ProjectLicenciaTab({
   vendors: VendorRow[];
 }) {
   const t = await getT();
+  const cincelLive = instance
+    ? await readInstanceCincelStatus(instance.instance_push_url)
+    : null;
   if (!instance) {
     return (
       <section className="rounded-xl border border-zinc-200 bg-white p-5">
@@ -254,6 +261,66 @@ export default async function ProjectLicenciaTab({
                   </button>
                 </ToastForm>
                 {row?.last_error ? <p className="mt-2 text-xs text-amber-800">{row.last_error}</p> : null}
+                {slot === 'cincel' ? (
+                  <div className="mt-4 space-y-3 border-t border-zinc-200 pt-4">
+                    <p className="text-sm text-zinc-600">{t('ops.license.vendorCincelHint')}</p>
+                    {cincelLive ? (
+                      <p className="text-xs text-zinc-500">
+                        {t('ops.license.vendorCincelLive')}: {cincelLive.expiresAt || '—'}
+                        {cincelLive.lastError ? ` · ${cincelLive.lastError}` : ''}
+                        {cincelLive.hasPendingOtp ? ` · ${t('ops.license.vendorOtpPending')}` : ''}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-zinc-500">{t('ops.license.vendorCincelOffline')}</p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <ToastForm
+                        success={t('ops.license.vendorOtpRequested')}
+                        action={async () => {
+                          'use server';
+                          await requestInstanceCincelOtp(projectId);
+                        }}
+                      >
+                        <button type="submit" className="rounded-lg bg-codiva-primary px-3 py-2 text-sm font-semibold text-white">
+                          {t('ops.license.vendorOtpRequest')}
+                        </button>
+                      </ToastForm>
+                      <ToastForm
+                        success={t('ops.license.vendorJwtWatched')}
+                        action={async () => {
+                          'use server';
+                          await watchInstanceCincelJwt(projectId);
+                        }}
+                      >
+                        <button type="submit" className="rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+                          {t('ops.license.vendorJwtWatch')}
+                        </button>
+                      </ToastForm>
+                    </div>
+                    <ToastForm
+                      success={t('ops.license.vendorOtpExchanged')}
+                      action={async (fd) => {
+                        'use server';
+                        await exchangeInstanceCincelOtp(projectId, fd);
+                      }}
+                      className="flex flex-wrap items-end gap-2"
+                    >
+                      <label className="text-sm">
+                        {t('ops.license.vendorOtpCode')}
+                        <input
+                          name="code"
+                          required
+                          autoComplete="one-time-code"
+                          inputMode="numeric"
+                          className="mt-1 block rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                        />
+                      </label>
+                      <button type="submit" className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium">
+                        {t('ops.license.vendorOtpExchange')}
+                      </button>
+                    </ToastForm>
+                  </div>
+                ) : null}
               </article>
             );
           })}

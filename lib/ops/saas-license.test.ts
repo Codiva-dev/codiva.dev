@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { instanceApiOrigin } from './saas-instance-http';
 import {
   deriveSaasStatusFromCharges,
   periodLabelFromIso,
@@ -48,5 +49,13 @@ describe('saas license', () => {
     expect(vendorSlotIsDue('2026-09-24T00:00:00.000Z', now)).toBe(true);
     expect(vendorSlotIsDue('2026-10-20T00:00:00.000Z', now)).toBe(false);
     expect(periodLabelFromIso('2026-09-19T15:00:00.000Z')).toBe('2026-09');
+  });
+
+  it('derives the instance origin from the license push URL', () => {
+    expect(instanceApiOrigin('https://app.nircgroup.info/api/internal/codiva-license')).toBe(
+      'https://app.nircgroup.info'
+    );
+    expect(instanceApiOrigin('')).toBeNull();
+    expect(instanceApiOrigin('not-a-url')).toBeNull();
   });
 });

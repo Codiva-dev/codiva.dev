@@ -7,6 +7,7 @@ import { throwDb, throwPublic } from '@/lib/ops/throw-db';
 import { notifyStaff } from '@/lib/ops/email';
 import { isLicenseStatus, parseLicenseModules, type LicenseStatus } from '@/lib/ops/saas-license';
 import { signAndPushSaasProject } from '@/lib/ops/saas-push';
+import { callInstanceCincelAuth } from '@/lib/ops/saas-instance-http';
 
 const SLOTS = ['cincel', 'idse', 'stp'] as const;
 
@@ -214,4 +215,38 @@ export async function saveSaasVendorSlot(
   if (error) throw await throwDb(error);
   revalidatePath(`/projects/${projectId}`);
 }
+
+async function postCincelHatch(
+  projectId: string,
+  action: 'otp_request' | 'otp_exchange' | 'jwt_watch',
+  code?: string
+) {
+  const access = await assertCapability('saas_licenses');
+  await assertProjectAccessOrThrow(access, projectId);
+  const row = await loadInstance(access.supabase, projectId);
+  const res = await callInstanceCincelAuth(row.instance_push_url, {
+    method: 'POST',
+    action,
+    code,
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    if (body?.error === 'otp_missing') await throwPublic('ops.license.errOtp');
+    await throwPublic('ops.license.errInstance');
+  }
+  revalidatePath(`/projects/${projectId}`);
+}
+
+export async function requestInstanceCincelOtp(projectId: string) {
+  await postCincelHatch(projectId, 'otp_request');
+}
+
+export async function exchangeInstanceCincelOtp(projectId: string, formData: FormData) {
+  await postCincelHatch(projectId, 'otp_exchange', String(formData.get('code') || ''));
+}
+
+export async function watchInstanceCincelJwt(projectId: string) {
+  await postCincelHatch(projectId, 'jwt_watch');
+}
+
 

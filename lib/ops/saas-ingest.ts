@@ -110,7 +110,7 @@ export async function ingestVendorExpiry(input: {
   if (becameDue || input.lastError === 'jwt_expired') {
     await notifyStaff({
       subject: `NIRC vendor ${input.slot}`,
-      text: `La instancia ${input.instanceKey} tiene ${input.slot} por vencer o vencido (${input.expiresAt ?? 'sin fecha'}). Renovar en la escotilla Super Admin de la instancia.`,
+      text: `La instancia ${input.instanceKey} tiene ${input.slot} por vencer o vencido (${input.expiresAt ?? 'sin fecha'}). Renovar en Ops → proyecto → Licencia.`,
     });
   }
   return { ok: true };
