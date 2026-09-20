@@ -67,10 +67,20 @@ export async function notifySaasVendorDue(input: Parameters<typeof saasVendorAle
   await notifyStaffSafe({ subject: alert.subject, html: alert.html });
 }
 
+type ProjectMailClient = {
+  from: (table: string) => {
+    select: (cols: string) => {
+      eq: (col: string, val: string) => {
+        maybeSingle: () => Promise<{ data: { name?: string | null; slug?: string | null } | null }>;
+      };
+    };
+  };
+};
+
 export async function loadProjectMailContext(
-  supabase: { from: (table: string) => any },
+  supabase: ProjectMailClient,
   projectId: string
 ): Promise<{ projectName: string | null; projectSlug: string | null }> {
   const { data } = await supabase.from('projects').select('name, slug').eq('id', projectId).maybeSingle();
-  return { projectName: (data?.name as string | null | undefined) ?? null, projectSlug: (data?.slug as string | null | undefined) ?? null };
+  return { projectName: data?.name ?? null, projectSlug: data?.slug ?? null };
 }
