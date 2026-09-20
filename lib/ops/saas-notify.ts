@@ -67,20 +67,22 @@ export async function notifySaasVendorDue(input: Parameters<typeof saasVendorAle
   await notifyStaffSafe({ subject: alert.subject, html: alert.html });
 }
 
-type ProjectMailClient = {
-  from: (table: string) => {
-    select: (cols: string) => {
-      eq: (col: string, val: string) => {
-        maybeSingle: () => Promise<{ data: { name?: string | null; slug?: string | null } | null }>;
+export async function loadProjectMailContext(
+  supabase: { from: (table: string) => unknown },
+  projectId: string
+): Promise<{ projectName: string | null; projectSlug: string | null }> {
+  const client = supabase as {
+    from: (table: string) => {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => {
+          maybeSingle: () => Promise<{ data: { name?: unknown; slug?: unknown } | null }>;
+        };
       };
     };
   };
-};
-
-export async function loadProjectMailContext(
-  supabase: ProjectMailClient,
-  projectId: string
-): Promise<{ projectName: string | null; projectSlug: string | null }> {
-  const { data } = await supabase.from('projects').select('name, slug').eq('id', projectId).maybeSingle();
-  return { projectName: data?.name ?? null, projectSlug: data?.slug ?? null };
+  const { data } = await client.from('projects').select('name, slug').eq('id', projectId).maybeSingle();
+  return {
+    projectName: typeof data?.name === 'string' ? data.name : null,
+    projectSlug: typeof data?.slug === 'string' ? data.slug : null,
+  };
 }
