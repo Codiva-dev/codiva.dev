@@ -126,6 +126,11 @@ export async function middleware(request: NextRequest) {
     return sessionResponse;
   }
 
+  // Career/portal/ops hosts otherwise rewrite unknown paths to /ops/__missing.
+  if (pathname === '/robots.txt' || pathname === '/sitemap.xml') {
+    return sessionResponse;
+  }
+
   if (pathname === '/ops-sw.js' || pathname === '/ops-manifest.webmanifest') {
     return sessionResponse;
   }

@@ -61,8 +61,41 @@ async function launchBrowser(): Promise<Browser> {
   });
 }
 
+/** Chromium pack is still being written when a second PDF spawns in the same isolate. */
+export function isChromiumBusyError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const code = 'code' in err ? String((err as { code?: unknown }).code) : '';
+  const message = 'message' in err ? String((err as { message?: unknown }).message) : '';
+  return code === 'ETXTBSY' || /ETXTBSY/i.test(message);
+}
+
+let pdfQueue: Promise<unknown> = Promise.resolve();
+
+function enqueuePdf<T>(fn: () => Promise<T>): Promise<T> {
+  const run = pdfQueue.then(fn, fn);
+  pdfQueue = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
+}
+
+async function launchBrowserRetrying(): Promise<Browser> {
+  try {
+    return await launchBrowser();
+  } catch (err) {
+    if (!isChromiumBusyError(err)) throw err;
+    await new Promise((r) => setTimeout(r, 300));
+    return launchBrowser();
+  }
+}
+
 export async function htmlToPdf(html: string): Promise<Buffer> {
-  const browser = await launchBrowser();
+  return enqueuePdf(() => htmlToPdfOnce(html));
+}
+
+async function htmlToPdfOnce(html: string): Promise<Buffer> {
+  const browser = await launchBrowserRetrying();
   try {
     const page = await browser.newPage();
     await page.setRequestInterception(true);
