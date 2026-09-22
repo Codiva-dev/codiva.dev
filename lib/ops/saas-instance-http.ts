@@ -8,8 +8,11 @@ export type InstanceCincelStatus = {
   lastRenewedAt: string | null;
   lastError: string | null;
   hasPendingOtp: boolean;
+  hasPat: boolean;
   source: string;
 };
+
+export type CincelAuthPostAction = 'set_pat' | 'clear_pat';
 
 export function instanceApiOrigin(pushUrl: string | null | undefined): string | null {
   return safeOutboundOrigin(pushUrl);
@@ -26,7 +29,7 @@ function outboundAuthorization(licenseToken?: string | null): string | null {
 
 export async function callInstanceCincelAuth(
   pushUrl: string | null | undefined,
-  init: { method: 'GET' } | { method: 'POST'; action: 'otp_request' | 'otp_exchange' | 'jwt_watch'; code?: string },
+  init: { method: 'GET' } | { method: 'POST'; action: CincelAuthPostAction; pat?: string },
   licenseToken?: string | null
 ): Promise<Response> {
   const origin = instanceApiOrigin(pushUrl);
@@ -43,7 +46,11 @@ export async function callInstanceCincelAuth(
       },
       body:
         init.method === 'POST'
-          ? JSON.stringify({ action: init.action, code: init.code })
+          ? JSON.stringify(
+              init.action === 'set_pat'
+                ? { action: init.action, pat: init.pat ?? '' }
+                : { action: init.action }
+            )
           : undefined,
       redirect: 'error',
       signal: AbortSignal.timeout(12_000),

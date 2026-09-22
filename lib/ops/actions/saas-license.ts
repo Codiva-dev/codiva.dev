@@ -245,10 +245,10 @@ export async function saveSaasVendorSlot(
   revalidatePath(`/projects/${projectId}`);
 }
 
-async function postCincelHatch(
+async function postInstanceCincelPat(
   projectId: string,
-  action: 'otp_request' | 'otp_exchange' | 'jwt_watch',
-  code?: string
+  action: 'set_pat' | 'clear_pat',
+  pat?: string
 ) {
   const access = await assertCapabilityWrite('saas_licenses');
   await assertProjectAccessOrThrow(access, projectId);
@@ -258,28 +258,24 @@ async function postCincelHatch(
     {
       method: 'POST',
       action,
-      code,
+      pat,
     },
     row.entitlement_token
   );
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { error?: string } | null;
-    if (body?.error === 'otp_missing') await throwPublic('ops.license.errOtp');
+    if (body?.error === 'invalid_pat') await throwPublic('ops.license.errPat');
     await throwPublic('ops.license.errInstance');
   }
   revalidatePath(`/projects/${projectId}`);
 }
 
-export async function requestInstanceCincelOtp(projectId: string) {
-  await postCincelHatch(projectId, 'otp_request');
+export async function setInstanceCincelPat(projectId: string, formData: FormData) {
+  await postInstanceCincelPat(projectId, 'set_pat', String(formData.get('pat') || ''));
 }
 
-export async function exchangeInstanceCincelOtp(projectId: string, formData: FormData) {
-  await postCincelHatch(projectId, 'otp_exchange', String(formData.get('code') || ''));
-}
-
-export async function watchInstanceCincelJwt(projectId: string) {
-  await postCincelHatch(projectId, 'jwt_watch');
+export async function clearInstanceCincelPat(projectId: string) {
+  await postInstanceCincelPat(projectId, 'clear_pat');
 }
 
 

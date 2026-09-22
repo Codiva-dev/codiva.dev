@@ -44,7 +44,7 @@ export function saasVendorAlert(input: {
     input.projectName ? `Proyecto: ${input.projectName}` : '',
     `Slot: ${input.slot}`,
     `Vence: ${input.expiresAt || 'sin fecha'}`,
-    'Renueva el JWT/PAT en Ops → proyecto → Licencia.',
+    'Renueva el PAT de Cincel en Ops → proyecto → Licencia.',
   ].filter(Boolean);
   return {
     subject,

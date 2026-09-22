@@ -6,9 +6,8 @@ import {
   saveSaasVendorSlot,
   setSaasStatus,
   signAndPushSaasLicense,
-  requestInstanceCincelOtp,
-  exchangeInstanceCincelOtp,
-  watchInstanceCincelJwt,
+  setInstanceCincelPat,
+  clearInstanceCincelPat,
 } from '@/lib/ops/actions/saas-license';
 import { readInstanceCincelStatus } from '@/lib/ops/saas-instance-http';
 import { LICENSE_MODULES, LICENSE_STATUSES, vendorSlotIsDue } from '@/lib/ops/saas-license';
@@ -271,59 +270,57 @@ export default async function ProjectLicenciaTab({
                     <p className="text-sm text-zinc-600">{t('ops.license.vendorCincelHint')}</p>
                     {cincelLive ? (
                       <p className="text-xs text-zinc-500">
-                        {t('ops.license.vendorCincelLive')}: {cincelLive.expiresAt || '-'}
+                        {cincelLive.hasPat
+                          ? t('ops.license.vendorCincelPatConfigured')
+                          : t('ops.license.vendorCincelPatMissing')}
+                        {cincelLive.source && cincelLive.source !== 'none'
+                          ? ` · ${t('ops.license.vendorCincelSource')}: ${cincelLive.source}`
+                          : ''}
+                        {cincelLive.lastRenewedAt
+                          ? ` · ${t('ops.license.vendorCincelLastRenewed')}: ${cincelLive.lastRenewedAt}`
+                          : ''}
                         {cincelLive.lastError ? ` · ${cincelLive.lastError}` : ''}
-                        {cincelLive.hasPendingOtp ? ` · ${t('ops.license.vendorOtpPending')}` : ''}
                       </p>
                     ) : (
                       <p className="text-xs text-zinc-500">{t('ops.license.vendorCincelOffline')}</p>
                     )}
-                    <div className="flex flex-wrap gap-2">
-                      <ToastForm
-                        success={t('ops.license.vendorOtpRequested')}
-                        action={async () => {
-                          'use server';
-                          await requestInstanceCincelOtp(projectId);
-                        }}
-                      >
-                        <button type="submit" className="rounded-lg bg-codiva-primary px-3 py-2 text-sm font-semibold text-white">
-                          {t('ops.license.vendorOtpRequest')}
-                        </button>
-                      </ToastForm>
-                      <ToastForm
-                        success={t('ops.license.vendorJwtWatched')}
-                        action={async () => {
-                          'use server';
-                          await watchInstanceCincelJwt(projectId);
-                        }}
-                      >
-                        <button type="submit" className="rounded-lg border border-zinc-300 px-3 py-2 text-sm">
-                          {t('ops.license.vendorJwtWatch')}
-                        </button>
-                      </ToastForm>
-                    </div>
                     <ToastForm
-                      success={t('ops.license.vendorOtpExchanged')}
+                      success={t('ops.license.vendorPatSaved')}
                       action={async (fd) => {
                         'use server';
-                        await exchangeInstanceCincelOtp(projectId, fd);
+                        await setInstanceCincelPat(projectId, fd);
                       }}
                       className="flex flex-wrap items-end gap-2"
                     >
-                      <label className="text-sm">
-                        {t('ops.license.vendorOtpCode')}
+                      <label className="min-w-[16rem] flex-1 text-sm">
+                        {t('ops.license.vendorPatLabel')}
                         <input
-                          name="code"
+                          name="pat"
+                          type="password"
                           required
-                          autoComplete="one-time-code"
-                          inputMode="numeric"
-                          className="mt-1 block rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                          autoComplete="off"
+                          spellCheck={false}
+                          placeholder="pat_…"
+                          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 font-mono text-sm"
                         />
                       </label>
-                      <button type="submit" className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium">
-                        {t('ops.license.vendorOtpExchange')}
+                      <button type="submit" className="rounded-lg bg-codiva-primary px-3 py-2 text-sm font-semibold text-white">
+                        {t('ops.license.vendorPatSave')}
                       </button>
                     </ToastForm>
+                    {cincelLive?.hasPat ? (
+                      <ToastForm
+                        success={t('ops.license.vendorPatCleared')}
+                        action={async () => {
+                          'use server';
+                          await clearInstanceCincelPat(projectId);
+                        }}
+                      >
+                        <button type="submit" className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-800">
+                          {t('ops.license.vendorPatClear')}
+                        </button>
+                      </ToastForm>
+                    ) : null}
                   </div>
                 ) : null}
               </article>
