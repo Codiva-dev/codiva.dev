@@ -30,6 +30,7 @@ export {
   invitePortalUser,
   inviteProjectMember,
   resendPortalInvite,
+  sendPortalPasswordReset,
   addPortalUserProjects,
   setPortalUserHub,
   syncPortalHubProjects,

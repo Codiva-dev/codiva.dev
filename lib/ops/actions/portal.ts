@@ -10,8 +10,16 @@ import {
 import { sendClientEmail } from '@/lib/ops/email';
 import { throwDb } from '@/lib/ops/throw-db';
 import { templatePortalInviteExistingUser } from '@/lib/ops/email-templates';
+import { portalHubAuthCallbackUrl } from '@/lib/ops/auth-urls';
 import { portalLoginUrl } from '@/lib/ops/host';
 import { invitePortalUserCore } from '@/lib/ops/portal-invite';
+import { sendRecoveryEmail } from '@/lib/ops/recovery-email';
+import { getT } from '@/i18n/locale';
+import {
+  PUBLIC_RL_AUTH,
+  STAFF_RL_PORTAL_PASSWORD_RESET,
+  consumeRateLimit,
+} from '@/lib/rate-limit';
 import {
   syncHubUserPartnerProjects,
   upsertPortalHubProfile,
@@ -124,6 +132,54 @@ export async function resendPortalInvite(userId: string) {
   }
 
   revalidatePath(`/users/${userId}`);
+}
+
+export async function sendPortalPasswordReset(userId: string) {
+  const { access, visibleIds } = await assertPortalUserInScope(userId);
+  const admin = createAdminClient();
+  const t = await getT();
+
+  const { data: authUser, error: userError } = await admin.auth.admin.getUserById(userId);
+  if (userError || !authUser.user?.email) throw new Error(t('ops.portalUsers.resetMissing'));
+
+  const email = authUser.user.email.toLowerCase();
+  const [staffRl, emailRl] = await Promise.all([
+    consumeRateLimit(
+      `staff_portal_reset:${access.user.id}`,
+      STAFF_RL_PORTAL_PASSWORD_RESET.windowMs,
+      STAFF_RL_PORTAL_PASSWORD_RESET.max
+    ),
+    consumeRateLimit(`auth_reset_email:${email}`, PUBLIC_RL_AUTH.emailWindowMs, PUBLIC_RL_AUTH.emailMax),
+  ]);
+  if (!staffRl.ok || !emailRl.ok) throw new Error(t('auth.rateLimited'));
+
+  let membershipsQuery = admin
+    .from('project_members')
+    .select('projects(name, client_visible)')
+    .eq('user_id', userId);
+  if (visibleIds) {
+    membershipsQuery = membershipsQuery.in(
+      'project_id',
+      visibleIds.length ? visibleIds : ['00000000-0000-0000-0000-000000000000']
+    );
+  }
+  const { data: memberships } = await membershipsQuery;
+  const projects = (memberships ?? [])
+    .map((row) => {
+      const raw = row.projects as
+        | { name?: string; client_visible?: boolean }
+        | { name?: string; client_visible?: boolean }[]
+        | null;
+      return Array.isArray(raw) ? raw[0] : raw;
+    })
+    .filter((project): project is { name: string; client_visible?: boolean } => Boolean(project?.name));
+  const project = projects.find((item) => item.client_visible) ?? projects[0];
+  if (!project) throw new Error(t('ops.portalUsers.resetNoProject'));
+
+  const result = await sendRecoveryEmail(email, portalHubAuthCallbackUrl('/reset-password'), {
+    projectName: project.name,
+  });
+  if (!result.ok) throw new Error(result.message);
 }
 
 export async function addPortalUserProjects(userId: string, formData: FormData) {

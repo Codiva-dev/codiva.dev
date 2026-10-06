@@ -123,3 +123,9 @@ export const STAFF_RL_PASSWORD_CHANGE = {
   windowMs: 15 * 60 * 1000,
   max: Number(process.env.STAFF_RL_PASSWORD_CHANGE_PER_15MIN || 8),
 };
+
+/** Reinicio de contraseña de portal disparado por staff. */
+export const STAFF_RL_PORTAL_PASSWORD_RESET = {
+  windowMs: 60 * 60 * 1000,
+  max: Number(process.env.STAFF_RL_PORTAL_PASSWORD_RESET_PER_HOUR || 20),
+};

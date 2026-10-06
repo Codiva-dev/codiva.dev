@@ -7,6 +7,7 @@ import {
   addPortalUserProjects,
   removePortalUserProject,
   resendPortalInvite,
+  sendPortalPasswordReset,
   setPortalUserHub,
   syncPortalHubProjects,
 } from '@/lib/ops/actions';
@@ -64,6 +65,11 @@ export default async function PortalUserDetailPage({
     await resendPortalInvite(userId);
   }
 
+  async function onResetPassword() {
+    'use server';
+    await sendPortalPasswordReset(userId);
+  }
+
   async function onAdd(formData: FormData) {
     'use server';
     await addPortalUserProjects(userId, formData);
@@ -94,6 +100,21 @@ export default async function PortalUserDetailPage({
               className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm hover:bg-zinc-50"
             >
               {t('ops.portalUsers.resend')}
+            </button>
+          </ToastForm>
+          <ToastForm
+            success={t('ops.portalUsers.resetSent')}
+            confirmTitle={t('ops.portalUsers.resetTitle')}
+            confirmMessage={t('ops.portalUsers.resetConfirm', { email })}
+            confirmLabel={t('ops.portalUsers.resetSend')}
+            confirmTone="primary"
+            action={onResetPassword}
+          >
+            <button
+              type="submit"
+              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm hover:bg-zinc-50"
+            >
+              {t('ops.portalUsers.reset')}
             </button>
           </ToastForm>
           <Link href="/users" className="rounded-lg px-4 py-2 text-sm text-codiva-primary hover:underline">
