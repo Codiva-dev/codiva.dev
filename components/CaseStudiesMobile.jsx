@@ -147,13 +147,13 @@ export default function CaseStudiesMobile({ logos }) {
             className="flex flex-col items-center"
           >
             <ul
-              className="flex min-h-[4.5rem] w-full flex-wrap justify-center gap-2"
+              className="flex min-h-8 w-full flex-wrap items-center justify-center gap-2"
               aria-label={t('cases.technologiesOf', { name: project.name })}
             >
               {project.tech.map((tech) => (
                 <li
                   key={tech}
-                  className="rounded-full border border-codiva-primary/20 bg-codiva-primary/5 px-3 py-1 text-sm text-codiva-primary"
+                  className="w-fit whitespace-nowrap rounded-full border border-codiva-primary/20 bg-codiva-primary/5 px-2.5 py-0.5 text-sm leading-5 text-codiva-primary"
                 >
                   {tech}
                 </li>

@@ -58,7 +58,7 @@ export default function Services() {
                   }`}
                 >
                   {service.badge && (
-                    <span className="absolute right-3 top-3 rounded-full bg-codiva-primary px-3 py-1 text-[11px] font-medium text-white shadow-sm md:right-2 md:top-2 md:text-xs">
+                    <span className="mb-3 inline-flex max-w-full self-start rounded-full bg-codiva-primary px-3 py-1 text-center text-[11px] font-medium leading-snug text-white shadow-sm md:absolute md:right-2 md:top-2 md:mb-0 md:self-auto md:text-xs">
                       {service.badge}
                     </span>
                   )}
@@ -66,7 +66,7 @@ export default function Services() {
                   <div>
                     <h3
                       className={`mb-2 flex items-start gap-2 text-xl font-semibold text-zinc-900 ${
-                        service.badge ? 'pr-16' : ''
+                        service.badge ? 'md:pr-16' : ''
                       }`}
                     >
                       {ICONS[index]}

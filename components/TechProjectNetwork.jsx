@@ -14,13 +14,13 @@ const INNER_RADIUS_RATIO = 0.58;
 const PROJECT_ANGLE_OFFSET = Math.PI / 6;
 
 const PILL_HEIGHT = 32;
-const PILL_PAD_X = 20;
 const PILL_GAP = 10;
+const PILL_FONT = '12px/1 Inter, "Inter Fallback", sans-serif';
 const TECH_OUTER_RATIO = 0.98;
 const TECH_INNER_RATIO = 0.78;
 const COLLISION_PASSES = 8;
 
-let measureCtx;
+let measureProbe;
 
 function shuffle(list) {
   return [...list].sort(() => Math.random() - 0.5);
@@ -59,13 +59,33 @@ function pointOnEllipse(cx, cy, rx, ry, t) {
   return { x: cx + rx, y: cy };
 }
 
-function measureLabelWidth(text) {
-  if (typeof document === 'undefined') return Math.ceil(text.length * 7.2 + PILL_PAD_X);
-  if (!measureCtx) {
-    measureCtx = document.createElement('canvas').getContext('2d');
+function measureLabel(text) {
+  if (typeof document === 'undefined') {
+    return { w: Math.ceil(text.length * 7.2 + 22), h: PILL_HEIGHT };
   }
-  measureCtx.font = '12px ui-sans-serif, system-ui, sans-serif, "Segoe UI", Roboto, Arial';
-  return Math.ceil(measureCtx.measureText(text).width) + PILL_PAD_X;
+  if (!measureProbe) {
+    measureProbe = document.createElement('span');
+    measureProbe.setAttribute('aria-hidden', 'true');
+    measureProbe.style.cssText = [
+      'position:absolute',
+      'left:-9999px',
+      'top:0',
+      'visibility:hidden',
+      'white-space:nowrap',
+      `font:${PILL_FONT}`,
+      'padding:6px 10px',
+      'border:1px solid transparent',
+      'box-sizing:border-box',
+      'display:inline-flex',
+    ].join(';');
+    document.body.appendChild(measureProbe);
+  }
+  measureProbe.textContent = text;
+  const box = measureProbe.getBoundingClientRect();
+  return {
+    w: Math.max(1, Math.ceil(box.width)),
+    h: Math.max(PILL_HEIGHT, Math.ceil(box.height)),
+  };
 }
 
 function boxesOverlap(a, b, gap = PILL_GAP) {
@@ -89,13 +109,13 @@ function placeRing(names, cx, cy, rx, ry, tOffset) {
   const n = names.length;
   if (n === 0) return [];
   return names.map((name, idx) => {
-    const w = measureLabelWidth(name);
+    const box = measureLabel(name);
     const t = (idx + tOffset) / n;
     const pos = pointOnEllipse(cx, cy, rx, ry, t);
     return {
       name,
-      w,
-      h: PILL_HEIGHT,
+      w: box.w,
+      h: box.h,
       ringRx: rx,
       ringRy: ry,
       t,
@@ -153,6 +173,7 @@ export default function TechProjectNetwork() {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [hoveredProject, setHoveredProject] = useState(null);
   const [hoveredTech, setHoveredTech] = useState(null);
+  const [fontEpoch, setFontEpoch] = useState(0);
 
   const isInView = useInView(containerRef, { threshold: 0.2 });
 
@@ -167,7 +188,14 @@ export default function TechProjectNetwork() {
     }
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
-    return () => window.removeEventListener('resize', updateDimensions);
+    let cancel = false;
+    document.fonts?.ready?.then(() => {
+      if (!cancel) setFontEpoch((n) => n + 1);
+    });
+    return () => {
+      cancel = true;
+      window.removeEventListener('resize', updateDimensions);
+    };
   }, []);
 
   const shuffledTechList = useMemo(() => {
@@ -193,7 +221,7 @@ export default function TechProjectNetwork() {
 
     const centerX = width / 2;
     const centerY = height / 2;
-    const longest = shuffledTechList.reduce((m, name) => Math.max(m, measureLabelWidth(name)), 80);
+    const longest = shuffledTechList.reduce((m, name) => Math.max(m, measureLabel(name).w), 80);
     const padX = longest / 2 + 8;
     const padY = PILL_HEIGHT / 2 + 8;
     const outerRadiusX = Math.max(40, centerX - padX);
@@ -241,7 +269,7 @@ export default function TechProjectNetwork() {
       techPositions: resolveCollisions([...outerTechs, ...innerTechs], projectPositions, centerX, centerY),
       projectPositions,
     };
-  }, [dimensions, shuffledTechList, techRings]);
+  }, [dimensions, shuffledTechList, techRings, fontEpoch]);
 
   const { techPositions, projectPositions } = layout;
 
@@ -357,13 +385,13 @@ export default function TechProjectNetwork() {
               }}
             >
               <motion.div
-                className="absolute text-xs leading-none rounded-full border border-codiva-secondary whitespace-nowrap shadow-sm"
+                className="absolute box-border whitespace-nowrap rounded-full border border-codiva-secondary text-xs leading-none shadow-sm"
                 style={{
                   x: '-50%',
                   y: '-50%',
-                  height: `${PILL_HEIGHT}px`,
-                  paddingLeft: '10px',
-                  paddingRight: '10px',
+                  width: tech.w,
+                  height: tech.h,
+                  padding: '6px 10px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
