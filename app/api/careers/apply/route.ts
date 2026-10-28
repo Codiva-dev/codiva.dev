@@ -21,6 +21,7 @@ import { catalogForApplication } from '@/lib/careers/assessments/engine';
 import { loadAttemptByToken } from '@/lib/careers/assessments/server';
 import { huntProgressForAttempt } from '@/lib/careers/hunt/progress';
 import { opsBaseUrl } from '@/lib/ops/host';
+import { handoffApplicationToExternalInterview } from '@/lib/ops/interview-seed';
 
 export const runtime = 'nodejs';
 
@@ -198,6 +199,12 @@ export async function POST(request: Request) {
     action: 'created',
     metadata: { jobPostingId, slug: job.slug, discipline: discipline || null },
   });
+
+  if (inserted?.id) {
+    await handoffApplicationToExternalInterview({ applicationId: inserted.id }).catch((error) => {
+      console.error('POST /api/careers/apply external handoff:', error);
+    });
+  }
 
   const disciplineLabel = discipline ? CAREER_DISCIPLINE_LABELS[discipline] : '';
   await notifyStaff({

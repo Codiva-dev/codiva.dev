@@ -32,6 +32,10 @@ import { sendClientEmail } from '@/lib/ops/email';
 import { templateInterviewAssigned } from '@/lib/ops/email-templates';
 import { interviewsApplicationUrl } from '@/lib/ops/host';
 import { getT } from '@/i18n/locale';
+import {
+  backfillExternalHandoffForJobPosting,
+  handoffApplicationToExternalInterview,
+} from '@/lib/ops/interview-seed';
 
 function revalidateInterviewPaths() {
   revalidatePath('/team');
@@ -131,11 +135,28 @@ export async function assignInterviewScope(formData: FormData) {
       .eq('id', payload.round_id);
   }
 
-  const applicationIdForMail = await resolveAssignmentApplicationId(admin, payload);
-  after(() => notifyAssignment(memberId, applicationIdForMail));
+  let applicationIdForMail: string | null = null;
+  if (payload.job_posting_id) {
+    await backfillExternalHandoffForJobPosting({
+      jobPostingId: payload.job_posting_id,
+      actorId: user.id,
+      supabase: admin,
+    });
+  } else if (payload.application_id) {
+    await handoffApplicationToExternalInterview({
+      applicationId: payload.application_id,
+      actorId: user.id,
+      supabase: admin,
+    });
+    applicationIdForMail = payload.application_id;
+  } else {
+    applicationIdForMail = await resolveAssignmentApplicationId(admin, payload);
+    after(() => notifyAssignment(memberId, applicationIdForMail));
+  }
+
   await logActivity({
     entityType: 'job_application',
-    entityId: applicationIdForMail || memberId,
+    entityId: applicationIdForMail || payload.job_posting_id || memberId,
     action: 'interview_assigned',
     metadata: { assignmentId: row.id, memberId },
     actorId: user.id,
