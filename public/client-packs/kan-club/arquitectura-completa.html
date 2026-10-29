@@ -197,18 +197,18 @@ sequenceDiagram
   participant MP as MP Adapter
   participant WA as WhatsApp
   C->>E: Llega con mascota
-  E->>POS: Busca por tel/nombre/mascota
-  POS->>CRM: Waiver?
+  E->>POS: Busca por tel nombre o mascota
+  POS->>CRM: Waiver firmada
   CRM-->>POS: false
   C->>POS: Firma en tablet
-  POS->>CRM: Blob + hash
-  E->>POS: Fases grooming t0..t3
+  POS->>CRM: Blob y hash
+  E->>POS: Fases grooming t0 a t3
   POS->>WA: Pet Ready
   WA-->>C: WhatsApp
-  E->>POS: SKUs + servicio → ticket
+  E->>POS: SKUs y servicio a ticket
   POS->>MP: Orden Point
   MP-->>POS: Webhook Approved
-  POS->>CRM: +1 lealtad · stock
+  POS->>CRM: Suma lealtad y stock
   </div>
 
   <h2>6. RBAC</h2>

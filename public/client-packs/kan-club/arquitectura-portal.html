@@ -225,11 +225,13 @@ stateDiagram-v2
   [*] --> Scheduled
   Scheduled --> Cancelled
   Scheduled --> InReception: Llega mascota
-  note right of InReception: Gate: waiver si falta
-  InReception --> InBath: Baño
-  InBath --> InHaircut: Corte/secado
-  InHaircut --> ReadyForPickup: Completo + WhatsApp
-  ReadyForPickup --> DeliveredAndPaid: Entrega + ticket
+  note right of InReception
+    Gate waiver si falta
+  end note
+  InReception --> InBath: Bano
+  InBath --> InHaircut: Corte o secado
+  InHaircut --> ReadyForPickup: Completo y WhatsApp
+  ReadyForPickup --> DeliveredAndPaid: Entrega y ticket
   DeliveredAndPaid --> [*]
   </div>
   <p class="meta">Fases flexibles (CL-016): se permiten saltos, prepago o pago al final. Timestamps silenciosos (CL-017).</p>
@@ -241,9 +243,9 @@ stateDiagram-v2
   Draft --> PendingPayment: Checkout POS
   PendingPayment --> AwaitingPointResponse: Point Smart
   AwaitingPointResponse --> Paid: Webhook Approved
-  AwaitingPointResponse --> PaymentFailed: Reject/timeout
-  PaymentFailed --> PendingPayment: Cash / Transfer / link
-  Paid --> Completed: Stock + lealtad
+  AwaitingPointResponse --> PaymentFailed: Reject o timeout
+  PaymentFailed --> PendingPayment: Cash Transfer o link
+  Paid --> Completed: Stock y lealtad
   Draft --> WebOrderPending: Pedido web Pickup
   WebOrderPending --> Paid
   Paid --> PendingPickup
