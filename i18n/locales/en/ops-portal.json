@@ -259,7 +259,11 @@
       "fullscreen": "Fullscreen",
       "cannotPreview": "This resource cannot be previewed here.",
       "openIt": "Open it",
-      "noFile": "No file or URL attached."
+      "noFile": "No file or URL attached.",
+      "kindArchitecture": "Architecture",
+      "kindMvp": "MVP / Proposal",
+      "kindProposal": "Proposal",
+      "kindOther": "Other"
     },
     "timeline": {
       "title": "Project timeline",

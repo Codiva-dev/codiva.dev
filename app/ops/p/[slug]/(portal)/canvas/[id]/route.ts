@@ -2,11 +2,20 @@ import { NextResponse } from 'next/server';
 import { requirePortalAccess } from '@/lib/ops/auth';
 import { getAcceptanceStatus } from '@/lib/ops/legal/acceptances';
 import { resolveArchitectureHtml } from '@/lib/ops/architecture';
-import { opsFileHref } from '@/lib/ops/storage';
 
 type RouteContext = { params: Promise<{ slug: string; id: string }> };
 
-export async function GET(request: Request, context: RouteContext) {
+const EMBED_HTML_HEADERS = {
+  'Content-Type': 'text/html; charset=utf-8',
+  'Cache-Control': 'private, no-store',
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'no-referrer',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'Content-Security-Policy':
+    "default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src data: https:; connect-src https://cdn.jsdelivr.net; frame-ancestors 'self'",
+} as const;
+
+export async function GET(_request: Request, context: RouteContext) {
   const { slug, id } = await context.params;
   const access = await requirePortalAccess(slug);
 
@@ -32,36 +41,12 @@ export async function GET(request: Request, context: RouteContext) {
     return new NextResponse('Canvas no publicado', { status: 403 });
   }
 
-  const { html, source } = await resolveArchitectureHtml(deliverable);
-  if (source === 'ops' || source === 'pack') {
-    return new NextResponse(html, {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'private, no-store',
-        'X-Content-Type-Options': 'nosniff',
-        'Referrer-Policy': 'no-referrer',
-        'X-Frame-Options': 'SAMEORIGIN',
-        'Content-Security-Policy':
-          "default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src data: https:; connect-src https://cdn.jsdelivr.net; frame-ancestors 'self'",
-      },
-    });
-  }
-
-  const fileHref = opsFileHref(deliverable.file_path, deliverable.file_url);
-  if (fileHref) {
-    return NextResponse.redirect(new URL(fileHref, request.url));
-  }
-
-  if (deliverable.url && deliverable.url.startsWith('/')) {
-    return NextResponse.redirect(new URL(deliverable.url, request.url));
-  }
-
+  // Always serve HTML with embed-friendly headers.
+  // Never redirect to /client-packs/*: static packs use frame-ancestors 'none'
+  // and break the portal/ops iframe ("refused to connect").
+  const { html } = await resolveArchitectureHtml(deliverable);
   return new NextResponse(html, {
     status: 200,
-    headers: {
-      'Content-Type': 'text/html; charset=utf-8',
-      'Cache-Control': 'private, no-store',
-    },
+    headers: EMBED_HTML_HEADERS,
   });
 }

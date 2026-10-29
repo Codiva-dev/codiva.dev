@@ -259,7 +259,11 @@
       "fullscreen": "Pantalla completa",
       "cannotPreview": "Este recurso no se puede previsualizar aquí.",
       "openIt": "Abrirlo",
-      "noFile": "Sin archivo o URL asociado."
+      "noFile": "Sin archivo o URL asociado.",
+      "kindArchitecture": "Arquitectura",
+      "kindMvp": "MVP / Propuesta",
+      "kindProposal": "Propuesta",
+      "kindOther": "Otro"
     },
     "timeline": {
       "title": "Timeline del proyecto",

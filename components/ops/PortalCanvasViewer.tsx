@@ -142,10 +142,10 @@ export default function PortalCanvasViewer({ items }: { items: PortalCanvasItem[
   const { t } = useTranslation();
   const kindLabel = useMemo(
     (): Record<string, string> => ({
-      architecture: t('ops.labels.deliverableKind.architecture'),
-      mvp: t('ops.labels.deliverableKind.mvp'),
-      proposal: t('ops.labels.deliverableKind.proposal'),
-      other: t('ops.labels.deliverableKind.other'),
+      architecture: t('portal.proposal.kindArchitecture'),
+      mvp: t('portal.proposal.kindMvp'),
+      proposal: t('portal.proposal.kindProposal'),
+      other: t('portal.proposal.kindOther'),
     }),
     [t]
   );
