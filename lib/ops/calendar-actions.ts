@@ -11,6 +11,10 @@ import {
   scheduleChanged,
 } from '@/lib/ops/calendar';
 import { notifyCalendarEventMail } from '@/lib/ops/calendar-notify';
+import {
+  deleteOpsCalendarEventFromGoogle,
+  syncOpsCalendarEventToGoogle,
+} from '@/lib/ops/google-calendar-sync';
 import { throwDb } from '@/lib/ops/throw-db';
 import { isUuid } from '@/lib/ops/project-path';
 
@@ -47,7 +51,10 @@ export async function createCalendarEvent(formData: FormData) {
     .single();
   if (error || !row) throw await throwDb(error);
 
-  after(() => notifyCalendarEventMail({ eventId: row.id }));
+  after(() => {
+    void notifyCalendarEventMail({ eventId: row.id });
+    void syncOpsCalendarEventToGoogle(row.id);
+  });
   await logActivity({
     entityType: 'calendar_event',
     entityId: row.id,
@@ -95,7 +102,10 @@ export async function updateCalendarEvent(eventId: string, formData: FormData) {
     .eq('id', eventId);
   if (error) throw await throwDb(error);
 
-  if (timeChanged) after(() => notifyCalendarEventMail({ eventId }));
+  after(() => {
+    if (timeChanged) void notifyCalendarEventMail({ eventId });
+    void syncOpsCalendarEventToGoogle(eventId);
+  });
   await logActivity({
     entityType: 'calendar_event',
     entityId: eventId,
@@ -109,6 +119,7 @@ export async function deleteCalendarEvent(eventId: string) {
   const { user, supabase } = await requireStaff();
   const t = await getT();
   if (!isUuid(eventId)) throw new Error(t('ops.calendar.eventInvalid'));
+  await deleteOpsCalendarEventFromGoogle(eventId);
   const { error } = await supabase.from('ops_calendar_events').delete().eq('id', eventId);
   if (error) throw await throwDb(error);
   await logActivity({

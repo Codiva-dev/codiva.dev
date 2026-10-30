@@ -38,6 +38,7 @@ import { INTERVIEW_REPORT_BUCKET } from '@/lib/ops/interview-partner';
 import { seedInterviewRoundsFromPosting } from '@/lib/ops/interview-seed';
 import { parseCalendarScheduleFields, scheduleChanged } from '@/lib/ops/calendar';
 import { notifyInterviewSchedule } from '@/lib/ops/calendar-notify';
+import { syncInterviewRoundToGoogle } from '@/lib/ops/google-calendar-sync';
 import { createAdminClient } from '@/lib/supabase/admin';
 
 function revalidateCareerPaths(slug?: string) {
@@ -491,7 +492,10 @@ export async function addJobInterviewRound(applicationId: string, formData: Form
     actorId: user.id,
   });
   if (schedule.scheduled_at) {
-    after(() => notifyInterviewSchedule({ roundId: round.id }));
+    after(() => {
+      void notifyInterviewSchedule({ roundId: round.id });
+      void syncInterviewRoundToGoogle(round.id);
+    });
   }
   await maybePromoteToInterview(supabase, application, user.id);
   await seedInterviewRoundsFromPosting(supabase, applicationId, user.id);
@@ -558,9 +562,12 @@ export async function updateJobInterviewRound(roundId: string, formData: FormDat
     actorId: user.id,
   });
 
-  if (timeChanged && schedule.scheduled_at) {
-    after(() => notifyInterviewSchedule({ roundId }));
-  }
+  after(() => {
+    if (timeChanged && schedule.scheduled_at) {
+      void notifyInterviewSchedule({ roundId });
+    }
+    void syncInterviewRoundToGoogle(roundId);
+  });
 
   await logActivity({
     entityType: 'job_application',
