@@ -7,11 +7,12 @@
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <style>
     :root {
-      --ink: #1a1a1a;
+      --ink: #1E1E2C;
       --muted: #555;
       --line: #ccc;
-      --accent: #1e3d32;
-      --bg-soft: #f0f3f1;
+      --accent: #4C2A75;
+      --accent-2: #4FC3F7;
+      --bg-soft: #E0F7FA;
     }
     * { box-sizing: border-box; }
     body {
@@ -21,7 +22,7 @@
       color: var(--ink);
       font-size: 9.5pt;
       line-height: 1.35;
-      max-width: 960px;
+      max-width: 980px;
     }
     h1 {
       font-size: 16pt;
@@ -42,7 +43,7 @@
     ol, ul { margin: 4px 0 8px; padding-left: 1.25em; }
     .meta { color: var(--muted); font-size: 8.5pt; margin: 0 0 8px; }
     .staff {
-      background: #1e3d32;
+      background: var(--accent);
       color: #fff;
       display: inline-block;
       padding: 2px 8px;
@@ -60,17 +61,24 @@
       width: 100%;
       border-collapse: collapse;
       margin: 6px 0 10px;
-      font-size: 8.5pt;
+      font-size: 8pt;
     }
     th, td {
       border: 1px solid var(--line);
-      padding: 3px 6px;
+      padding: 3px 5px;
       text-align: left;
       vertical-align: top;
     }
     th { background: var(--bg-soft); font-weight: 600; }
+    .swatch {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 1px solid var(--line);
+      vertical-align: middle;
+      margin-right: 3px;
+    }
     .note { background: #fff8e6; border-left: 3px solid #c9a227; padding: 6px 8px; margin: 6px 0; font-size: 8.5pt; }
-    .info { background: #e8f0ec; border-left: 3px solid var(--accent); padding: 6px 8px; margin: 6px 0; font-size: 8.5pt; }
+    .info { background: var(--bg-soft); border-left: 3px solid var(--accent-2); padding: 6px 8px; margin: 6px 0; font-size: 8.5pt; }
     .mermaid {
       background: #fff;
       border: 1px solid var(--line);
@@ -81,7 +89,7 @@
     }
     .mermaid svg { max-width: 100% !important; height: auto !important; }
     pre {
-      background: var(--bg-soft);
+      background: #f7f7fb;
       border: 1px solid var(--line);
       padding: 6px 8px;
       font-size: 8pt;
@@ -101,72 +109,146 @@
   <div class="staff">SOLO STAFF CODIVA</div>
   <h1>Kan Club — Arquitectura completa</h1>
   <p class="meta">
-    Inventario interno: ADRs, stack Marketplace, offline, integraciones, handoff · 28 oct 2026
+    Inventario interno Spec v1.0.0 (ES) · CL-001…027 · ADRs · marca · stack as-built · 30 oct 2026
   </p>
 
   <div class="cover-box">
     <strong>Cliente</strong>
     <ul>
-      <li>Organización: Kan Club</li>
-      <li>Contacto: Luis Vaca · luis.vacavelez@gmail.com</li>
+      <li>Organización: Kan Club · Contacto: Luis Vaca · luis.vacavelez@gmail.com</li>
       <li>Slug Ops: <code>kan-club</code></li>
-      <li>Repo producto: local <code>Desarrollos/kan-club</code> (sin remoto aún)</li>
+      <li>Fuente: <code>public/client-packs/kan-club/kan_club_architecture_document.md</code></li>
+      <li>Repo producto: pendiente de arranque de build</li>
     </ul>
   </div>
 
-  <h2>1. ADRs (Aceptados)</h2>
+  <div class="info">
+    <strong>Freeze.</strong> v1.0.0 · Congelado / Listo para Construcción (30 oct 2026).
+    Baseline: Next.js + Vercel Postgres + KV + Blob.
+    As-built Marketplace: Neon + Upstash + Blob.
+    Marca incluida: purple <code>#4C2A75</code> · cyan <code>#4FC3F7</code>.
+  </div>
+
+  <h2>1. ADRs</h2>
   <table>
-    <thead><tr><th>ADR</th><th>Decisión</th><th>Notas build</th></tr></thead>
+    <thead><tr><th>ADR</th><th>Contexto</th><th>Decisión</th><th>Build</th></tr></thead>
     <tbody>
       <tr>
         <td>001</td>
-        <td>Offline-first PWA · RxDB / IndexedDB</td>
-        <td>Write-local-first; sync bidireccional a Neon; POS manda stock (CL-012)</td>
+        <td>Internet inestable en tienda</td>
+        <td>PWA Offline-First · RxDB · sync bidireccional</td>
+        <td>Cash + firmas + timers offline; Point requiere red</td>
       </tr>
       <tr>
         <td>002</td>
+        <td>Terminal no debe congelar UI</td>
         <td>MP Point async + webhook</td>
-        <td>Estado AwaitingPointResponse; fallback Cash/Transfer/link (CL-015)</td>
+        <td>AwaitingPointResponse · fallback efectivo/transfer (CL-015)</td>
       </tr>
       <tr>
         <td>003</td>
-        <td>Waiver inmutable en Vercel Blob + SHA-256</td>
-        <td>Una firma por cliente; PNG + texto + timestamp</td>
+        <td>Firma legalmente auditable</td>
+        <td>PNG → Blob + SHA-256 en expediente</td>
+        <td>1 vez por cliente (CL-008)</td>
       </tr>
       <tr>
         <td>004</td>
+        <td>1 sucursal, mínimo DevOps</td>
         <td>100% Vercel serverless</td>
-        <td>Neon + Upstash + Blob; sin Railway</td>
+        <td>Neon + Upstash + Blob</td>
       </tr>
     </tbody>
   </table>
 
-  <h2>2. Stack as-built Codiva</h2>
-  <p class="meta">El brief decía «Vercel Postgres / KV»; en 2026 el equivalente Marketplace es Neon + Upstash.</p>
+  <h2>2. Stack brief → as-built</h2>
   <table>
     <thead><tr><th>Brief</th><th>As-built</th></tr></thead>
     <tbody>
-      <tr><td>Next.js App Router</td><td>Next.js 16 · Fluid Compute / Node</td></tr>
-      <tr><td>Vercel Postgres</td><td>Neon Postgres (Marketplace)</td></tr>
-      <tr><td>Vercel KV Redis</td><td>Upstash Redis (Marketplace)</td></tr>
-      <tr><td>Vercel Blob</td><td>Vercel Blob (waivers)</td></tr>
-      <tr><td>BullMQ</td><td>Jobs async vía Redis + route handlers / crons Vercel</td></tr>
+      <tr><td>Next.js App Router + Tailwind</td><td>Next.js 15+ · Fluid Compute</td></tr>
+      <tr><td>Vercel Postgres</td><td>Neon (Marketplace)</td></tr>
+      <tr><td>Vercel KV Redis</td><td>Upstash Redis</td></tr>
+      <tr><td>Vercel Blob</td><td>Vercel Blob (responsivas)</td></tr>
+      <tr><td>BullMQ</td><td>Redis + route handlers / crons</td></tr>
+      <tr><td>RxDB / Dexie</td><td>IndexedDB tableta</td></tr>
     </tbody>
   </table>
 
-  <h2>3. Superficies técnicas</h2>
+  <h2>3. Clarification log (CL-001…027)</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Módulo</th><th>Impacta</th><th>Sev</th><th>Decisión</th></tr></thead>
+    <tbody>
+      <tr><td>CL-001</td><td>General</td><td>Todos</td><td>P0</td><td>Estética + e-com + ERP/CRM · 1 sucursal</td></tr>
+      <tr><td>CL-002</td><td>Actores</td><td>Auth/RBAC</td><td>P0</td><td>Clientes pagan · empleados en tableta</td></tr>
+      <tr><td>CL-003</td><td>Regulación</td><td>Compliance</td><td>P0</td><td>México · responsiva digital</td></tr>
+      <tr><td>CL-004</td><td>MVP</td><td>ERP/CRM</td><td>P0</td><td>Clientes, mascotas, agenda, SKU, lealtad, TPV, WA</td></tr>
+      <tr><td>CL-005</td><td>Integraciones</td><td>Hardware</td><td>P0</td><td>MP Point, WA API, escáner, tableta</td></tr>
+      <tr><td>CL-006</td><td>TPV</td><td>Inventario</td><td>P0</td><td>Ticket único servicios + SKUs</td></tr>
+      <tr><td>CL-007</td><td>Integraciones</td><td>Payments</td><td>P0</td><td>API/Webhook Point Smart</td></tr>
+      <tr><td>CL-008</td><td>Operación</td><td>Compliance</td><td>P0</td><td>Gate responsiva 1 vez</td></tr>
+      <tr><td>CL-009</td><td>CRM</td><td>TPV</td><td>P1</td><td>6 visitas: 3ª 20% · 4ª gratis · 6ª 50%</td></tr>
+      <tr><td>CL-010</td><td>Agenda</td><td>Booking</td><td>P1</td><td>Sin anticipo</td></tr>
+      <tr><td>CL-011</td><td>Operación</td><td>Analytics</td><td>P1</td><td>Timestamps por fase</td></tr>
+      <tr><td>CL-012</td><td>Inventario</td><td>POS</td><td>P0</td><td>TPV prioridad · web sin stock → backorder</td></tr>
+      <tr><td>CL-013</td><td>Booking</td><td>Ops</td><td>P0</td><td>Agenda empleados · web → WA</td></tr>
+      <tr><td>CL-014</td><td>Notificaciones</td><td>WA</td><td>P1</td><td>100% outbound</td></tr>
+      <tr><td>CL-015</td><td>TPV</td><td>Payments</td><td>P0</td><td>Fallback efectivo/transfer</td></tr>
+      <tr><td>CL-016</td><td>Grooming</td><td>POS</td><td>P0</td><td>Fases no bloqueantes</td></tr>
+      <tr><td>CL-017</td><td>Analytics</td><td>Ops</td><td>P1</td><td>Timers no punitivos</td></tr>
+      <tr><td>CL-018</td><td>Arquitectura</td><td>Sync</td><td>P0</td><td>Offline-First RxDB</td></tr>
+      <tr><td>CL-019</td><td>CRM</td><td>Notif</td><td>P1</td><td>Recompra + inactivos</td></tr>
+      <tr><td>CL-020</td><td>RBAC</td><td>POS</td><td>P0</td><td>Rol empleado unificado</td></tr>
+      <tr><td>CL-021</td><td>Stack</td><td>Deploy</td><td>P0</td><td>100% Vercel</td></tr>
+      <tr><td>CL-022</td><td>Auth</td><td>Audit</td><td>P1</td><td>PIN 4 dígitos + employee_id</td></tr>
+      <tr><td>CL-023</td><td>E-com</td><td>Checkout</td><td>P0</td><td>100% Pickup</td></tr>
+      <tr><td>CL-024</td><td>Landing</td><td>Web</td><td>P0</td><td>E-com primero · WA secundario</td></tr>
+      <tr><td>CL-025</td><td>CRM/Auth</td><td>Web</td><td>P0</td><td>OTP WA · lookup TPV</td></tr>
+      <tr><td>CL-026</td><td>E-com</td><td>Web</td><td>P1</td><td>Cotizador tamaño/raza</td></tr>
+      <tr><td>CL-027</td><td>CRM</td><td>Web</td><td>P1</td><td>Pre-registro web</td></tr>
+    </tbody>
+  </table>
+
+  <h2>4. Marca — tokens y assets</h2>
+  <table>
+    <thead><tr><th>Token</th><th>Hex</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td><span class="swatch" style="background:#4C2A75"></span>purple</td><td>#4C2A75</td><td>Headers / theme PWA</td></tr>
+      <tr><td><span class="swatch" style="background:#5E35B1"></span>purpleLight</td><td>#5E35B1</td><td>Hover</td></tr>
+      <tr><td><span class="swatch" style="background:#4FC3F7"></span>cyan</td><td>#4FC3F7</td><td>CTA / huella</td></tr>
+      <tr><td><span class="swatch" style="background:#29B6F6"></span>cyanDark</td><td>#29B6F6</td><td>Hover CTA</td></tr>
+      <tr><td><span class="swatch" style="background:#E0F7FA"></span>bgSoft</td><td>#E0F7FA</td><td>Cards / inputs</td></tr>
+      <tr><td><span class="swatch" style="background:#1E1E2C"></span>darkNeutral</td><td>#1E1E2C</td><td>Texto TPV</td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>Asset</th><th>Path</th></tr></thead>
+    <tbody>
+      <tr><td>Logo</td><td><code>/public/assets/logo-kanclub.svg</code></td></tr>
+      <tr><td>Sello</td><td><code>/public/assets/seal-kanclub.svg</code></td></tr>
+      <tr><td>Huella / PWA icons</td><td><code>/public/assets/icon-paw.png</code> (+ 192 / 512)</td></tr>
+    </tbody>
+  </table>
+  <pre>{
+  "name": "Kan Club POS & Ops",
+  "short_name": "KanClub",
+  "start_url": "/pos",
+  "display": "standalone",
+  "background_color": "#4C2A75",
+  "theme_color": "#4C2A75"
+}</pre>
+  <div class="note">Pendiente en portal: entregar archivos SVG/PNG reales al document request <code>brandbook</code> (o sembrar assets en el repo de producto al arrancar build).</div>
+
+  <h2>5. Superficies</h2>
   <div class="mermaid">
 flowchart TB
   subgraph Surfaces
-    TAB[tablet PWA]
-    WEB[marketing + ecom]
+    TAB[tableta PWA]
+    WEB[landing + ecom]
     ADM[admin]
-    PORT[portal Mi Mascota]
   end
   subgraph Gateway
-    BFF[Next.js Route Handlers]
-    MP[MP Point adapter]
-    WA[WhatsApp adapter]
+    BFF[Next.js BFF]
+    MP[MP adapter]
+    WA[WA adapter]
   end
   subgraph Data
     PG[(Neon)]
@@ -181,69 +263,30 @@ flowchart TB
   BFF --> WA
   </div>
 
-  <h2>4. Offline tablet</h2>
-  <pre>UI React ←→ RxDB (IndexedDB)
-Service Worker (assets)
-RxDB Sync ←→ API (cuando online) ←→ Neon</pre>
-  <div class="info">Offline permite cash + timers. TPV Point requiere red. Conflictos de stock: in-store gana.</div>
+  <h2>6. Offline</h2>
+  <pre>UI PWA ←→ RxDB → Queue local
+SW sync → /api/sync → Neon</pre>
 
-  <h2>5. Secuencia crítica (tienda)</h2>
-  <div class="mermaid">
-sequenceDiagram
-  actor C as Cliente
-  actor E as Staff
-  participant POS as POS
-  participant CRM as CRM
-  participant MP as MP Adapter
-  participant WA as WhatsApp
-  C->>E: Llega con mascota
-  E->>POS: Busca por tel nombre o mascota
-  POS->>CRM: Waiver firmada
-  CRM-->>POS: false
-  C->>POS: Firma en tablet
-  POS->>CRM: Blob y hash
-  E->>POS: Fases grooming t0 a t3
-  POS->>WA: Pet Ready
-  WA-->>C: WhatsApp
-  E->>POS: SKUs y servicio a ticket
-  POS->>MP: Orden Point
-  MP-->>POS: Webhook Approved
-  POS->>CRM: Suma lealtad y stock
-  </div>
-
-  <h2>6. RBAC</h2>
-  <table>
-    <thead><tr><th>Rol</th><th>Auth</th><th>Superficie</th></tr></thead>
-    <tbody>
-      <tr><td>Staff</td><td>PIN 4 dígitos</td><td>/tablet</td></tr>
-      <tr><td>Admin</td><td>Email + password / magic link</td><td>/admin</td></tr>
-      <tr><td>Cliente</td><td>WhatsApp OTP</td><td>/ · /portal</td></tr>
-    </tbody>
-  </table>
-
-  <h2>7. Clarifications</h2>
-  <p>CL-001…027 <strong>cerrados</strong> (cliente, 28 oct). Ver repo local <code>docs/plan/clarification-log.md</code>.</p>
-
-  <h2>8. Handoff humano</h2>
+  <h2>7. Handoff humano</h2>
   <ol>
-    <li>MP Developer (sandbox + prod Point)</li>
-    <li>Hardware Point Smart + scanner + tablet</li>
-    <li>WhatsApp Cloud API + template Pet Ready</li>
+    <li>MP sandbox + prod Point</li>
+    <li>Point Smart + escáner + tableta</li>
+    <li>WhatsApp Cloud API + plantilla Mascota Lista</li>
     <li>Texto Carta Responsiva</li>
-    <li>Seed SKUs JSON/CSV</li>
-    <li>Wireframes tablet touch-first</li>
+    <li>Seed SKUs</li>
+    <li>Wireframes TPV PIN</li>
+    <li>Assets de marca (logo / sello / huella) en repo</li>
   </ol>
 
-  <h2>9. Corte scaffold (28 oct)</h2>
+  <h2>8. Corte scaffold</h2>
   <ul>
-    <li>Docs + ADRs + freeze en <code>Desarrollos/kan-club</code></li>
-    <li>Next.js stub: /, /portal, /tablet, /admin, /api/health, webhook MP stub</li>
-    <li>Adapters vacíos <code>lib/mercadopago</code> · <code>lib/whatsapp</code></li>
-    <li>Sin schema Neon, sin RxDB, sin remoto GitHub/Vercel de producto</li>
+    <li>Docs + ADRs + marca en <code>client-packs/kan-club</code></li>
+    <li>Pendiente: stub Next.js /, /portal, /pos, /admin, adapters MP/WA</li>
+    <li>Sin schema Neon, sin RxDB, sin remoto producto aún</li>
   </ul>
-  <div class="note">No cotización en este pack — el brief no trae montos. Economics = trabajo aparte si aplica.</div>
+  <div class="note">Sin cotización en este pack — el brief no trae montos.</div>
 
-  <footer>Kan Club · Arquitectura completa (staff) · Codiva · Freeze 2026-10-28</footer>
+  <footer>Kan Club · Arquitectura completa (staff) · Codiva · Spec v1.0.0 · Freeze 2026-10-30</footer>
   <script>
     mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "strict" });
   </script>

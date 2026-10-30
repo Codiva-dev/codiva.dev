@@ -7,11 +7,12 @@
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
   <style>
     :root {
-      --ink: #1a1a1a;
+      --ink: #1E1E2C;
       --muted: #555;
       --line: #ccc;
-      --accent: #2c5f4a;
-      --bg-soft: #f4f7f5;
+      --accent: #4C2A75;
+      --accent-2: #4FC3F7;
+      --bg-soft: #E0F7FA;
     }
     * { box-sizing: border-box; }
     body {
@@ -37,7 +38,7 @@
       border-bottom: 1px solid var(--line);
       padding-bottom: 2px;
     }
-    h3 { font-size: 10pt; margin: 10px 0 4px; }
+    h3 { font-size: 10pt; margin: 10px 0 4px; color: var(--accent); }
     p, li { margin: 3px 0; }
     ol, ul { margin: 4px 0 8px; padding-left: 1.25em; }
     .meta { color: var(--muted); font-size: 8.5pt; margin: 0 0 8px; }
@@ -60,13 +61,35 @@
       vertical-align: top;
     }
     th { background: var(--bg-soft); font-weight: 600; }
+    .swatch {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 1px solid var(--line);
+      vertical-align: middle;
+      margin-right: 4px;
+    }
     .note, .info {
       padding: 6px 8px;
       margin: 6px 0;
       font-size: 8.5pt;
     }
     .note { background: #fff8e6; border-left: 3px solid #c9a227; }
-    .info { background: #eef5f1; border-left: 3px solid var(--accent); }
+    .info { background: var(--bg-soft); border-left: 3px solid var(--accent-2); }
+    .kpi {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 6px 0 8px;
+    }
+    .kpi div {
+      flex: 1 1 120px;
+      border: 1px solid var(--line);
+      padding: 6px;
+      background: var(--bg-soft);
+      text-align: center;
+    }
+    .kpi strong { display: block; font-size: 11pt; color: var(--accent); }
+    .kpi span { font-size: 7.5pt; color: var(--muted); }
     .mermaid {
       background: #fff;
       border: 1px solid var(--line);
@@ -78,7 +101,7 @@
     }
     .mermaid svg { max-width: 100% !important; height: auto !important; }
     pre {
-      background: var(--bg-soft);
+      background: #f7f7fb;
       border: 1px solid var(--line);
       padding: 6px 8px;
       margin: 6px 0;
@@ -97,199 +120,284 @@
       font-size: 7.5pt;
       color: var(--muted);
     }
+    @media print {
+      body { padding: 0; max-width: none; font-size: 9pt; }
+      a { color: inherit; text-decoration: none; }
+      h1 { font-size: 14pt; }
+      h2 { margin-top: 10px; font-size: 11pt; }
+      tr { break-inside: avoid; }
+    }
+    @page { size: A4; margin: 10mm 9mm 12mm; }
   </style>
 </head>
 <body>
-  <h1>Kan Club — Arquitectura</h1>
+  <h1>Kan Club — Arquitectura de plataforma</h1>
   <p class="meta">
-    ERP · CRM · POS · E-commerce Pickup para grooming y retail de mascotas (1 sucursal)<br />
-    Arquitectura certificada · 28 de octubre de 2026 · Codiva
+    ERP + CRM Omnicanal · Estética canina + pet shop (1 sucursal) · E-commerce Pickup<br />
+    Spec v1.0.0 · Congelado / listo para build · 30 de octubre de 2026 · Codiva
   </p>
 
   <div class="cover-box">
     <strong>Alcance de este documento</strong>
     <ul>
-      <li>Resumen del producto y alcance MVP</li>
-      <li>Actores, superficies y flujo comercial</li>
-      <li>Dominios de plataforma y máquinas de estado</li>
-      <li>Decisiones cerradas (CL-001…027) y lo que falta del lado humano</li>
+      <li>Brief MVP, no-objetivos y decisiones cerradas (CL-001…027)</li>
+      <li>Actores, dominios, máquinas de estado y secuencia TPV</li>
+      <li>Landing, e-commerce Pickup y portal Mi Mascota</li>
+      <li>Stack Vercel, offline-first, ADRs y tokens de marca</li>
+      <li>Checklist humano pre-build</li>
     </ul>
   </div>
 
+  <div class="kpi">
+    <div><strong>1</strong><span>Sucursal + inventario único</span></div>
+    <div><strong>1</strong><span>Tableta TPV offline-first</span></div>
+    <div><strong>6</strong><span>Visitas de lealtad presencial</span></div>
+    <div><strong>27</strong><span>Clarificaciones cerradas</span></div>
+  </div>
+
   <div class="info">
-    <strong>Estado.</strong> Arquitectura <em>congelada / lista para build</em> (28 oct 2026).
-    Scaffold técnico iniciado; aún sin POS live, Mercado Pago Point ni WhatsApp en producción.
-    Tagline web: <em>«El club donde tu mejor amigo se siente como en casa»</em>.
+    <strong>Estado.</strong> Congelado / Listo para Construcción (v1.0.0 · 30 oct 2026).
+    Tagline: <em>«El club donde tu mejor amigo se siente como en casa»</em>.
+    Compras online = Pickup. WhatsApp = 100% outbound.
   </div>
 
   <h2>Índice</h2>
   <ol class="toc">
-    <li><a href="#resumen">Resumen ejecutivo</a></li>
-    <li><a href="#mvp">MVP y fuera de alcance</a></li>
-    <li><a href="#actores">Actores</a></li>
+    <li><a href="#mvp">Brief MVP</a></li>
+    <li><a href="#decisiones">Decisiones cerradas</a></li>
+    <li><a href="#actores">Actores y RBAC</a></li>
     <li><a href="#flujo">Flujo comercial</a></li>
     <li><a href="#dominios">Dominios</a></li>
-    <li><a href="#grooming">Estados de grooming</a></li>
-    <li><a href="#pedido">Estados de pedido</a></li>
+    <li><a href="#grooming">Estados de estética</a></li>
+    <li><a href="#pedido">Estados de orden</a></li>
+    <li><a href="#secuencia">Secuencia TPV</a></li>
     <li><a href="#landing">Landing y e-commerce</a></li>
-    <li><a href="#stack">Stack</a></li>
-    <li><a href="#humano">Checklist humano</a></li>
+    <li><a href="#stack">Stack y offline</a></li>
+    <li><a href="#adrs">ADRs</a></li>
+    <li><a href="#marca">Marca y tokens</a></li>
+    <li><a href="#humano">Checklist handoff</a></li>
   </ol>
 
-  <h2 id="resumen">1. Resumen ejecutivo</h2>
+  <h2 id="mvp">1. Brief MVP</h2>
   <p>
-    Kan Club centraliza la operación de un salón de grooming con retail físico y tienda en línea
-    <strong>solo Pickup (Click &amp; Collect)</strong>. El personal opera en <strong>una sola tablet</strong>:
-    check-in, timers de grooming, escaneo de SKUs, lealtad y cobro con terminal Mercado Pago Point Smart.
+    Kan Club centraliza operación de estética canina y pet shop físico con tienda en línea
+    <strong>100% Click &amp; Collect</strong>. Una sola tableta: check-in, timers, escaneo SKU,
+    lealtad, carta responsiva y cobro con Mercado Pago Point Smart.
   </p>
-  <pre>Cliente + Mascota → Pre-registro / Walk-in → Carta responsiva (1 vez)
-→ Fases grooming (timestamps) + carrito retail → POS (Mercado Pago)
-→ Stock y lealtad sincronizados · WhatsApp «Tu mascota está lista»</pre>
-
-  <h2 id="mvp">2. MVP y fuera de alcance</h2>
   <h3>Incluye</h3>
   <ul>
-    <li>Inventario único sincronizado POS ↔ web</li>
-    <li>Grooming con fases y timestamps (Recepción → Baño → Corte/Secado → Listo)</li>
-    <li>Carta responsiva digital en tablet (una vez por cliente)</li>
-    <li>Ticket unificado servicios + productos; Point Smart + fallback efectivo/transferencia/link</li>
-    <li>Web: e-commerce Pickup, estimador de grooming, CTA WhatsApp para agendar, portal Mi Mascota (OTP)</li>
-    <li>Lealtad presencial 6 visitas (3ª 20% premios · 4ª premio gratis · 6ª 50% grooming/baño)</li>
-    <li>WhatsApp outbound: Pet Ready, recordatorios, recompra de alimento</li>
+    <li>TPV unificado (servicios + productos SKU) · Point Smart API/Webhook · fallback efectivo/transferencia</li>
+    <li>Carta responsiva digital 1 vez por cliente · fases Recepción → Baño → Corte/Secado → Listo + WhatsApp «Mascota Lista»</li>
+    <li>Web Pickup, cotizador, CTA WhatsApp, portal Mi Mascota (OTP)</li>
+    <li>Lealtad presencial 6 visitas · PWA Offline-First (RxDB) · 100% Vercel</li>
   </ul>
-  <h3>No incluye (MVP)</h3>
+  <h3>No incluye</h3>
   <ol>
     <li>Multi-sucursal / franquicia</li>
-    <li>CFDI 4.0 automático</li>
-    <li>App nativa iOS/Android (sí PWA tablet + web responsive)</li>
+    <li>CFDI 4.0 automático (corte diario a público en general; factura manual bajo demanda)</li>
+    <li>App nativa iOS/Android</li>
     <li>Envíos a domicilio</li>
-    <li>Bot de IA inbound en WhatsApp (solo outbound; respuestas las atiende el staff)</li>
+    <li>Bot IA inbound en WhatsApp</li>
   </ol>
 
-  <h2 id="actores">3. Actores</h2>
+  <h2 id="decisiones">2. Decisiones cerradas (CL-001…027)</h2>
+  <p class="meta">Todas CERRADAS con el cliente el 28 oct 2026. Resumen P0:</p>
   <table>
-    <thead>
-      <tr><th>Actor</th><th>Rol</th><th>Puede</th><th>No puede</th></tr>
-    </thead>
+    <thead><tr><th>ID</th><th>Decisión</th></tr></thead>
+    <tbody>
+      <tr><td>CL-001…004</td><td>Estética + pet shop + e-com · 1 tableta · México · waiver · agenda, SKU, lealtad 6, TPV, WhatsApp</td></tr>
+      <tr><td>CL-006…008</td><td>Ticket único · MP Point API/webhook · responsiva 1 vez (gate)</td></tr>
+      <tr><td>CL-012…013</td><td>TPV prioriza stock · agenda master empleados; web → WhatsApp</td></tr>
+      <tr><td>CL-015…018</td><td>Fallback efectivo/transfer · fases no bloqueantes · Offline-First RxDB</td></tr>
+      <tr><td>CL-020…025</td><td>Rol empleado unificado · 100% Vercel · Pickup · e-com primero · OTP WhatsApp</td></tr>
+    </tbody>
+  </table>
+  <p class="meta">P1 cerradas: lealtad (009), sin anticipo (010), timestamps (011/017), WA outbound (014), PIN 4 dígitos (022), cotizador (026), pre-registro (027).</p>
+
+  <h2 id="actores">3. Actores y RBAC</h2>
+  <table>
+    <thead><tr><th>Actor</th><th>Rol</th><th>Decide / ve</th><th>No ve</th></tr></thead>
     <tbody>
       <tr>
         <td>Cliente</td>
         <td>Consumidor</td>
-        <td>Catálogo Pickup, pre-registro, firma, portal, agendar vía WhatsApp</td>
-        <td>Ver márgenes, agenda interna ni settings</td>
+        <td>Pickup, pre-registro, firma, portal, agendar vía WhatsApp</td>
+        <td>Márgenes, agenda interna, caja</td>
       </tr>
       <tr>
-        <td>Staff (tablet)</td>
-        <td>Operador</td>
-        <td>Check-in, timers, SKUs, TPV, waiver, PIN rápido</td>
-        <td>Editar listas de precio ni exportar finanzas globales</td>
+        <td>Empleado / Groomer</td>
+        <td>Operador TPV</td>
+        <td>Agenda día, timers, SKUs, cobro, firmas, PIN</td>
+        <td>Utilidad global, settings, credenciales de pago</td>
       </tr>
       <tr>
-        <td>Admin / dueño</td>
-        <td>Superusuario</td>
-        <td>Precios, inventario, lealtad, campañas, métricas, cortes</td>
+        <td>Administrador</td>
+        <td>Owner</td>
+        <td>Precios, inventario, lealtad, personal, analytics, cortes</td>
         <td>—</td>
       </tr>
     </tbody>
   </table>
 
   <h2 id="flujo">4. Flujo comercial</h2>
+  <pre>Cliente + Mascota → Pre-registro / Walk-in → Gate Responsiva (v1)
+→ Fases grooming (timestamps) + Carrito SKUs → Cobro TPV (MP Point)
+→ Lealtad + Inventario · WhatsApp «Mascota Lista»</pre>
   <div class="mermaid">
 flowchart TD
-  C[Cliente / tutor] -->|Browse y pre-registro| WEB[Web]
-  C -->|Alertas y agenda CTA| WA[WhatsApp]
-  C -->|Visita tienda| E[Staff tablet]
-  E --> ORD[Ticket unificado]
-  E --> TIM[Timers grooming]
-  E --> EXP[Carta responsiva]
+  C[Cliente] -->|Catálogo / Pre-registro| WEB[Web]
+  C -->|Agenda / Avisos| WA[WhatsApp]
+  C -->|Visita| E[Empleado tableta]
+  E --> ORD[Ticket]
+  E --> TIM[Timers]
+  E --> EXP[Responsiva]
   ORD --> INV[Inventario SKU]
-  ORD --> LOY[Lealtad 6 visitas]
-  ORD --> MP[Mercado Pago Point]
-  TIM -->|Pet Ready| WAPI[WhatsApp outbound]
+  ORD --> LOY[Lealtad 6]
+  ORD --> MP[MP Point]
+  TIM -->|Mascota Lista| WAPI[WhatsApp outbound]
   WAPI --> C
   </div>
 
-  <h2 id="dominios">5. Dominios de plataforma</h2>
+  <h2 id="dominios">5. Dominios</h2>
   <ol>
-    <li><strong>CRM y mascotas</strong> — clientes, perfiles, notas, waiver, lealtad</li>
-    <li><strong>Agenda y grooming</strong> — calendario master (staff), fases y timestamps</li>
-    <li><strong>Catálogo e inventario</strong> — SKUs productos/servicios; POS manda sobre stock web</li>
-    <li><strong>Ventas y POS</strong> — ticket, cortes de caja, offline, pagos</li>
-    <li><strong>Notificaciones</strong> — WhatsApp outbound</li>
-    <li><strong>Plataforma</strong> — PIN staff, RBAC, auditoría, reportes de tiempos</li>
+    <li><strong>CRM &amp; Pet Profile</strong> — clientes, mascotas, responsiva (Blob), lealtad 6</li>
+    <li><strong>Booking &amp; Grooming Ops</strong> — agenda, fases, timestamps</li>
+    <li><strong>Catalog &amp; Inventory</strong> — SKUs/servicios; TPV prioriza stock</li>
+    <li><strong>Sales &amp; POS</strong> — ticket omnicanal, cortes, pagos</li>
+    <li><strong>Notification &amp; Engagement</strong> — WhatsApp outbound</li>
+    <li><strong>Platform &amp; Analytics</strong> — PIN, OTP, auditoría, métricas</li>
   </ol>
 
-  <h2 id="grooming">6. Estados de grooming</h2>
+  <h2 id="grooming">6. Estados de estética</h2>
   <div class="mermaid">
 stateDiagram-v2
-  [*] --> Scheduled
-  Scheduled --> Cancelled
-  Scheduled --> InReception: Llega mascota
-  note right of InReception
-    Gate waiver si falta
+  [*] --> Programada
+  Programada --> Cancelada
+  Programada --> EnRecepcion: Llega a sucursal
+  note right of EnRecepcion
+    Gate responsiva si falta
   end note
-  InReception --> InBath: Bano
-  InBath --> InHaircut: Corte o secado
-  InHaircut --> ReadyForPickup: Completo y WhatsApp
-  ReadyForPickup --> DeliveredAndPaid: Entrega y ticket
-  DeliveredAndPaid --> [*]
+  EnRecepcion --> EnBano: Bano
+  EnBano --> EnCorteSecado: Corte o secado
+  EnCorteSecado --> ListoEntrega: Completo y WhatsApp
+  ListoEntrega --> EntregadoYCobrado
+  EntregadoYCobrado --> [*]
   </div>
-  <p class="meta">Fases flexibles (CL-016): se permiten saltos, prepago o pago al final. Timestamps silenciosos (CL-017).</p>
+  <p class="meta">Fases no bloqueantes (CL-016). Timestamps silenciosos (CL-017).</p>
 
-  <h2 id="pedido">7. Estados de pedido</h2>
+  <h2 id="pedido">7. Estados de orden</h2>
   <div class="mermaid">
 stateDiagram-v2
   [*] --> Draft
-  Draft --> PendingPayment: Checkout POS
+  Draft --> PendingPayment: Checkout TPV
   PendingPayment --> AwaitingPointResponse: Point Smart
-  AwaitingPointResponse --> Paid: Webhook Approved
+  AwaitingPointResponse --> Paid: Approved
   AwaitingPointResponse --> PaymentFailed: Reject o timeout
-  PaymentFailed --> PendingPayment: Cash Transfer o link
+  PaymentFailed --> PendingPayment: Efectivo o Transfer
   Paid --> Completed: Stock y lealtad
-  Draft --> WebOrderPending: Pedido web Pickup
+  Draft --> WebOrderPending: Pedido Pickup
   WebOrderPending --> Paid
   Paid --> PendingPickup
   PendingPickup --> Completed: Recoge en tienda
   </div>
 
-  <h2 id="landing">8. Landing y e-commerce</h2>
+  <h2 id="secuencia">8. Secuencia TPV (crítica)</h2>
+  <div class="mermaid">
+sequenceDiagram
+  actor C as Cliente
+  actor E as Empleado
+  participant POS as POS
+  participant CRM as CRM
+  participant MP as MP Adapter
+  participant WA as WhatsApp
+  C->>E: Llega con mascota
+  E->>POS: Busca tel nombre o mascota
+  POS->>CRM: Expediente y responsiva
+  opt Si falta firma
+    C->>POS: Firma en tableta
+    POS->>CRM: Blob y hash
+  end
+  E->>POS: Fases t0 a t3
+  POS->>WA: Mascota Lista
+  WA-->>C: WhatsApp
+  E->>POS: SKUs + servicio a ticket
+  POS->>MP: Orden Point
+  MP-->>POS: Webhook Approved
+  POS->>CRM: Lealtad y cierre
+  </div>
+
+  <h2 id="landing">9. Landing y e-commerce</h2>
   <ol>
-    <li>Hero + CTAs <strong>Comprar en línea (Pickup)</strong> y <strong>Agendar por WhatsApp</strong></li>
-    <li>Estimador interactivo (tamaño / tipo de pelo)</li>
-    <li>Tienda: Alimento Premium, Premios Naturales, Accesorios, Higiene</li>
-    <li>Sección lealtad 6 visitas</li>
-    <li>Portal Mi Mascota (OTP WhatsApp)</li>
+    <li><strong>Hero</strong> — tagline + CTAs Comprar Pickup / Agendar WhatsApp · badge horario</li>
+    <li><strong>Cotizador</strong> — Chico/Mediano/Grande/Gigante + tipo de pelo → CTA WhatsApp prefabricado</li>
+    <li><strong>Catálogo Pickup</strong> — Alimento Premium, Premios Naturales, Accesorios, Cuidados &amp; Higiene · stock en vivo</li>
+    <li><strong>Lealtad 6 visitas</strong> — 3ª 20% premios · 4ª premio gratis · 6ª 50% baño/corte</li>
+    <li><strong>Portal Mi Mascota</strong> — OTP WhatsApp: ficha, responsiva, historial, sellos</li>
   </ol>
 
-  <h2 id="stack">9. Stack</h2>
+  <h2 id="stack">10. Stack y offline</h2>
   <table>
     <thead><tr><th>Capa</th><th>Tecnología</th></tr></thead>
     <tbody>
-      <tr><td>App / API</td><td>Next.js (App Router) en Vercel · PWA tablet</td></tr>
-      <tr><td>Offline tablet</td><td>RxDB / IndexedDB</td></tr>
-      <tr><td>Base de datos</td><td>Neon Postgres (Marketplace Vercel)</td></tr>
-      <tr><td>Cache / cola</td><td>Upstash Redis (Marketplace)</td></tr>
-      <tr><td>Archivos</td><td>Vercel Blob (firmas waiver)</td></tr>
+      <tr><td>App / API</td><td>Next.js App Router + Tailwind · PWA tableta</td></tr>
+      <tr><td>Offline</td><td>RxDB / IndexedDB + sync al reconectar</td></tr>
+      <tr><td>OLTP</td><td>Vercel Postgres (Neon)</td></tr>
+      <tr><td>Cache / cola</td><td>Vercel KV (Upstash) + jobs async</td></tr>
+      <tr><td>Archivos</td><td>Vercel Blob (firmas + SHA-256)</td></tr>
       <tr><td>Pagos</td><td>Mercado Pago Point Smart (webhook)</td></tr>
       <tr><td>Mensajería</td><td>WhatsApp Cloud API outbound</td></tr>
     </tbody>
   </table>
+  <pre>UI PWA ←→ RxDB (IndexedDB) → Queue local
+Service Worker sync → /api/sync → Postgres</pre>
+  <div class="info">Offline: efectivo, firmas, timers. Point Smart requiere red. Stock: TPV gana (CL-012).</div>
 
-  <h2 id="humano">10. Checklist humano (pre-build)</h2>
+  <h2 id="adrs">11. ADRs (aprobados)</h2>
+  <table>
+    <thead><tr><th>ADR</th><th>Decisión</th></tr></thead>
+    <tbody>
+      <tr><td>001</td><td>Offline-First RxDB · sync bidireccional a Postgres</td></tr>
+      <tr><td>002</td><td>MP Point async + webhook · estado AwaitingPointResponse</td></tr>
+      <tr><td>003</td><td>Responsiva inmutable: PNG → Blob + SHA-256 en expediente</td></tr>
+      <tr><td>004</td><td>100% Vercel serverless (app, Postgres, KV, Blob)</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="marca">12. Marca y design tokens</h2>
+  <table>
+    <thead><tr><th>Token</th><th>Valor</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td><span class="swatch" style="background:#4C2A75"></span>brand.purple</td><td><code>#4C2A75</code></td><td>Headers, navbar, títulos, theme PWA</td></tr>
+      <tr><td><span class="swatch" style="background:#5E35B1"></span>brand.purpleLight</td><td><code>#5E35B1</code></td><td>Hover principales</td></tr>
+      <tr><td><span class="swatch" style="background:#4FC3F7"></span>brand.cyan</td><td><code>#4FC3F7</code></td><td>CTA, badges activos, isotipo huella</td></tr>
+      <tr><td><span class="swatch" style="background:#29B6F6"></span>brand.cyanDark</td><td><code>#29B6F6</code></td><td>Hover CTA</td></tr>
+      <tr><td><span class="swatch" style="background:#E0F7FA"></span>brand.bgSoft</td><td><code>#E0F7FA</code></td><td>Fondos de cards / inputs</td></tr>
+      <tr><td><span class="swatch" style="background:#1E1E2C"></span>brand.darkNeutral</td><td><code>#1E1E2C</code></td><td>Texto tableta TPV</td></tr>
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>Asset</th><th>Ruta</th><th>Uso</th></tr></thead>
+    <tbody>
+      <tr><td>Logotipo</td><td><code>/public/assets/logo-kanclub.svg</code></td><td>Header e-com, PDF responsiva, tickets WA</td></tr>
+      <tr><td>Imagotipo (sello)</td><td><code>/public/assets/seal-kanclub.svg</code></td><td>Login PIN tableta, marca de agua, lealtad</td></tr>
+      <tr><td>Isotipo (huella)</td><td><code>/public/assets/icon-paw.png</code></td><td>Favicon, iconos PWA 192/512, loader</td></tr>
+    </tbody>
+  </table>
+  <p class="meta">PWA manifest: name «Kan Club POS &amp; Ops» · short_name KanClub · theme/background <code>#4C2A75</code> · start_url <code>/pos</code>.</p>
+
+  <h2 id="humano">13. Checklist handoff a build</h2>
   <ol>
-    <li>Cuenta desarrollador Mercado Pago (sandbox + producción Point Smart)</li>
-    <li>Terminal Point Smart + escáner + tablet</li>
-    <li>WhatsApp Cloud API + plantilla «Pet Ready»</li>
-    <li>Texto legal final de Carta Responsiva</li>
-    <li>Seed de SKUs / precios / servicios</li>
-    <li>Wireframes touch-first de tablet</li>
+    <li>API Keys Mercado Pago (sandbox + prod Point Smart)</li>
+    <li>Hardware: Point Smart + escáner + tableta</li>
+    <li>WhatsApp Cloud API + plantilla «Mascota Lista»</li>
+    <li>Texto legal final Carta Responsiva</li>
+    <li>Seed SKUs / precios / servicios</li>
+    <li>Wireframes táctiles TPV (PIN 4 dígitos)</li>
   </ol>
-  <div class="note">
-    Estos ítems no reabren la arquitectura; se gestionan como documentos / accesos en el portal Codiva.
-  </div>
+  <div class="note">Estos ítems no reabren la arquitectura; se gestionan como documentos / accesos en el portal Codiva.</div>
 
   <footer>
-    Kan Club · Arquitectura portal · Codiva · v1.0.0 · Freeze 2026-10-28 · Contacto cliente: Luis Vaca
+    Kan Club · Arquitectura portal · Codiva · Spec v1.0.0 · Freeze 2026-10-30 · Contacto: Luis Vaca
   </footer>
   <script>
     mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "strict" });
