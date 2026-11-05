@@ -22,6 +22,14 @@ const sql = [
   `UPDATE deliverables SET body_html = ${dollar('kanclub_completa', completa)} WHERE id = '92000001-0001-4000-8000-0000000000d2';`,
 ].join('\n\n');
 
-const out = path.join(root, 'supabase/migrations/20261029010200_kan_club_hydrate_canvas.sql');
+// Always write a NEW timestamped migration so already-applied history stays intact.
+const stamp = new Date()
+  .toISOString()
+  .replace(/[-:TZ.]/g, '')
+  .slice(0, 14);
+const out = path.join(
+  root,
+  `supabase/migrations/${stamp}_kan_club_hydrate_canvas.sql`
+);
 fs.writeFileSync(out, sql);
 console.log('wrote', out, 'bytes', Buffer.byteLength(sql), 'portal', portal.length, 'completa', completa.length);

@@ -23,6 +23,7 @@ import {
   updateCalendarEvent,
 } from '@/lib/ops/calendar-actions';
 import { isJobInterviewKind } from '@/lib/ops/careers';
+import { getGoogleCalendarLinkStatus } from '@/lib/ops/google-calendar-sync';
 
 type InterviewJoin = {
   full_name?: string | null;
@@ -46,7 +47,7 @@ export default async function CalendarPage({
   searchParams: Promise<{ week?: string }>;
 }) {
   const { week: weekParam } = await searchParams;
-  const { supabase, staff } = await requireStaff();
+  const { user, supabase, staff } = await requireStaff();
   const t = await getT();
   const { formatDate, formatDateTime } = labelsFor(t.locale);
   const canCareers = can(staff, 'careers_review');
@@ -57,7 +58,14 @@ export default async function CalendarPage({
     zonedLocalToUtcIso(`${addDaysYmd(monday, 7)}T00:00`) ?? `${addDaysYmd(monday, 7)}T06:00:00.000Z`;
   const today = opsCalendarDate();
 
-  const [{ data: events }, { data: rounds }, { data: projects }, { data: staffRows }, { data: unscheduled }] =
+  const [
+    { data: events },
+    { data: rounds },
+    { data: projects },
+    { data: staffRows },
+    { data: unscheduled },
+    gcalStatus,
+  ] =
     await Promise.all([
       supabase
         .from('ops_calendar_events')
@@ -89,6 +97,7 @@ export default async function CalendarPage({
             .order('created_at', { ascending: false })
             .limit(12)
         : Promise.resolve({ data: [] as never[] }),
+      getGoogleCalendarLinkStatus(user.id),
     ]);
 
   const staffName = new Map((staffRows ?? []).map((row) => [row.id, row.full_name]));
@@ -200,6 +209,21 @@ export default async function CalendarPage({
         }
       />
       <p className="mb-6 text-sm text-zinc-600">{weekLabel}</p>
+
+      {gcalStatus.configured ? (
+        <p className="mb-4 text-sm text-zinc-600">
+          {gcalStatus.linked ? (
+            t('ops.calendar.gcalLinked', { email: gcalStatus.googleEmail })
+          ) : (
+            <>
+              {t('ops.calendar.gcalUnlinked')}{' '}
+              <Link href="/settings#google-calendar" className="text-codiva-primary hover:underline">
+                {t('ops.nav.settings')}
+              </Link>
+            </>
+          )}
+        </p>
+      ) : null}
 
       <section className="mb-8 rounded-2xl border border-zinc-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-zinc-900">{t('ops.calendar.addEvent')}</h2>

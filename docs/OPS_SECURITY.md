@@ -29,6 +29,23 @@ Recordatorio de CV: `GET /api/ops/cron/cv-nudge` cada hora (minuto 45, mismo `CR
 
 Recordatorio de agenda: `GET /api/ops/cron/calendar-nudge` cada 15 min (mismo `CRON_SECRET`). A las 24 h y a la 1 h de una entrevista o junta interna, se envía un correo con el `.ics`.
 
+## Google Calendar (por staff)
+
+Cada miembro de Ops puede ligar su cuenta en **Configuración → Google Calendar**. Ops hace push de juntas (`ops_calendar_events`) y entrevistas (`ops_job_interview_rounds`) al calendario primario del staff ligado. El `.ics` y los correos de recordatorio siguen activos.
+
+En Google Cloud: OAuth client (Web) con redirect  
+`https://ops.codiva.dev/api/ops/google-calendar/oauth/callback`  
+(y el equivalente local si aplica). Scopes: `openid email profile` + `https://www.googleapis.com/auth/calendar.events`.
+
+```env
+GOOGLE_CALENDAR_CLIENT_ID=....apps.googleusercontent.com
+GOOGLE_CALENDAR_CLIENT_SECRET=...
+# opcional; default = {NEXT_PUBLIC_OPS_URL}/api/ops/google-calendar/oauth/callback
+GOOGLE_CALENDAR_REDIRECT_URI=https://ops.codiva.dev/api/ops/google-calendar/oauth/callback
+```
+
+Tokens en `ops_google_calendar_links` (RLS: solo el dueño). Mapeo de eventos en `ops_google_calendar_sync`. Sin esas env vars, la UI muestra que no está configurado y el resto de Ops sigue igual.
+
 ## Antivirus / malware (opcional)
 
 | Opción | Costo aprox. | Notas |

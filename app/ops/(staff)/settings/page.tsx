@@ -1,8 +1,10 @@
 import OpsChangePasswordForm from '@/components/ops/OpsChangePasswordForm';
+import OpsGoogleCalendarLink from '@/components/ops/OpsGoogleCalendarLink';
 import OpsPageHeader from '@/components/ops/OpsPageHeader';
 import OpsPushOptIn from '@/components/ops/OpsPushOptIn';
 import ToastForm from '@/components/ops/ToastForm';
 import { requireStaff } from '@/lib/ops/auth';
+import { getGoogleCalendarLinkStatus } from '@/lib/ops/google-calendar-sync';
 import { labelsFor } from '@/lib/ops/labels';
 import { getT } from '@/i18n/locale';
 import { publishLegalVersionAndNotify } from '@/lib/ops/actions';
@@ -11,7 +13,21 @@ import { can } from '@/lib/ops/permissions';
 import Link from 'next/link';
 import { offerLabelsFor } from '@/lib/ops/offer-letter';
 
-export default async function SettingsPage() {
+const GCAL_FLASH: Record<string, string> = {
+  linked: 'ops.settings.gcalFlashLinked',
+  denied: 'ops.settings.gcalFlashDenied',
+  invalid: 'ops.settings.gcalFlashInvalid',
+  not_configured: 'ops.settings.gcalFlashNotConfigured',
+  no_refresh: 'ops.settings.gcalFlashNoRefresh',
+  token_error: 'ops.settings.gcalFlashTokenError',
+  taken: 'ops.settings.gcalFlashTaken',
+};
+
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ gcal?: string }>;
+}) {
   const { user, staff, supabase } = await requireStaff();
   const t = await getT();
   const { EMPTY_LABEL, formatDate } = labelsFor(t.locale);
@@ -19,8 +35,11 @@ export default async function SettingsPage() {
   const { OPS_ROLE_LABELS } = offerLabelsFor(t.locale);
   const canPublishLegal = can(staff, 'legal_publish');
   const canManageTeam = can(staff, 'team');
+  const params = await searchParams;
+  const gcalFlash = typeof params.gcal === 'string' ? params.gcal : null;
+  const flashKey = gcalFlash ? GCAL_FLASH[gcalFlash] : null;
 
-  const [{ data: versions }, { data: ownOffer }, { data: ownContract }] = await Promise.all([
+  const [{ data: versions }, { data: ownOffer }, { data: ownContract }, gcalStatus] = await Promise.all([
     supabase
       .from('legal_document_versions')
       .select('kind, version_code, changelog, published_at')
@@ -39,6 +58,7 @@ export default async function SettingsPage() {
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    getGoogleCalendarLinkStatus(user.id),
   ]);
 
   async function onPublish(formData: FormData) {
@@ -91,6 +111,23 @@ export default async function SettingsPage() {
           <p className="mb-4 text-sm text-zinc-600">{t('ops.settings.passwordHint')}</p>
           <OpsChangePasswordForm />
         </section>
+
+        <OpsGoogleCalendarLink
+          status={gcalStatus}
+          labels={{
+            title: t('ops.settings.gcalTitle'),
+            hint: t('ops.settings.gcalHint'),
+            notConfigured: t('ops.settings.gcalNotConfigured'),
+            account: t('ops.settings.gcalAccount'),
+            linkedHint: t('ops.settings.gcalLinkedHint'),
+            syncError: (error) => t('ops.settings.gcalSyncError', { error }),
+            disconnect: t('ops.settings.gcalDisconnect'),
+            disconnected: t('ops.settings.gcalFlashDisconnected'),
+            connectHint: t('ops.settings.gcalConnectHint'),
+            connect: t('ops.settings.gcalConnect'),
+            flash: flashKey ? t(flashKey) : null,
+          }}
+        />
 
         <OpsPushOptIn vapidPublicKey={(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '').trim()} />
 
