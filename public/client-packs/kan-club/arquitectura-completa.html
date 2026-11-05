@@ -101,7 +101,7 @@
   <div class="staff">SOLO STAFF CODIVA</div>
   <h1>Kan Club — Arquitectura completa</h1>
   <p class="meta">
-    Inventario interno: ADRs, stack Marketplace, offline, integraciones, handoff · 28 oct 2026
+    Inventario interno: ADRs, stack Marketplace, offline, integraciones, handoff · corte 3 nov 2026
   </p>
 
   <div class="cover-box">
@@ -110,7 +110,7 @@
       <li>Organización: Kan Club</li>
       <li>Contacto: Luis Vaca · luis.vacavelez@gmail.com</li>
       <li>Slug Ops: <code>kan-club</code></li>
-      <li>Repo producto: local <code>Desarrollos/kan-club</code> (sin remoto aún)</li>
+      <li>Repo: <code>Codiva-dev/kan-club</code> · Prod: <code>https://www.kanclub.com</code></li>
     </ul>
   </div>
 
@@ -215,8 +215,8 @@ sequenceDiagram
   <table>
     <thead><tr><th>Rol</th><th>Auth</th><th>Superficie</th></tr></thead>
     <tbody>
-      <tr><td>Staff</td><td>PIN 4 dígitos</td><td>/tablet</td></tr>
-      <tr><td>Admin</td><td>Email + password / magic link</td><td>/admin</td></tr>
+      <tr><td>Staff</td><td>PIN 4 dígitos</td><td>/tablet (sin enlace Admin)</td></tr>
+      <tr><td>Owner / Admin</td><td>PIN 4 dígitos (cookie httpOnly)</td><td>/admin + enlace Admin desde tablet</td></tr>
       <tr><td>Cliente</td><td>WhatsApp OTP</td><td>/ · /portal</td></tr>
     </tbody>
   </table>
@@ -234,16 +234,28 @@ sequenceDiagram
     <li>Wireframes tablet touch-first</li>
   </ol>
 
-  <h2>9. Corte scaffold (28 oct)</h2>
+  <h2>9. Cortes de build</h2>
+  <h3>Scaffold (28 oct)</h3>
   <ul>
-    <li>Docs + ADRs + freeze en <code>Desarrollos/kan-club</code></li>
-    <li>Next.js stub: /, /portal, /tablet, /admin, /api/health, webhook MP stub</li>
-    <li>Adapters vacíos <code>lib/mercadopago</code> · <code>lib/whatsapp</code></li>
-    <li>Sin schema Neon, sin RxDB, sin remoto GitHub/Vercel de producto</li>
+    <li>Docs + ADRs + freeze</li>
+    <li>Remoto GitHub <code>Codiva-dev/kan-club</code> + Vercel prod</li>
   </ul>
+  <h3>MVP operable (3 nov AM)</h3>
+  <ul>
+    <li>Tablet: PIN, CRM, waiver canvas, agenda, pickup, POS+lealtad, RxDB offline</li>
+    <li>Admin: catálogo, clientes, agenda, pickup, métricas, cortes, campañas</li>
+    <li>Web: landing, tienda Pickup, registro, portal OTP; adapters MP/WA env-gated</li>
+  </ul>
+  <h3>Polish + estabilidad shells (3 nov PM)</h3>
+  <ul>
+    <li>Branding PNG huellita; copy sin ruido; estimador con precios visibles</li>
+    <li>Cruce tablet↔admin estable (sesión request-time, nav dura, RxDB <code>closeDuplicates</code>)</li>
+    <li>PINs fuera de UI admin; enlace Admin solo owner/admin</li>
+  </ul>
+  <div class="note">Checklist humano (MP, WhatsApp, waiver legal, seed SKUs, hardware) sigue abierto — bloquea go-live de integraciones, no el MVP de superficies.</div>
   <div class="note">No cotización en este pack — el brief no trae montos. Economics = trabajo aparte si aplica.</div>
 
-  <footer>Kan Club · Arquitectura completa (staff) · Codiva · Freeze 2026-10-28</footer>
+  <footer>Kan Club · Arquitectura completa (staff) · Codiva · Corte 2026-11-03</footer>
   <script>
     mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "strict" });
   </script>
